@@ -2,6 +2,8 @@
 
 // Includes
 
+#include <raylib.h>
+
 // Constructors
 
 MenuState::MenuState() {
@@ -17,7 +19,9 @@ void MenuState::update() {
 // Other functions
 
 void MenuState::render() {
-
+   BeginDrawing();
+      ClearBackground(BLACK);
+   EndDrawing();
 }
 
 void MenuState::change(States& states) {

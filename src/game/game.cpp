@@ -6,14 +6,17 @@
 #include <raylib.h>
 #include "constants.hpp"
 #include "game/menuState.hpp"
+#include "mngr/sound.hpp"
 
 // Constructors
 
 Game::Game() {
    srand(time(nullptr));
    InitWindow(GetMonitorWidth(GetCurrentMonitor()), GetMonitorHeight(GetCurrentMonitor()), title);
-   InitAudioDevice();
+   ToggleFullscreen();
    SetTargetFPS(targetFPS);
+   
+   InitAudioDevice();
    SetExitKey(KEY_NULL);
    states.push_back(MenuState::make());
 }
@@ -36,6 +39,7 @@ void Game::run() {
          return;
       }
 
+      SoundManager::get().update();
       states.front()->update();
       states.front()->render();
    }

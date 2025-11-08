@@ -1,0 +1,46 @@
+#ifndef MNGR_RESOURCE_HPP
+#define MNGR_RESOURCE_HPP
+
+// Includes
+
+#include <filesystem>
+#include <string>
+#include <unordered_map>
+#include <raylib.h>
+
+// Resource manager class
+
+class ResourceManager {
+   std::unordered_map<std::string, Texture> textures;
+   std::unordered_map<std::string, Font> fonts;
+
+   Texture& getFallbackTexture();
+   Font& getFallbackFont();
+
+public:
+   ResourceManager() = default;
+   ~ResourceManager() = default;
+
+   static ResourceManager& get() {
+      static ResourceManager resourceManager;
+      return resourceManager;
+   }
+
+   // Load functions
+
+   Texture& loadTexture(const std::string& name, const std::filesystem::path& path);
+   Font& loadFont(const std::string& name, const std::filesystem::path& path);
+
+   void loadTextures();
+   void loadFonts();
+
+   // Get functions
+
+   Texture& getTexture(const std::string& name);
+   Font& getFont(const std::string& name);
+
+   bool textureExists(const std::string& name);
+   bool fontExists(const std::string& name);
+};
+
+#endif
