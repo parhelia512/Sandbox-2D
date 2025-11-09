@@ -60,25 +60,25 @@ namespace fmt {
    // Private error macro implementations
 
    template<typename... Args>
-   static void warnImpl(const char* file, int line, const char* base, const Args&... args) {
+   void warnImpl(const char* file, int line, const char* base, const Args&... args) {
       std::cout << "WARNING: '" << file << ":" << line << "': " << fmt::format(base, args...) << '\n';
    }
 
    template<typename... Args>
-   [[noreturn]] static void raiseImpl(const char* file, int line, const char* base, const Args&... args) {
+   [[noreturn]] void raiseImpl(const char* file, int line, const char* base, const Args&... args) {
       std::cout << "ERROR: '" << file << ":" << line << "': " << fmt::format(base, args...) << '\n';
       std::exit(-1);
    }
 
    template<typename... Args>
-   static void checkImpl(const char* file, int line, bool condition, const char* base, const Args&... args) {
+   void checkImpl(const char* file, int line, bool condition, const char* base, const Args&... args) {
       if (condition) {
          fmt::warnImpl(file, line, base, args...);
       }
    }
 
    template<typename... Args>
-   static void assertImpl(const char* file, int line, bool condition, const char* base, const Args&... args) {
+   void assertImpl(const char* file, int line, bool condition, const char* base, const Args&... args) {
       if (condition) {
          fmt::raiseImpl(file, line, base, args...);
       }

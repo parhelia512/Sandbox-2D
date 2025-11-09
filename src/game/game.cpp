@@ -4,21 +4,20 @@
 
 #include <cstdlib>
 #include <raylib.h>
-#include "constants.hpp"
-#include "game/menuState.hpp"
+#include "game/loadingState.hpp"
 #include "mngr/sound.hpp"
 
 // Constructors
 
 Game::Game() {
    srand(time(nullptr));
-   InitWindow(GetMonitorWidth(GetCurrentMonitor()), GetMonitorHeight(GetCurrentMonitor()), title);
+   InitWindow(GetMonitorWidth(GetCurrentMonitor()), GetMonitorHeight(GetCurrentMonitor()), "Terraria Clone");
    ToggleFullscreen();
-   SetTargetFPS(targetFPS);
+   SetTargetFPS(60);
    
    InitAudioDevice();
    SetExitKey(KEY_NULL);
-   states.push_back(MenuState::make());
+   states.push_back(LoadingState::make());
 }
 
 Game::~Game() {
