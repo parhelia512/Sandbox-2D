@@ -20,7 +20,7 @@ void SoundManager::loadMusic(const std::string& name, const std::filesystem::pat
 void SoundManager::saveSound(const std::string& name, const std::vector<std::string>& sounds) {
    std::vector<Sound*> saved;
    for (const auto& identifier: sounds) {
-      fmt::assert(soundExists(identifier), "Sound '{}' does not exist.", identifier);
+      fmt::assert(this->sounds.count(identifier), "Sound '{}' does not exist.", identifier);
       saved.push_back(&this->sounds[identifier]);
    }
    savedSounds[name] = saved;

@@ -12,7 +12,7 @@ using namespace std::string_literals;
 
 class LoadingState : public State {
    enum class Phase { fadingIn, loading, fadingOut };
-   enum class Load { fonts, textures, sounds, music, count };
+   enum class Load { fonts, textures, sounds, soundSetup, music, count };
 
    std::string splash;
    std::string text = "Loading Fonts... "s;

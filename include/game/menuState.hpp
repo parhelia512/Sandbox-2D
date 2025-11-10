@@ -4,18 +4,20 @@
 // Includes
 
 #include "game/state.hpp"
+#include "util/button.hpp"
 
 // Menu state class
 
 class MenuState : public State {
    enum class Phase { fadingIn, updating, fadingOut };
 
+   Button playButton, optionsButton, quitButton;
    Phase phase = Phase::fadingIn;
    float fadeTimer = 0.f;
    float alpha = 0.f;
    
 public:
-   MenuState() = default;
+   MenuState();
    ~MenuState() = default;
 
    static StatePtr make() {

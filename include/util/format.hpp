@@ -72,14 +72,14 @@ namespace fmt {
 
    template<typename... Args>
    void checkImpl(const char* file, int line, bool condition, const char* base, const Args&... args) {
-      if (condition) {
+      if (not condition) {
          fmt::warnImpl(file, line, base, args...);
       }
    }
 
    template<typename... Args>
    void assertImpl(const char* file, int line, bool condition, const char* base, const Args&... args) {
-      if (condition) {
+      if (not condition) {
          fmt::raiseImpl(file, line, base, args...);
       }
    }

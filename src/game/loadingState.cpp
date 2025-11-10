@@ -8,8 +8,10 @@
 #include "mngr/resource.hpp"
 #include "mngr/sound.hpp"
 #include "util/format.hpp"
+#include "util/position.hpp"
 #include "util/text.hpp"
 #include "util/random.hpp"
+#include "util/render.hpp"
 
 // Constants
 
@@ -23,6 +25,8 @@ namespace {
 LoadingState::LoadingState() {
    splash = getSplashMessage();
    wrapText(splash, GetScreenWidth() - 50.f, 40, 1.f);
+   ResourceManager::get().loadFont("andy"s, "assets/fonts/andy.ttf"s);
+   ResourceManager::get().loadTexture("loading"s, "assets/sprites/loading.png"s);
 }
 
 // Update functions
@@ -58,11 +62,17 @@ void LoadingState::updateLoading() {
    } else if (load == Load::sounds) {
       text = "Loading Sounds... "s;
       SoundManager::get().loadSounds();
+      load = Load::soundSetup;
+   } else if (load == Load::soundSetup) {
+      text = "Setting Up Sounds... "s;
+      SoundManager::get().saveSound("click"s, {"click"s, "click2"s, "click3"s});
+      SoundManager::get().saveSound("hover"s, {"hover"s, "hover2"s});
       load = Load::music;
    } else if (load == Load::music) {
       text = "Loading Music... "s;
       SoundManager::get().loadMusic();
       phase = Phase::fadingOut;
+      SoundManager::get().play("load"s);
    }
 }
 
@@ -86,18 +96,16 @@ void LoadingState::updateFadingOut() {
 void LoadingState::render() {
    BeginDrawing();
       ClearBackground(BLACK);
-      auto& tex = ResourceManager::get().loadTexture("loading"s, "assets/sprites/loading.png"s);
-      auto& fon = ResourceManager::get().loadFont("andy"s, "assets/fonts/andy.ttf"s);
-
+      auto& tex = ResourceManager::get().getTexture("loading"s);
       std::string ltext = "Loading Done!"s;
       if (phase != Phase::fadingOut) {
          ltext = text + std::to_string((int)load) + "/"s + std::to_string((int)Load::count);
       }
 
-      DrawTextEx(fon, ltext.c_str(), {GetScreenWidth() / 2.f - MeasureTextEx(fon, ltext.c_str(), 80, 1.f).x / 2.f, GetScreenHeight() / 2.f - 175.f}, 80, 1.f, WHITE);
-      DrawTextEx(fon, splash.c_str(), {GetScreenWidth() / 2.f - MeasureTextEx(fon, splash.c_str(), 40, 1.f).x / 2.f, GetScreenHeight() / 2.f + 100.f}, 40, 1.f, WHITE);
-      DrawTexturePro(tex, {0.f, 0.f, (float)tex.width, (float)tex.height}, {GetScreenWidth() / 2.f, GetScreenHeight() / 2.f, tex.width * 2.f, tex.height * 2.f}, {(float)tex.width, (float)tex.height}, rotation, WHITE);
-      DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, alpha));
+      drawText(getScreenCenter(0.f, -175.f), ltext.c_str(), 80);
+      drawText(getScreenCenter(0.f, 100.f), splash.c_str(), 40);
+      drawTexture(tex, getScreenCenter(), {70.f, 70.f}, rotation);
+      drawRect(Fade(BLACK, alpha));
    EndDrawing();
 }
 
@@ -105,11 +113,11 @@ void LoadingState::change(States& states) {
    states.push_back(MenuState::make());
 }
 
+// Return the error message as the splash as the average user might not
+// have the terminal opened
 std::string LoadingState::getSplashMessage() {
    std::ifstream file ("assets/splash.json"s);
    if (not file.is_open()) {
-      // Return the error message as the splash as the average user might not
-      // have the terminal opened
       return "File 'assets/splash.json' does not exist."s;
    }
 
