@@ -23,4 +23,8 @@ Rectangle getBox(const Texture& texture);
 
 Rectangle getCameraBounds(const Camera2D& camera);
 
+// Vector math functions
+
+Vector2 lerp(const Vector2& a, const Vector2& b, float t);
+
 #endif

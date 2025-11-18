@@ -10,13 +10,17 @@
 constexpr int mapSizeX = 1250;
 constexpr int mapSizeY = 500;
 
+constexpr float cameraFollowSpeed = 17.5f;
+constexpr float maxCameraZoom = 1.f;
+constexpr float minCameraZoom = 100.f;
+
 // Constructors
 
 GameState::GameState() {
    generateMap(blocks, mapSizeX, mapSizeY);
    player.init({mapSizeX / 2.f, 0.f});
 
-   camera.target = player.pos;
+   camera.target = player.getCenter();
    camera.offset = getScreenCenter();
    camera.rotation = 0.0f;
    camera.zoom = 50.f;
@@ -31,11 +35,11 @@ void GameState::update() {
 
 void GameState::updateControls() {
    player.updatePlayer(blocks);
-   camera.target = player.getCenter();
+   camera.target = lerp(camera.target, player.getCenter(), 25.f * GetFrameTime());
 
    float wheel = GetMouseWheelMove();
    if (wheel != 0.f) {
-      camera.zoom = std::clamp(std::exp(std::log(camera.zoom) + wheel * 0.2f), 1.f, 5000.f);
+      camera.zoom = std::clamp(std::exp(std::log(camera.zoom) + wheel * 0.2f), maxCameraZoom, minCameraZoom);
    }
 
    if (IsKeyReleased(KEY_ESCAPE)) {
@@ -82,10 +86,17 @@ void GameState::updatePhysics() {
             if (bottomIs(blocks, x, y)) {
                moveBlock(block, blocks[y + 1][x]);
             } else if (leftIs(blocks, x, y) and rightIs(blocks, x, y)) {
-               moveBlock(block, blocks[y][x + (chance(50) ? 1.f : -1.f)]);
+               if (chance(50)) {
+                  goto moveWaterLeft;
+               } else {
+                  goto moveWaterRight;
+               }
             } else if (leftIs(blocks, x, y)) {
+            moveWaterLeft:
                moveBlock(block, blocks[y][x - 1]);
+               --x; // Prevent the water tile from updating twice
             } else if (rightIs(blocks, x, y)) {
+            moveWaterRight:
                moveBlock(block, blocks[y][x + 1]);
             }
          }

@@ -8,11 +8,11 @@ constexpr Vector2 size {2.f, 3.f};
 constexpr int frameSize = 20;
 
 constexpr float speed = 20.f;
-constexpr float jumpSpeed = -8.f;
-constexpr float gravity = 5.f;
+constexpr float jumpSpeed = -27.5f;
+constexpr float gravity = 4.f;
 constexpr float maxGravity = 55.f;
 constexpr float acceleration = 9.f;
-constexpr float jumpHoldTime = .3f;
+constexpr float jumpHoldTime = .4f;
 
 // Constructors
 
@@ -45,8 +45,7 @@ void Player::updateMovement() {
    }
 
    if (IsKeyDown(KEY_SPACE) and canHoldJump) {
-      vel.y = std::min(0.f, vel.y);
-      vel.y += jumpSpeed * GetFrameTime();
+      vel.y = jumpSpeed * GetFrameTime();
 
       holdJumpTimer += GetFrameTime();
       if (holdJumpTimer >= jumpHoldTime) {

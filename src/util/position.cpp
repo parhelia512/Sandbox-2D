@@ -41,3 +41,9 @@ Rectangle getCameraBounds(const Camera2D& camera) {
    Vector2 pos = GetScreenToWorld2D({0, 0}, camera);
    return {pos.x, pos.y, GetScreenWidth() / camera.zoom, GetScreenHeight() / camera.zoom};
 }
+
+// Vector math functions
+
+Vector2 lerp(const Vector2& a, const Vector2& b, float t) {
+   return {a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t};
+}
