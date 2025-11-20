@@ -81,14 +81,14 @@ void Player::updateCollisions(Map& map) {
    bool collisionX = false, collisionY = false;
    int waterTileCount = 0;
 
-   auto maxX = min((int)map[0].size(), int(pos.x + size.x) + 1);
-   auto maxY = min((int)map.size(), int(pos.y + size.y) + 1);
+   auto maxX = min(map.sizeX, int(pos.x + size.x) + 1);
+   auto maxY = min(map.sizeY, int(pos.y + size.y) + 1);
 
    for (int y = max(0, (int)pos.y); y < maxY; ++y) {
       for (int x = max(0, (int)pos.x); x < maxX; ++x) {
-         if (map[y][x].type == Block::Type::air or map[y][x].type == Block::Type::water) {
+         if (map.is(x, y, Block::air) or map.is(x, y, Block::water)) {
             // Only check water tile count in the first iteration
-            waterTileCount += (map[y][x].type == Block::Type::water);
+            waterTileCount += map.is(x, y, Block::water);
             continue;
          }
 
@@ -124,12 +124,12 @@ void Player::updateCollisions(Map& map) {
    torsoCollision = feetCollision = false;
    feetCollisionY = 0;
 
-   maxX = min((int)map[0].size(), int(pos.x + size.x) + 1);
-   maxY = min((int)map.size(), int(pos.y + size.y) + 1);
+   maxX = min(map.sizeX, int(pos.x + size.x) + 1);
+   maxY = min(map.sizeY, int(pos.y + size.y) + 1);
 
    for (int y = max(0, (int)pos.y - 1); y < maxY; ++y) {
       for (int x = max(0, (int)pos.x); x < maxX; ++x) {
-         if (map[y][x].type == Block::Type::air or map[y][x].type == Block::Type::water) {
+         if (map.is(x, y, Block::air) or map.is(x, y, Block::water)) {
             continue;
          }
 

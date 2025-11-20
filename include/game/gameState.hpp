@@ -26,7 +26,7 @@ struct GameState: public State {
    void change(States& states) override;
 
 private:
-   Map blocks;
+   Map map;
    Camera2D camera;
    Player player;
    float physicsTimer = 0.f;

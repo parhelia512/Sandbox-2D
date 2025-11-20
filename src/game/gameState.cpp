@@ -18,7 +18,7 @@ constexpr float minCameraZoom = 100.f;
 // Constructors
 
 GameState::GameState() {
-   generateMap(blocks, mapSizeX, mapSizeY);
+   generateMap(map, mapSizeX, mapSizeY);
    player.init({mapSizeX / 2.f, 0.f});
 
    camera.target = player.getCenter();
@@ -35,7 +35,7 @@ void GameState::update() {
 }
 
 void GameState::updateControls() {
-   player.updatePlayer(blocks);
+   player.updatePlayer(map);
    camera.target = lerp(camera.target, player.getCenter(), 25.f * GetFrameTime());
 
    float wheel = GetMouseWheelMove();
@@ -67,13 +67,13 @@ void GameState::updatePhysics() {
       index = (index == 0 ? size - 1 : index - 1);
    }
 
-   if (isPositionValid(blocks, mousePos.x, mousePos.y)) {
+   if (map.isPositionValid(mousePos.x, mousePos.y)) {
       if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-         deleteBlock(blocks[mousePos.y][mousePos.x]);
+         map.deleteBlock(mousePos.x, mousePos.y);
       } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-         setBlock(blocks[mousePos.y][mousePos.x], blockMap[index]);
-      } else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) and blocks[mousePos.y][mousePos.x].type != Block::Type::air) {
-         index = blocks[mousePos.y][mousePos.x].id - 1;
+         map.setBlock(mousePos.x, mousePos.y, blockMap[index]);
+      } else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) and map[mousePos.y][mousePos.x].type != Block::air) {
+         index = map[mousePos.y][mousePos.x].id - 1;
       }
    }
 
@@ -87,37 +87,37 @@ void GameState::updatePhysics() {
    
    for (int y = mapSizeY - 1; y >= 0; --y) {
       for (int x = mapSizeX - 1; x >= 0; --x) {
-         auto& block = blocks[y][x];
+         auto& block = map[y][x];
 
-         if (block.type == Block::Type::water) {
-            if (bottomIs(blocks, x, y)) {
-               moveBlock(block, blocks[y + 1][x]);
-            } else if (leftIs(blocks, x, y) and rightIs(blocks, x, y)) {
+         if (block.type == Block::water) {
+            if (map.is(x, y + 1, Block::air)) {
+               map.moveBlock(x, y, x, y + 1);
+            } else if (map.is(x - 1, y, Block::air) and map.is(x + 1, y, Block::air)) {
                if (chance(50)) {
                   goto moveWaterLeft;
                } else {
                   goto moveWaterRight;
                }
-            } else if (leftIs(blocks, x, y)) {
+            } else if (map.is(x - 1, y, Block::air)) {
             moveWaterLeft:
-               moveBlock(block, blocks[y][x - 1]);
+               map.moveBlock(x, y, x - 1, y);
                --x; // Prevent the water tile from updating twice
-            } else if (rightIs(blocks, x, y)) {
+            } else if (map.is(x + 1, y, Block::air)) {
             moveWaterRight:
-               moveBlock(block, blocks[y][x + 1]);
+               map.moveBlock(x, y, x + 1, y);
             }
          }
 
-         if (block.type == Block::Type::sand and (bottomIs(blocks, x, y) or bottomIs(blocks, x, y, Block::Type::water))) {
-            moveBlock(block, blocks[y + 1][x]);
+         if (block.type == Block::sand and (map.is(x, y + 1, Block::air) or map.is(x, y + 1, Block::water))) {
+            map.moveBlock(x, y, x, y + 1);
          }
 
-         if (block.type == Block::Type::dirt and (topIs(blocks, x, y) or topIs(blocks, x, y, Block::Type::water)) and chance(1)) {
-            setBlock(block, "grass");
+         if (block.type == Block::dirt and (map.is(x, y - 1, Block::air) or map.is(x, y - 1, Block::water)) and chance(1)) {
+            map.setBlock(x, y, "grass");
          }
 
-         if (block.type == Block::Type::grass and not topIs(blocks, x, y) and not topIs(blocks, x, y, Block::Type::water) and chance(1)) {
-            setBlock(block, "dirt");
+         if (block.type == Block::grass and not map.is(x, y - 1, Block::air) and not map.is(x, y - 1, Block::water) and chance(1)) {
+            map.setBlock(x, y, "dirt");
          }
       }
    }
@@ -135,16 +135,16 @@ void GameState::render() {
 
    for (int y = std::max(0, int(crect.y)); y < maxY; ++y) {
       for (int x = std::max(0, int(crect.x)); x < maxX; ++x) {
-         auto& block = blocks[y][x];
-         if (block.type == Block::Type::air) {
+         auto& block = map[y][x];
+         if (block.type == Block::air) {
             continue;
          }
 
          int ox = x;
-         while (x < maxX and blocks[y][x].id == block.id) { ++x; }
+         while (x < maxX and map[y][x].id == block.id) { ++x; }
 
          if (camera.zoom <= 12.5f) {
-            DrawRectangle(ox, y, x - ox, 1, getBlockColor(block.id));
+            DrawRectangle(ox, y, x - ox, 1, block.getColor());
          } else {
             drawTextureBlock(*block.tex, {(float)ox, (float)y, float(x - ox), 1.f});
          }

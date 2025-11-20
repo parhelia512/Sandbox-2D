@@ -1,7 +1,7 @@
 #ifndef OBJS_GENERATION_HPP
 #define OBJS_GENERATION_HPP
 
-#include "objs/block.hpp"
+#include "objs/map.hpp"
 
 // Generate functions
 

@@ -15,11 +15,6 @@ constexpr int rockOffsetStart = 12;
 constexpr int rockOffsetMin = 5;
 constexpr int rockOffsetMax = 25;
 
-// Globals
-
-static int sizeX = 0;
-static int sizeY = 0;
-
 // Private functions
 
 inline float normalizedNoise2D(siv::PerlinNoise& noise, int x, int y, float amplitude) {
@@ -29,10 +24,7 @@ inline float normalizedNoise2D(siv::PerlinNoise& noise, int x, int y, float ampl
 // Generate functions
 
 void generateMap(Map& map, int mapSizeX, int mapSizeY) {
-   sizeX = mapSizeX;
-   sizeY = mapSizeY;
-   map = Map(sizeY, std::vector<Block>(sizeX, Block{}));
-
+   map.setSize(mapSizeX, mapSizeY);
    generateTerrain(map);
    generateDebri(map);
    generateWater(map);
@@ -40,10 +32,10 @@ void generateMap(Map& map, int mapSizeX, int mapSizeY) {
 
 void generateTerrain(Map& map) {
    siv::PerlinNoise noise (rand());
-   int y = startY * sizeY;
+   int y = startY * map.sizeY;
    int rockOffset = rockOffsetStart;
 
-   for (int x = 0; x < sizeX; ++x) {
+   for (int x = 0; x < map.sizeX; ++x) {
       float value = normalizedNoise2D(noise, x, y, 0.01f);
 
       // Get different height increase/decrease based on the noise
@@ -67,32 +59,32 @@ void generateTerrain(Map& map) {
 
       // Don't let the height get too low or too high
 
-      if (y < sizeY * highThreshold) {
+      if (y < map.sizeY * highThreshold) {
          ++y;
          ++rockOffset;
       }
 
-      if (y > sizeY * lowThreshold) {
+      if (y > map.sizeY * lowThreshold) {
          --y;
          --rockOffset;
       }
-      y = std::clamp<int>(y, sizeY * highestPoint, sizeY * lowestPoint);
+      y = std::clamp<int>(y, map.sizeY * highestPoint, map.sizeY * lowestPoint);
       rockOffset = std::clamp(rockOffset, rockOffsetMin, rockOffsetMax);
 
       // Generate grass, dirt and stone
 
-      setBlock(map[y][x], "grass");
-      for (int yy = y + 1; yy < sizeY; ++yy) {
-         setBlock(map[yy][x], (yy - y < rockOffset ? "dirt" : "stone"));
+      map.setBlock(x, y, "grass");
+      for (int yy = y + 1; yy < map.sizeY; ++yy) {
+         map.setBlock(x, yy, (yy - y < rockOffset ? "dirt" : "stone"));
       }
    }
 }
 
 void generateWater(Map& map) {
-   int seaY = sizeY * seaLevel;
-   for (int x = 0; x < sizeX; ++x) {
-      for (int y = seaY; y < sizeY and map[y][x].type == Block::Type::air; ++y) {
-         setBlock(map[y][x], "water");
+   int seaY = map.sizeY * seaLevel;
+   for (int x = 0; x < map.sizeX; ++x) {
+      for (int y = seaY; y < map.sizeY and map.is(x, y, Block::air); ++y) {
+         map.setBlock(x, y, "water");
       }
    }
 }
@@ -101,19 +93,19 @@ void generateDebri(Map& map) {
    siv::PerlinNoise sandNoise (rand());
    siv::PerlinNoise dirtNoise (rand());
 
-   for (int x = 0; x < sizeX; ++x) {
-      for (int y = 0; y < sizeY; ++y) {
-         if (map[y][x].type == Block::Type::air or map[y][x].type == Block::Type::grass) {
+   for (int x = 0; x < map.sizeX; ++x) {
+      for (int y = 0; y < map.sizeY; ++y) {
+         if (map.is(x, y, Block::air) or map.is(x, y, Block::grass)) {
             continue;
          }
 
          float value = normalizedNoise2D(dirtNoise, x, y, 0.04f);
          if (value >= .825f) {
-            setBlock(map[y][x], "clay");
+            map.setBlock(x, y, "clay");
          } else if (value <= .2f) {
-            setBlock(map[y][x], "dirt");
-         } else if (map[y][x].type != Block::Type::dirt and normalizedNoise2D(sandNoise, x, y, 0.04f) <= .15f) {
-            setBlock(map[y][x], "sand");
+            map.setBlock(x, y, "dirt");
+         } else if (not map.is(x, y, Block::dirt) and normalizedNoise2D(sandNoise, x, y, 0.04f) <= .15f) {
+            map.setBlock(x, y, "sand");
          }
       }
    }
