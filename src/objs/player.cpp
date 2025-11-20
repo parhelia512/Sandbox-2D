@@ -113,14 +113,33 @@ void Player::updateCollisions(Map& map) {
       }
    }
 
+   if (not torsoCollision and feetCollision) {
+      pos.y = feetCollisionY - size.y;
+   }
+
    pos.x += vel.x;
+
+   Rectangle torso {pos.x, pos.y - 1.f, size.x, size.y};
+   Rectangle feet {pos.x, pos.y + 2.f, size.x, 1.f};
+   torsoCollision = feetCollision = false;
+   feetCollisionY = 0;
+
    maxX = min((int)map[0].size(), int(pos.x + size.x) + 1);
    maxY = min((int)map.size(), int(pos.y + size.y) + 1);
 
-   for (int y = max(0, (int)pos.y); y < maxY; ++y) {
+   for (int y = max(0, (int)pos.y - 1); y < maxY; ++y) {
       for (int x = max(0, (int)pos.x); x < maxX; ++x) {
          if (map[y][x].type == Block::Type::air or map[y][x].type == Block::Type::water) {
             continue;
+         }
+
+         if (not torsoCollision and CheckCollisionRecs(torso, {(float)x, (float)y, 1.f, 1.f})) {
+            torsoCollision = true;
+         }
+
+         if (not feetCollision and CheckCollisionRecs(feet, {(float)x, (float)y, 1.f, 1.f})) {
+            feetCollision = true;
+            feetCollisionY = y;
          }
 
          if (not CheckCollisionRecs({pos.x, pos.y, size.x, size.y}, {(float)x, (float)y, 1.f, 1.f})) {

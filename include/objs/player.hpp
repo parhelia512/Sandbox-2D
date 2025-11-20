@@ -11,6 +11,9 @@ struct Player {
    Vector2 pos, vel, prev;
    bool onGround = false;
    bool canHoldJump = true;
+   bool feetCollision = false;
+   bool torsoCollision = false;
+   int feetCollisionY = 0;
    float waterMult = 1.f;
    float holdJumpTimer = 0.f;
 
