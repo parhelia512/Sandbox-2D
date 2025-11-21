@@ -16,7 +16,7 @@ struct Block {
 
    Color& getColor();
    Color& getWallColor();
-   static void initializeWallColors();
+   static void initializeColors();
 };
 
 // Map

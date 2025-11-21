@@ -3,14 +3,13 @@
 #include "mngr/resource.hpp"
 #include "objs/map.hpp"
 #include "util/format.hpp" // IWYU pragma: export
-#include "util/math.hpp"
 #include "util/position.hpp"
 #include "util/render.hpp"
 
 // Constants
 
 constexpr int idCount = 13;
-constexpr Color backgroundTint {90, 90, 90, 255};
+constexpr Color backgroundTint {120, 120, 120, 255};
 
 static std::unordered_map<std::string, int> blockIds {
    {"air", 0}, {"grass", 1}, {"dirt", 2}, {"clay", 3}, {"stone", 4},
@@ -18,17 +17,13 @@ static std::unordered_map<std::string, int> blockIds {
    {"planks", 10}, {"stone_bricks", 11}, {"tiles", 12}
 };
 
-static std::array<Block::Type, idCount> blockTypes {{
+constexpr static std::array<Block::Type, idCount> blockTypes {{
    Block::air, Block::grass, Block::dirt, Block::solid, Block::solid,
    Block::sand, Block::solid, Block::water, Block::solid, Block::transparent,
    Block::solid, Block::solid, Block::solid
 }};
 
-static std::array<Color, idCount> wallColors, blockColors {{
-   {0, 0, 0, 0}, {28, 152, 29, 255}, {117, 56, 19, 255}, {158, 91, 35, 255}, {102, 102, 102, 255},
-   {255, 189, 40, 255}, {247, 134, 13, 255}, {8, 69, 165, 255}, {244, 52, 8, 255}, {0, 0, 0, 0},
-   {158, 91, 35, 255}, {102, 102, 102, 255}, {102, 102, 102, 255}
-}};
+static std::array<Color, idCount> wallColors, blockColors;
 
 // Block functions
 
@@ -40,12 +35,36 @@ Color& Block::getWallColor() {
    return wallColors[id];
 }
 
-void Block::initializeWallColors() {
-   for (int i = 0; i < idCount; ++i) {
-      Color& a = blockColors[i];
-      Color b = backgroundTint;
-      Color c {(unsigned char)clamp(a.r - b.r, 0, 255), (unsigned char)clamp(a.g - b.g, 0, 255), (unsigned char)clamp(a.b - b.b, 0, 255), a.a};
-      wallColors[i] = c;
+void Block::initializeColors() {
+   using c = unsigned char;
+   for (const auto& [name, id]: blockIds) {
+      auto& texture = ResourceManager::get().getTexture(name);
+      auto image = LoadImageFromTexture(texture);
+      Color a = GetImageColor(image, 0, 0);
+
+      // Ignore any transparent blocks (like glass)
+      if (a.a == 0) {
+         blockColors[id] = wallColors[id] = a;
+         UnloadImage(image);
+         continue;
+      }
+
+      // Do some cheats to have our color tinted without having to implement
+      // any math ourselves
+      auto target = LoadRenderTexture(1, 1);
+      BeginTextureMode(target);
+      DrawTexture(texture, 0, 0, backgroundTint);
+      EndTextureMode();
+
+      auto image2 = LoadImageFromTexture(target.texture);
+      Color b = GetImageColor(image2, 0, 0);
+
+      blockColors[id] = a;
+      wallColors[id] = b;
+
+      UnloadImage(image);
+      UnloadImage(image2);
+      UnloadRenderTexture(target);
    }
 }
 

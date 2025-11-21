@@ -137,7 +137,7 @@ void GameState::render() {
    player.render();
    EndMode2D();
 
-   drawTexture(ResourceManager::get().getTexture(blockMap[index]), {GetScreenWidth() - 75.f, GetScreenHeight() - 75.f}, {50.f, 50.f}, 0.f, (drawWall ? Color{90, 90, 90, 255} : WHITE));
+   drawTexture(ResourceManager::get().getTexture(blockMap[index]), {GetScreenWidth() - 75.f, GetScreenHeight() - 75.f}, {50.f, 50.f}, 0.f, (drawWall ? Color{120, 120, 120, 255} : WHITE));
 }
 
 void GameState::change(States& states) {

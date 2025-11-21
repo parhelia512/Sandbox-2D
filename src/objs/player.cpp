@@ -10,7 +10,7 @@ constexpr int frameSize = 20;
 constexpr float speed = 20.f;
 constexpr float jumpSpeed = -27.5f;
 constexpr float gravity = 2.5f;
-constexpr float maxGravity = 55.f;
+constexpr float maxGravity = 0.9f;
 constexpr float acceleration = 5.f;
 constexpr float deceleration = 10.f;
 constexpr float jumpHoldTime = .4f;
@@ -41,7 +41,7 @@ void Player::updateMovement() {
    auto dir = IsKeyDown(KEY_D) - IsKeyDown(KEY_A);
 
    if (not onGround) {
-      vel.y = std::min(maxGravity * dt, vel.y + gravity * dt);
+      vel.y = std::min(maxGravity, vel.y + gravity * dt);
    } else {
       vel.y = 0.f;
    }
