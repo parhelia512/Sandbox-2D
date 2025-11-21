@@ -8,11 +8,18 @@
 // Block
 
 struct Block {
-   enum Type { air, grass, dirt, solid, transparent, sand, water };
+   enum Type { air, grass, dirt, solid, transparent, sand, water, lava };
    
    Texture* tex = nullptr;
    Type type = Type::air;
-   int id = 0;
+
+   // Unsigned chars can only hold 256 unique IDs. Currently trying to save
+   // block space, so it's a problem for later
+   unsigned char id = 0;
+
+   // Values used by physics updates, specific to the block type
+   unsigned char value = 0;
+   unsigned char value2 = 0;
 
    Color& getColor();
    Color& getWallColor();

@@ -51,9 +51,9 @@ void GameState::updateControls() {
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp.
 static int index = 0;
-static int size = 12;
+static int size = 14;
 static const char* blockMap[] {
-   "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles"
+   "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian", "lava"
 };
 static bool drawWall = false;
 
@@ -94,7 +94,32 @@ void GameState::updatePhysics() {
       for (int x = mapSizeX - 1; x >= 0; --x) {
          auto& block = map[y][x];
 
-         if (block.type == Block::water) {
+         if (block.type == Block::water or block.type == Block::lava) {
+            if (block.type == Block::lava) {
+               // Turn into obsidian if water is found adjacently
+               if (map.is(x, y + 1, Block::water)) {
+                  map.setBlock(x, y, "obsidian");
+                  map.deleteBlock(x, y + 1);
+               } else if (map.is(x, y - 1, Block::water)) {
+                  map.setBlock(x, y, "obsidian");
+                  map.deleteBlock(x, y - 1);
+               } else if (map.is(x + 1, y, Block::water)) {
+                  map.setBlock(x, y, "obsidian");
+                  map.deleteBlock(x + 1, y);
+               } else if (map.is(x - 1, y, Block::water)) {
+                  map.setBlock(x, y, "obsidian");
+                  map.deleteBlock(x - 1, y);
+               }
+
+               // Update lava slower than water
+               ++map[y][x].value;
+               if (map[y][x].value >= 6) {
+                  map[y][x].value = 0;
+               } else {
+                  continue;
+               }
+            }
+
             if (map.is(x, y + 1, Block::air)) {
                map.moveBlock(x, y, x, y + 1);
             } else if (map.is(x - 1, y, Block::air) and map.is(x + 1, y, Block::air)) {
@@ -117,12 +142,28 @@ void GameState::updatePhysics() {
             map.moveBlock(x, y, x, y + 1);
          }
 
-         if (block.type == Block::dirt and (map.is(x, y - 1, Block::air) or map.is(x, y - 1, Block::water)) and chance(1)) {
-            map.setBlock(x, y, "grass");
+         if (block.type == Block::dirt and (map.is(x, y - 1, Block::air) or map.is(x, y - 1, Block::water))) {
+            if (map[y][x].value2 == 0) {
+               map[y][x].value2 = random(100, 255);
+            }
+
+            ++map[y][x].value;
+            if (map[y][x].value >= map[y][x].value2) {
+               map[y][x].value = 0;
+               map.setBlock(x, y, "grass");
+            }
          }
 
-         if (block.type == Block::grass and not map.is(x, y - 1, Block::air) and not map.is(x, y - 1, Block::water) and chance(1)) {
-            map.setBlock(x, y, "dirt");
+         if (block.type == Block::grass and not map.is(x, y - 1, Block::air) and not map.is(x, y - 1, Block::water)) {
+            if (map[y][x].value2 == 0) {
+               map[y][x].value2 = random(100, 255);
+            }
+
+            ++map[y][x].value;
+            if (map[y][x].value >= map[y][x].value2) {
+               map[y][x].value = 0;
+               map.setBlock(x, y, "dirt");
+            }
          }
       }
    }

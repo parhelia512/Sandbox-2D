@@ -8,19 +8,19 @@
 
 // Constants
 
-constexpr int idCount = 13;
+constexpr unsigned char idCount = 15;
 constexpr Color backgroundTint {120, 120, 120, 255};
 
-static std::unordered_map<std::string, int> blockIds {
+static std::unordered_map<std::string, unsigned char> blockIds {
    {"air", 0}, {"grass", 1}, {"dirt", 2}, {"clay", 3}, {"stone", 4},
    {"sand", 5}, {"sandstone", 6}, {"water", 7}, {"bricks", 8}, {"glass", 9},
-   {"planks", 10}, {"stone_bricks", 11}, {"tiles", 12}
+   {"planks", 10}, {"stone_bricks", 11}, {"tiles", 12}, {"obsidian", 13}, {"lava", 14}
 };
 
 constexpr static std::array<Block::Type, idCount> blockTypes {{
    Block::air, Block::grass, Block::dirt, Block::solid, Block::solid,
    Block::sand, Block::solid, Block::water, Block::solid, Block::transparent,
-   Block::solid, Block::solid, Block::solid
+   Block::solid, Block::solid, Block::solid, Block::solid, Block::lava
 }};
 
 static std::array<Color, idCount> wallColors, blockColors;
@@ -83,6 +83,7 @@ void Map::setBlock(int x, int y, const std::string& name, bool wall) {
    
    block.tex = &ResourceManager::get().getTexture(name);
    block.id = blockIds[name];
+   block.value = block.value2 = 0;
    block.type = blockTypes[block.id];
 }
 
@@ -90,7 +91,7 @@ void Map::deleteBlock(int x, int y, bool wall) {
    auto& block = (wall ? walls : blocks)[y][x];
    block.tex = nullptr;
    block.type = Block::air;
-   block.id = 0;
+   block.id = block.value = block.value2 = 0;
 }
 
 void Map::moveBlock(int ox, int oy, int nx, int ny) {
