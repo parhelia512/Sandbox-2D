@@ -75,7 +75,7 @@ void GameState::updatePhysics() {
    if (map.isPositionValid(mousePos.x, mousePos.y)) {
       if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
          map.deleteBlock(mousePos.x, mousePos.y, drawWall);
-      } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+      } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) and (drawWall or not CheckCollisionRecs(player.getBounds(), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}))) {
          map.setBlock(mousePos.x, mousePos.y, blockMap[index], drawWall);
       } else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) and (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type != Block::air) {
          index = (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].id - 1;

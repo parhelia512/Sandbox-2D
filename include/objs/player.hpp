@@ -39,6 +39,7 @@ struct Player {
    // Getter functions
 
    Vector2 getCenter();
+   Rectangle getBounds();
 };
 
 #endif

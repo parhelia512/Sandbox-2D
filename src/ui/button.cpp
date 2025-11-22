@@ -12,11 +12,11 @@ void Button::update() {
    clicked = hovering and IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
 
    if (down) {
-      scale = std::max(scale * .975f, .9f);
+      scale = std::max(scale * 1.f - GetFrameTime(), .9f);
    } else if (hovering) {
-      scale = std::min(scale * 1.025f, 1.1f);
+      scale = std::min(scale * 1.f + GetFrameTime(), 1.1f);
    } else if (scale != 1.f) {
-      scale = (scale < 1.f ? std::min(1.f, scale * 1.025f) : std::max(1.f, scale * .975f));
+      scale = (scale < 1.f ? std::min(1.f, scale * 1.f + GetFrameTime()) : std::max(1.f, scale * 1.f - GetFrameTime()));
    }
 
    if (not was_hovering and hovering) {

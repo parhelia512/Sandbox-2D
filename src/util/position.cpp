@@ -45,5 +45,6 @@ Rectangle getCameraBounds(const Camera2D& camera) {
 // Vector math functions
 
 Vector2 lerp(const Vector2& a, const Vector2& b, float t) {
+   t = (t < 0.f ? 0.f : (t > 1.f ? 1.f : t));
    return {a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t};
 }
