@@ -13,6 +13,10 @@ void drawTexture(const Texture& texture, const Vector2& position, const Vector2&
    DrawTexturePro(texture, getBox(texture), {position.x, position.y, size.x, size.y}, getOrigin(size), rotation, color);
 }
 
+void drawTextureNoOrigin(const Texture& texture, const Vector2& position, const Vector2& size) {
+   DrawTexturePro(texture, getBox(texture), {position.x, position.y, size.x, size.y}, {0, 0}, 0, WHITE);
+}
+
 void drawTextureBlock(const Texture& texture, const Rectangle& rect, const Color& color) {
    Rectangle src {0, 0, texture.width * (rect.width / rect.height), (float)texture.height};
    DrawTexturePro(texture, src, rect, {0.f, 0.f}, 0.f, color);
