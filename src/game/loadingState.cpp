@@ -1,14 +1,11 @@
-#include <fstream>
-#include "json.hpp"
 #include "game/loadingState.hpp"
 #include "game/menuState.hpp"
 #include "mngr/resource.hpp"
 #include "mngr/sound.hpp"
 #include "objs/map.hpp"
-#include "util/format.hpp"
+#include "util/fileio.hpp"
 #include "util/position.hpp"
 #include "util/text.hpp"
-#include "util/random.hpp"
 #include "util/render.hpp"
 
 // Constructors
@@ -16,7 +13,7 @@
 LoadingState::LoadingState() {
    ResourceManager::get().loadFont("andy", "assets/fonts/andy.ttf");
    ResourceManager::get().loadTexture("loading", "assets/sprites/loading.png");
-   splash = getSplashMessage();
+   splash = getRandomLineFromFile("assets/splash.txt");
    wrapText(splash, GetScreenWidth() - 50.f, 40, 1.f);
 }
 
@@ -71,27 +68,4 @@ void LoadingState::render() {
 
 State* LoadingState::change() {
    return new MenuState();
-}
-
-// Return the error message as the splash as the average user might not
-// have the terminal opened
-std::string LoadingState::getSplashMessage() {
-   std::ifstream file ("assets/splash.json");
-   if (not file.is_open()) {
-      return "File 'assets/splash.json' does not exist.";
-   }
-
-   nlohmann::json data;
-   file >> data;
-   file.close();
-
-   if (not data.contains("splash") or not data["splash"].is_array()) {
-      return "Expected 'assets/splash.json' to contain array 'splash'.";
-   }
-   
-   auto splash = data["splash"][random(0, data["splash"].size() - 1)];
-   if (not splash.is_string()) {
-      return format("Expected 'assets/splash.json' element '{}' to be of type 'string', but it is '{}' instead.", splash.dump(), splash.type_name());
-   }
-   return splash;
 }

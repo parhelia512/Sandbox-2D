@@ -30,7 +30,7 @@ Sandbox-2D is a 2D sidescrolling sandbox where you can build, destroy and play w
 ## Installation
 
 #### Prerequisites
-You must have git, cmake, a C++ compiler, raylib and nlohmann-json installed.
+You must have git, cmake, a C++ compiler and raylib installed.
 
 #### Installation
 1. Clone the repository:

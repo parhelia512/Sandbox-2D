@@ -7,7 +7,7 @@
 // Game state
 
 struct GameState: public State {
-   GameState();
+   GameState(const std::string& worldName);
    ~GameState() = default;
 
    // Update

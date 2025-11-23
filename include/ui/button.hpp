@@ -11,7 +11,6 @@ struct Button {
    std::string text;
    bool hovering = false, down = false, clicked = false;
    float scale = 1;
-   int index = 0;
 
    // Functions
 

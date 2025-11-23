@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include "game/gameState.hpp"
 #include "game/menuState.hpp"
 #include "mngr/resource.hpp"
+#include "util/format.hpp"
 #include "util/position.hpp"
 #include "util/random.hpp"
 #include "util/render.hpp"
@@ -18,10 +20,33 @@ constexpr float minCameraZoom = 100.f;
 
 // Constructors
 
-GameState::GameState() {
-   generateMap(map, mapSizeX, mapSizeY);
-   player.init({mapSizeX / 2.f, 0.f});
+GameState::GameState(const std::string& worldName) {
+   std::ifstream file (format("data/worlds/{}.txt", worldName));
+   assert(file.is_open(), "Failed to load world 'data/worlds/{}.txt'.", worldName);
+   int mapSizeX = 0, mapSizeY = 0, playerX = 0, playerY = 0;
+   file >> std::ws >> playerX >> std::ws >> playerY;
+   file >> std::ws >> mapSizeX >> std::ws >> mapSizeY;
 
+   map.setSize(mapSizeX, mapSizeY);
+
+   for (int y = 0; y < mapSizeY; ++y) {
+      for (int x = 0; x < mapSizeX; ++x) {
+         int id = 0;
+         file >> id;
+         map.setBlock(x, y, (Block::id_t)id);
+      }
+   }
+
+   // Do the same for background walls
+   for (int y = 0; y < mapSizeY; ++y) {
+      for (int x = 0; x < mapSizeX; ++x) {
+         int id = 0;
+         file >> id;
+         map.setBlock(x, y, (Block::id_t)id, true);
+      }
+   }
+
+   player.init({mapSizeX / 2.f, 0.f});
    camera.target = player.getCenter();
    camera.offset = getScreenCenter();
    camera.rotation = 0.0f;

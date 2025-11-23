@@ -18,7 +18,6 @@ struct LoadingState: public State {
 
    void render() override;
    State* change() override;
-   std::string getSplashMessage();
 
 private:
    enum class Load { fonts, textures, sounds, soundSetup, music, count };

@@ -24,12 +24,14 @@ void SoundManager::saveSound(const std::string& name, const std::vector<std::str
 }
 
 void SoundManager::loadSounds() {
+   std::filesystem::create_directories("assets/sounds/");
    for (const auto& file: std::filesystem::recursive_directory_iterator("assets/sounds/")) {
       loadSound(file.path().stem().string(), file.path().string());
    }
 }
 
 void SoundManager::loadMusic() {
+   std::filesystem::create_directories("assets/music/");
    for (const auto& file: std::filesystem::recursive_directory_iterator("assets/music/")) {
       loadMusic(file.path().stem().string(), file.path().string());
    }
@@ -42,7 +44,7 @@ void SoundManager::play(const std::string& name) {
    Sound* sound = nullptr;
    
    if (savedSounds.count(name)) {
-      sound = random(savedSounds[name]);
+      sound = savedSounds[name][random(0, savedSounds[name].size() - 1)];
    } else {
       sound = &sounds[name];
    }

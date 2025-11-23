@@ -1,5 +1,7 @@
+#include <fstream>
 #include "PerlinNoise.hpp"
 #include "objs/generation.hpp"
+#include "util/format.hpp"
 #include "util/random.hpp"
 
 // Constants
@@ -23,19 +25,20 @@ inline float normalizedNoise2D(siv::PerlinNoise& noise, int x, int y, float ampl
 
 // Generate functions
 
-void generateMap(Map& map, int mapSizeX, int mapSizeY) {
-   map.setSize(mapSizeX, mapSizeY);
-   generateTerrain(map);
-   generateDebri(map);
-   generateWater(map);
+void generateMap(const std::string& name, int sizeX, int sizeY) {
+   auto map = FileMap(sizeY, std::vector<Block::id_t>(sizeX, 0));
+   generateTerrain(map, sizeX, sizeY);
+   generateDebri(map, sizeX, sizeY);
+   generateWater(map, sizeX, sizeY);
+   saveMapToJson(name, map, sizeX, sizeY);
 }
 
-void generateTerrain(Map& map) {
+void generateTerrain(FileMap& map, int sizeX, int sizeY) {
    siv::PerlinNoise noise (rand());
-   int y = startY * map.sizeY;
+   int y = startY * sizeY;
    int rockOffset = rockOffsetStart;
 
-   for (int x = 0; x < map.sizeX; ++x) {
+   for (int x = 0; x < sizeX; ++x) {
       float value = normalizedNoise2D(noise, x, y, 0.01f);
 
       // Get different height increase/decrease based on the noise
@@ -59,54 +62,82 @@ void generateTerrain(Map& map) {
 
       // Don't let the height get too low or too high
 
-      if (y < map.sizeY * highThreshold) {
+      if (y < sizeY * highThreshold) {
          ++y;
          ++rockOffset;
       }
 
-      if (y > map.sizeY * lowThreshold) {
+      if (y > sizeY * lowThreshold) {
          --y;
          --rockOffset;
       }
-      y = std::clamp<int>(y, map.sizeY * highestPoint, map.sizeY * lowestPoint);
+      y = std::clamp<int>(y, sizeY * highestPoint, sizeY * lowestPoint);
       rockOffset = std::clamp(rockOffset, rockOffsetMin, rockOffsetMax);
 
       // Generate grass, dirt and stone
 
-      map.setBlock(x, y, "grass");
-      for (int yy = y + 1; yy < map.sizeY; ++yy) {
-         map.setBlock(x, yy, (yy - y < rockOffset ? "dirt" : "stone"));
+      map[y][x] = Block::getId("grass");
+      for (int yy = y + 1; yy < sizeY; ++yy) {
+         map[yy][x] = Block::getId((yy - y < rockOffset ? "dirt" : "stone"));
       }
    }
 }
 
-void generateWater(Map& map) {
-   int seaY = map.sizeY * seaLevel;
-   for (int x = 0; x < map.sizeX; ++x) {
-      for (int y = seaY; y < map.sizeY and map.is(x, y, Block::air); ++y) {
-         map.setBlock(x, y, "water");
+void generateWater(FileMap& map, int sizeX, int sizeY) {
+   int seaY = sizeY * seaLevel;
+   for (int x = 0; x < sizeX; ++x) {
+      for (int y = seaY; y < sizeY and map[y][x] == Block::getId("air"); ++y) {
+         map[y][x] = Block::getId("water");
       }
    }
 }
 
-void generateDebri(Map& map) {
+void generateDebri(FileMap& map, int sizeX, int sizeY) {
    siv::PerlinNoise sandNoise (rand());
    siv::PerlinNoise dirtNoise (rand());
 
-   for (int x = 0; x < map.sizeX; ++x) {
-      for (int y = 0; y < map.sizeY; ++y) {
-         if (map.is(x, y, Block::air) or map.is(x, y, Block::grass)) {
+   for (int x = 0; x < sizeX; ++x) {
+      for (int y = 0; y < sizeY; ++y) {
+         if (map[y][x] == Block::getId("air") or map[y][x] == Block::getId("grass")) {
             continue;
          }
 
          float value = normalizedNoise2D(dirtNoise, x, y, 0.04f);
          if (value >= .825f) {
-            map.setBlock(x, y, "clay");
+            map[y][x] = Block::getId("clay");
          } else if (value <= .2f) {
-            map.setBlock(x, y, "dirt");
-         } else if (not map.is(x, y, Block::dirt) and normalizedNoise2D(sandNoise, x, y, 0.04f) <= .15f) {
-            map.setBlock(x, y, "sand");
+            map[y][x] = Block::getId("dirt");
+         } else if (map[y][x] != Block::getId("dirt") and normalizedNoise2D(sandNoise, x, y, 0.04f) <= .15f) {
+            map[y][x] = Block::getId("sand");
          }
       }
    }
+}
+
+// Save map to JSON
+
+void saveMapToJson(const std::string& name, FileMap& map, int sizeX, int sizeY) {
+   std::fstream file (format("data/worlds/{}.txt", name), std::fstream::out);
+   if (not file.is_open()) {
+      warn("File 'data/worlds/{}.txt' could not be opened.", name);
+      return;
+   }
+
+   file << sizeX / 2.f << '\n' << 0 << '\n'; // Starting player position
+   file << sizeX << '\n' << sizeY << '\n';
+   for (const auto& row: map) {
+      for (const auto& tile: row) {
+         file << (int)tile << ' ';
+      }
+      file << '\n';
+   }
+
+   // Don't forget to dump background walls too
+   for (const auto& row: map) {
+      for (const auto& tile: row) {
+         file << 0 << ' ';
+      }
+      file << '\n';
+   }
+   file.close();
 }

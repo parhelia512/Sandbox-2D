@@ -5,9 +5,12 @@
 
 // Generate functions
 
-void generateMap(Map& map, int sizeX, int sizeY);
-void generateTerrain(Map& map);
-void generateWater(Map& map);
-void generateDebri(Map& map);
+using FileMap = std::vector<std::vector<Block::id_t>>;
+
+void generateMap(const std::string& name, int sizeX, int sizeY);
+void generateTerrain(FileMap& map, int sizeX, int sizeY);
+void generateWater(FileMap& map, int sizeX, int sizeY);
+void generateDebri(FileMap& map, int sizeX, int sizeY);
+void saveMapToJson(const std::string& name, FileMap& map, int sizeX, int sizeY);
 
 #endif

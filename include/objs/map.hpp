@@ -9,13 +9,14 @@
 
 struct Block {
    enum Type { air, grass, dirt, solid, transparent, sand, water, lava };
+   using id_t = unsigned char;
    
    Texture* tex = nullptr;
    Type type = Type::air;
 
    // Unsigned chars can only hold 256 unique IDs. Currently trying to save
    // block space, so it's a problem for later
-   unsigned char id = 0;
+   id_t id = 0;
 
    // Values used by physics updates, specific to the block type
    unsigned char value = 0;
@@ -24,6 +25,7 @@ struct Block {
    Color& getColor();
    Color& getWallColor();
    static void initializeColors();
+   static int getId(const std::string& name);
 };
 
 // Map
@@ -38,6 +40,7 @@ struct Map {
 
    void setSize(int x, int y);
    void setBlock(int x, int y, const std::string& name, bool walls = false);
+   void setBlock(int x, int y, Block::id_t id, bool walls = false);
    void deleteBlock(int x, int y, bool walls = false);
    void moveBlock(int ox, int oy, int nx, int ny);
 

@@ -33,12 +33,14 @@ Font& ResourceManager::loadFont(const std::string& name, const std::filesystem::
 }
 
 void ResourceManager::loadTextures() {
+   std::filesystem::create_directories("assets/sprites/");
    for (const auto& file: std::filesystem::recursive_directory_iterator("assets/sprites/")) {
       loadTexture(file.path().stem().string(), file.path());
    }
 }
 
 void ResourceManager::loadFonts() {
+   std::filesystem::create_directories("assets/fonts/");
    for (const auto& file: std::filesystem::recursive_directory_iterator("assets/fonts/")) {
       loadFont(file.path().stem().string(), file.path());
    }

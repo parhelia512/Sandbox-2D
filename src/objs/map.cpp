@@ -8,13 +8,20 @@
 
 // Constants
 
-constexpr unsigned char idCount = 15;
+constexpr Block::id_t idCount = 15;
 constexpr Color backgroundTint {120, 120, 120, 255};
 
-static std::unordered_map<std::string, unsigned char> blockIds {
+static std::unordered_map<std::string, Block::id_t> blockIds {
    {"air", 0}, {"grass", 1}, {"dirt", 2}, {"clay", 3}, {"stone", 4},
    {"sand", 5}, {"sandstone", 6}, {"water", 7}, {"bricks", 8}, {"glass", 9},
    {"planks", 10}, {"stone_bricks", 11}, {"tiles", 12}, {"obsidian", 13}, {"lava", 14}
+};
+
+// Gotta do what you gotta do
+static std::unordered_map<Block::id_t, std::string> blockNames {
+   {0, "air"}, {1, "grass"}, {2, "dirt"}, {3, "clay"}, {4, "stone"},
+   {5, "sand"}, {6, "sandstone"}, {7, "water"}, {8, "bricks"}, {9, "glass"},
+   {10, "planks"}, {11, "stone_bricks"}, {12, "tiles"}, {13, "obsidian"}, {14, "lava"}
 };
 
 constexpr static std::array<Block::Type, idCount> blockTypes {{
@@ -36,7 +43,6 @@ Color& Block::getWallColor() {
 }
 
 void Block::initializeColors() {
-   using c = unsigned char;
    for (const auto& [name, id]: blockIds) {
       auto& texture = ResourceManager::get().getTexture(name);
       auto image = LoadImageFromTexture(texture);
@@ -68,6 +74,10 @@ void Block::initializeColors() {
    }
 }
 
+int Block::getId(const std::string& name) {
+   return blockIds[name];
+}
+
 // Set block functions
 
 void Map::setSize(int x, int y) {
@@ -81,10 +91,23 @@ void Map::setBlock(int x, int y, const std::string& name, bool wall) {
    assert(blockIds.find(name) != blockIds.end(), "Block with the name '{}' does not exist.", name);
    auto& block = (wall ? walls : blocks)[y][x];
    
-   block.tex = &ResourceManager::get().getTexture(name);
    block.id = blockIds[name];
    block.value = block.value2 = 0;
    block.type = blockTypes[block.id];
+
+   if (block.id != 0) {
+      block.tex = &ResourceManager::get().getTexture(name);
+   }
+}
+
+void Map::setBlock(int x, int y, Block::id_t id, bool wall) {
+   auto& block = (wall ? walls : blocks)[y][x];
+   block.id = id;
+   block.type = blockTypes[block.id];
+
+   if (block.id != 0) {
+      block.tex = &ResourceManager::get().getTexture(blockNames[id]);
+   }
 }
 
 void Map::deleteBlock(int x, int y, bool wall) {
