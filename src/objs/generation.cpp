@@ -1,7 +1,6 @@
-#include <fstream>
 #include "PerlinNoise.hpp"
 #include "objs/generation.hpp"
-#include "util/format.hpp"
+#include "util/fileio.hpp"
 #include "util/random.hpp"
 
 // Constants
@@ -30,7 +29,7 @@ void generateMap(const std::string& name, int sizeX, int sizeY) {
    generateTerrain(map, sizeX, sizeY);
    generateDebri(map, sizeX, sizeY);
    generateWater(map, sizeX, sizeY);
-   saveMapToJson(name, map, sizeX, sizeY);
+   saveWorldData(name, sizeX / 2.f, 0.f, 50.f, map);
 }
 
 void generateTerrain(FileMap& map, int sizeX, int sizeY) {
@@ -112,32 +111,4 @@ void generateDebri(FileMap& map, int sizeX, int sizeY) {
          }
       }
    }
-}
-
-// Save map to JSON
-
-void saveMapToJson(const std::string& name, FileMap& map, int sizeX, int sizeY) {
-   std::fstream file (format("data/worlds/{}.txt", name), std::fstream::out);
-   if (not file.is_open()) {
-      warn("File 'data/worlds/{}.txt' could not be opened.", name);
-      return;
-   }
-
-   file << sizeX / 2.f << '\n' << 0 << '\n'; // Starting player position
-   file << sizeX << '\n' << sizeY << '\n';
-   for (const auto& row: map) {
-      for (const auto& tile: row) {
-         file << (int)tile << ' ';
-      }
-      file << '\n';
-   }
-
-   // Don't forget to dump background walls too
-   for (const auto& row: map) {
-      for (const auto& tile: row) {
-         file << 0 << ' ';
-      }
-      file << '\n';
-   }
-   file.close();
 }

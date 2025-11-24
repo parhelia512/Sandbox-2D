@@ -17,8 +17,7 @@ constexpr float jumpHoldTime = .4f;
 
 // Constructors
 
-void Player::init(const Vector2& spawnPos) {
-   pos = spawnPos;
+void Player::init() {
    vel = {0, 0};
    prev = {0, 0};
 

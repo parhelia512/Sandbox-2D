@@ -38,7 +38,7 @@ struct Map {
 
    // Set block functions
 
-   void setSize(int x, int y);
+   void init();
    void setBlock(int x, int y, const std::string& name, bool walls = false);
    void setBlock(int x, int y, Block::id_t id, bool walls = false);
    void deleteBlock(int x, int y, bool walls = false);

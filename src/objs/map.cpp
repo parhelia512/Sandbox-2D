@@ -80,9 +80,7 @@ int Block::getId(const std::string& name) {
 
 // Set block functions
 
-void Map::setSize(int x, int y) {
-   sizeX = x;
-   sizeY = y;
+void Map::init() {
    blocks = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
    walls = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
 }

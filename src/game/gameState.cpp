@@ -1,18 +1,14 @@
 #include <algorithm>
 #include <cmath>
-#include <fstream>
 #include "game/gameState.hpp"
 #include "game/menuState.hpp"
 #include "mngr/resource.hpp"
-#include "util/format.hpp"
+#include "util/fileio.hpp"
 #include "util/position.hpp"
 #include "util/random.hpp"
 #include "util/render.hpp"
 
 // Constants
-
-constexpr int mapSizeX = 2500;
-constexpr int mapSizeY = 300;
 
 constexpr float cameraFollowSpeed = 17.5f;
 constexpr float maxCameraZoom = 1.f;
@@ -22,60 +18,14 @@ constexpr float minCameraZoom = 100.f;
 
 GameState::GameState(const std::string& worldName)
    : worldName(worldName) {
-   std::ifstream file (format("data/worlds/{}.txt", worldName));
-   assert(file.is_open(), "Failed to load world 'data/worlds/{}.txt'.", worldName);
-
-   float playerX = 0, playerY = 0;
-   int mapSizeX = 0, mapSizeY = 0;
-   
-   file >> std::ws >> playerX >> std::ws >> playerY;
-   file >> std::ws >> mapSizeX >> std::ws >> mapSizeY;
-   map.setSize(mapSizeX, mapSizeY);
-
-   for (int y = 0; y < mapSizeY; ++y) {
-      for (int x = 0; x < mapSizeX; ++x) {
-         int id = 0;
-         file >> id;
-         map.setBlock(x, y, (Block::id_t)id);
-      }
-   }
-
-   // Do the same for background walls
-   for (int y = 0; y < mapSizeY; ++y) {
-      for (int x = 0; x < mapSizeX; ++x) {
-         int id = 0;
-         file >> id;
-         map.setBlock(x, y, (Block::id_t)id, true);
-      }
-   }
-
-   player.init({playerX, playerY});
+   loadWorldData(worldName, player, camera.zoom, map);
    camera.target = player.getCenter();
    camera.offset = getScreenCenter();
    camera.rotation = 0.0f;
-   camera.zoom = 50.f;
 }
 
 GameState::~GameState() {
-   std::fstream file (format("data/worlds/{}.txt", worldName));
-   assert(file.is_open(), "Failed to save world 'data/worlds/{}.txt'.", worldName);
-   file << player.pos.x << '\n' << player.pos.y << '\n';
-   file << map.sizeX << '\n' << map.sizeY << '\n';
-
-   for (const auto& row: map.blocks) {
-      for (const auto& tile: row) {
-         file << (int)tile.id << ' ';
-      }
-      file << '\n';
-   }
-
-   for (const auto& row: map.walls) {
-      for (const auto& tile: row) {
-         file << (int)tile.id << ' ';
-      }
-      file << '\n';
-   }
-   file.close();
+   saveWorldData(worldName, player.pos.x, player.pos.y, camera.zoom, map);
 }
 
 // Update functions
@@ -141,8 +91,8 @@ void GameState::updatePhysics() {
    }
 
    
-   for (int y = mapSizeY - 1; y >= 0; --y) {
-      for (int x = mapSizeX - 1; x >= 0; --x) {
+   for (int y = map.sizeY - 1; y >= 0; --y) {
+      for (int x = map.sizeX - 1; x >= 0; --x) {
          auto& block = map[y][x];
 
          if (block.type == Block::water or block.type == Block::lava) {

@@ -23,7 +23,7 @@ struct Player {
 
    // Constructors
 
-   void init(const Vector2& spawnPos);
+   void init();
 
    // Update functions
 

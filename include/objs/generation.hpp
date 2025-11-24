@@ -11,6 +11,5 @@ void generateMap(const std::string& name, int sizeX, int sizeY);
 void generateTerrain(FileMap& map, int sizeX, int sizeY);
 void generateWater(FileMap& map, int sizeX, int sizeY);
 void generateDebri(FileMap& map, int sizeX, int sizeY);
-void saveMapToJson(const std::string& name, FileMap& map, int sizeX, int sizeY);
 
 #endif
