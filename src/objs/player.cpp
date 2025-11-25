@@ -7,12 +7,13 @@
 constexpr Vector2 size {2.f, 3.f};
 constexpr int frameSize = 20;
 
-constexpr float speed = 20.f;
-constexpr float jumpSpeed = -27.5f;
-constexpr float gravity = 2.5f;
-constexpr float maxGravity = 55.f;
-constexpr float acceleration = 5.f;
-constexpr float deceleration = 10.f;
+constexpr float speed = 80.f;
+constexpr float jumpSpeed = -100.f;
+constexpr float gravity = 10.f;
+constexpr float maxGravity = 200.f;
+constexpr float acceleration = .083f;
+constexpr float deceleration = .167f;
+constexpr float smoothing = .333f;
 constexpr float jumpHoldTime = .4f;
 
 // Constructors
@@ -47,9 +48,9 @@ void Player::updateMovement() {
 
    if (dir != 0) {
       auto speedX = (onGround ? speed : speed * .6f);
-      vel.x = lerp(vel.x, dir * speedX * dt, acceleration * dt);
+      vel.x = lerp(vel.x, dir * speedX * dt, acceleration);
    } else {
-      vel.x = lerp(vel.x, 0.f, deceleration * dt);
+      vel.x = lerp(vel.x, 0.f, deceleration);
    }
 
    if (IsKeyDown(KEY_SPACE) and canHoldJump) {
@@ -76,7 +77,7 @@ void Player::updateMovement() {
 }
 
 void Player::updateCollisions(Map& map) {
-   pos.y += vel.y;
+   pos.y = lerp(pos.y, pos.y + vel.y, smoothing);
    bool collisionX = false, collisionY = false;
    int waterTileCount = 0;
 
@@ -116,7 +117,7 @@ void Player::updateCollisions(Map& map) {
       pos.y = feetCollisionY - size.y;
    }
 
-   pos.x += vel.x;
+   pos.x = lerp(pos.x, pos.x + vel.x, smoothing);
 
    Rectangle torso {pos.x, pos.y - 1.f, size.x, size.y};
    Rectangle feet {pos.x, pos.y + 2.f, size.x, 1.f};

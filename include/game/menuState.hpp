@@ -19,6 +19,7 @@ struct MenuState: public State {
    void updateTitle();
    void updateLevelSelection();
    void updateLevelCreation();
+   void updateGeneratingLevel();
 
    // Render
 
@@ -26,6 +27,7 @@ struct MenuState: public State {
    void renderTitle();
    void renderLevelSelection();
    void renderLevelCreation();
+   void renderGeneratingLevel();
 
    // Other functions
 
@@ -34,7 +36,7 @@ struct MenuState: public State {
    std::string getRandomWorldName();
 
 private:
-   enum class Phase { title, levelSelection, levelCreation };
+   enum class Phase { title, levelSelection, levelCreation, generatingLevel };
 
    Button playButton, optionsButton, quitButton;
    Button backButton, newButton, createButton;

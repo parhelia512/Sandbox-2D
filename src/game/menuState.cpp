@@ -44,9 +44,10 @@ MenuState::MenuState() {
 
 void MenuState::update() {
    switch (phase) {
-   case Phase::title:          updateTitle();          break;
-   case Phase::levelSelection: updateLevelSelection(); break;
-   case Phase::levelCreation:  updateLevelCreation();  break;
+   case Phase::title:           updateTitle();           break;
+   case Phase::levelSelection:  updateLevelSelection();  break;
+   case Phase::levelCreation:   updateLevelCreation();   break;
+   case Phase::generatingLevel: updateGeneratingLevel(); break;
    }
 }
 
@@ -105,19 +106,24 @@ void MenuState::updateLevelCreation() {
    }
 
    if (createButton.clicked) {
-      generateMap(worldName.text, defaultMapSizeX, defaultMapSizeY);
-      loadWorlds();
-      phase = Phase::levelSelection;
+      phase = Phase::generatingLevel;
    }
+}
+
+void MenuState::updateGeneratingLevel() {
+   generateMap(worldName.text, defaultMapSizeX, defaultMapSizeY);
+   loadWorlds();
+   phase = Phase::levelSelection;
 }
 
 // Render
 
 void MenuState::render() {
    switch (phase) {
-   case Phase::title:          renderTitle();          break;
-   case Phase::levelSelection: renderLevelSelection(); break;
-   case Phase::levelCreation:  renderLevelCreation();  break;
+   case Phase::title:           renderTitle();           break;
+   case Phase::levelSelection:  renderLevelSelection();  break;
+   case Phase::levelCreation:   renderLevelCreation();   break;
+   case Phase::generatingLevel: renderGeneratingLevel(); break;
    }
 }
 
@@ -150,6 +156,10 @@ void MenuState::renderLevelCreation() {
    drawText({worldName.rectangle.x - 125.f, worldName.rectangle.y + worldName.rectangle.height / 2.f}, "World Name:", 50);
 }
 
+void MenuState::renderGeneratingLevel() {
+   drawText(getScreenCenter(), (std::string("Generating World '") + worldName.text + "'...").c_str(), 50);
+}
+
 // Other functions
 
 State* MenuState::change() {
@@ -172,7 +182,7 @@ void MenuState::loadWorlds() {
       button.text = file.path().stem().string();
       button.texture = &ResourceManager::get().getTexture("button_long");
       worldButtons.push_back(button);
-      worldFrame.scrollHeight = button.rectangle.y + button.rectangle.height / 2.f;
+      worldFrame.scrollHeight = std::max(worldFrame.rectangle.height, button.rectangle.y + button.rectangle.height / 2.f);
    }
 }
 
