@@ -4,9 +4,9 @@
 
 // Render functions
 
-void drawText(const Vector2& position, const char* text, float fontSize) {
+void drawText(const Vector2& position, const char* text, float fontSize, const Color& color) {
    auto& font = ResourceManager::get().getFont("andy");
-   DrawTextPro(font, text, position, getOrigin(text, fontSize, 1.f), 0.f, fontSize, 1.f, WHITE);
+   DrawTextPro(font, text, position, getOrigin(text, fontSize, 1.f), 0.f, fontSize, 1.f, color);
 }
 
 void drawTexture(const Texture& texture, const Vector2& position, const Vector2& size, float rotation, const Color& color) {

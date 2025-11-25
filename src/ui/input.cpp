@@ -1,11 +1,14 @@
+#include <cmath>
 #include "mngr/resource.hpp"
 #include "ui/input.hpp"
 #include "mngr/sound.hpp"
 #include "util/render.hpp"
+#include "util/text.hpp"
 
 // Update function
 
 void Input::update() {
+   std::string original = text;
    bool wasTyping = typing;
    hovering = CheckCollisionPointRec(GetMousePosition(), rectangle);
 
@@ -37,11 +40,17 @@ void Input::update() {
    if (wasTyping != typing) {
       SoundManager::get().play("click");
    }
+   ++counter;
+
+   if (original != text) {
+      wrapText(text, rectangle.width - 10.f, 35, 1);
+   }
 }
 
 // Render function
 
 void Input::render() {
+   unsigned char value = (typing ? std::sin(counter * .3f) * 65 + 190 : 255);
    drawTextureNoOrigin(ResourceManager::get().getTexture("button"), {rectangle.x, rectangle.y}, {rectangle.width, rectangle.height});
-   drawText({rectangle.x + rectangle.width / 2.f, rectangle.y + rectangle.height / 2.f}, (text.empty() ? defaultText : text).c_str(), 35);
+   drawText({rectangle.x + rectangle.width / 2.f, rectangle.y + rectangle.height / 2.f}, (text.empty() ? defaultText : text).c_str(), 35, Color{value, value, value, 255});
 }
