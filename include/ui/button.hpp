@@ -7,6 +7,7 @@
 // Button
 
 struct Button {
+   Texture2D* texture = nullptr;
    Rectangle rectangle;
    std::string text;
    bool hovering = false, down = false, clicked = false;

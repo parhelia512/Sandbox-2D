@@ -1,4 +1,3 @@
-#include "mngr/resource.hpp"
 #include "mngr/sound.hpp"
 #include "ui/button.hpp"
 #include "util/render.hpp"
@@ -12,9 +11,9 @@ void Button::update(float offsetY) {
    clicked = hovering and IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
 
    if (down) {
-      scale = std::max(scale * 1.f - GetFrameTime(), .9f);
+      scale = std::max(scale * 1.f - GetFrameTime(), .98f);
    } else if (hovering) {
-      scale = std::min(scale * 1.f + GetFrameTime(), 1.1f);
+      scale = std::min(scale * 1.f + GetFrameTime(), 1.02f);
    } else if (scale != 1.f) {
       scale = (scale < 1.f ? std::min(1.f, scale * 1.f + GetFrameTime()) : std::max(1.f, scale * 1.f - GetFrameTime()));
    }
@@ -31,7 +30,7 @@ void Button::update(float offsetY) {
 // Render function
 
 void Button::render(float offsetY) {
-   drawTexture(ResourceManager::get().getTexture("button"), {rectangle.x, rectangle.y - offsetY}, {rectangle.width * scale, rectangle.height * scale});
+   drawTexture(*texture, {rectangle.x, rectangle.y - offsetY}, {rectangle.width * scale, rectangle.height * scale});
    drawText({rectangle.x, rectangle.y - offsetY}, text.c_str(), 35 * scale);
 }
 

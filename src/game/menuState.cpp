@@ -1,6 +1,7 @@
 #include <filesystem>
 #include "game/gameState.hpp"
 #include "game/menuState.hpp"
+#include "mngr/resource.hpp"
 #include "util/fileio.hpp"
 #include "util/position.hpp"
 #include "util/render.hpp"
@@ -22,7 +23,7 @@ MenuState::MenuState() {
    quitButton.text = "Quit";
 
    // Init world selection screen
-   worldFrame.rectangle = {300.f, 200.f, GetScreenWidth() - 600.f, GetScreenHeight() - 400.f};
+   worldFrame.rectangle = {280.f, 200.f, GetScreenWidth() - 600.f, GetScreenHeight() - 360.f};
    worldFrame.scrollHeight = worldFrame.rectangle.height;
    backButton.rectangle = {GetScreenWidth() / 2.f - 120.f, worldFrame.rectangle.y + worldFrame.rectangle.height + 90.f, 210.f, 70.f};
    backButton.text = "Back";
@@ -36,6 +37,7 @@ MenuState::MenuState() {
    createButton.text = "Create";
    worldName.rectangle = {GetScreenWidth() / 2.f - 210.f, GetScreenHeight() / 2.f - 70.f, 420.f, 140.f};
    worldName.maxChars = 24;
+   playButton.texture = optionsButton.texture = quitButton.texture = backButton.texture = newButton.texture = createButton.texture = &ResourceManager::get().getTexture("button");
 }
 
 // Update
@@ -160,12 +162,15 @@ State* MenuState::change() {
 void MenuState::loadWorlds() {
    worldButtons.clear();
    std::filesystem::create_directories("data/worlds/");
+   float offsetX = 56.666f;
+
    for (const auto& file: std::filesystem::directory_iterator("data/worlds")) {
       Button button;
-      button.rectangle = {360.f, 210.f + 110.f * worldButtons.size(), worldFrame.rectangle.width - 120.f, 100.f};
+      button.rectangle = {360.f - offsetX / 2.f, 210.f + 110.f * worldButtons.size(), worldFrame.rectangle.width - 120.f - offsetX / 2.f, 100.f};
       button.rectangle.x += button.rectangle.width / 2.f;
       button.rectangle.y += button.rectangle.height / 2.f;
       button.text = file.path().stem().string();
+      button.texture = &ResourceManager::get().getTexture("button_long");
       worldButtons.push_back(button);
       worldFrame.scrollHeight = button.rectangle.y + button.rectangle.height / 2.f;
    }

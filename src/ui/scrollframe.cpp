@@ -31,9 +31,8 @@ void Scrollframe::update() {
 // Render function
 
 void Scrollframe::render() {
-   drawTextureNoOrigin(ResourceManager::get().getTexture("frame"), {rectangle.x, rectangle.y}, {rectangle.width, rectangle.height});
-   drawTextureNoOrigin(ResourceManager::get().getTexture("scrollbar_background"), {rectangle.x + rectangle.width - 50.f, rectangle.y}, {50.f, rectangle.height});
-   drawTextureNoOrigin(ResourceManager::get().getTexture("scrollbar_foreground"), {rectangle.x + rectangle.width - 50.f, scrollbarY}, {50.f, scrollbarHeight});
+   drawTextureNoOrigin(ResourceManager::get().getTexture("scrollframe"), {rectangle.x, rectangle.y}, {rectangle.width, rectangle.height});
+   drawTextureNoOrigin(ResourceManager::get().getTexture("scrollbar"), {rectangle.x + rectangle.width - 56.666f, scrollbarY}, {56.666f, scrollbarHeight});
 }
 
 // Other functions
