@@ -90,7 +90,7 @@ void Player::updateCollisions(Map& map) {
 
    for (int y = max(0, (int)pos.y); y < maxY; ++y) {
       for (int x = max(0, (int)pos.x); x < maxX; ++x) {
-         if (map.is(x, y, Block::air) or map.is(x, y, Block::water)) {
+         if (map.is(x, y, Block::air) or map.is(x, y, Block::water) or (IsKeyDown(KEY_S) and map.is(x, y, Block::platform))) {
             // Only check water tile count in the first iteration
             waterTileCount += map.is(x, y, Block::water);
             continue;
@@ -100,19 +100,16 @@ void Player::updateCollisions(Map& map) {
             continue;
          }
 
-         bool ceilingCollision = (prev.y >= y + 1.f);
-         bool floorCollision = (prev.y + size.y <= y);
-
-         collisionY = (collisionY or ceilingCollision or floorCollision);
-
-         if (ceilingCollision) {
+         if (prev.y >= y + 1.f and not map.is(x, y, Block::platform)) {
             pos.y = y + 1.f;
             canHoldJump = false;
+            collisionY = true;
          }
 
-         if (floorCollision) {
+         if (prev.y + size.y <= y) {
             pos.y = y - size.y;
             onGround = true;
+            collisionY = true;
          }
       }
    }
@@ -133,7 +130,7 @@ void Player::updateCollisions(Map& map) {
 
    for (int y = max(0, (int)pos.y - 1); y < maxY; ++y) {
       for (int x = max(0, (int)pos.x); x < maxX; ++x) {
-         if (map.is(x, y, Block::air) or map.is(x, y, Block::water)) {
+         if (map.is(x, y, Block::air) or map.is(x, y, Block::water) or map.is(x, y, Block::platform)) {
             continue;
          }
 
@@ -150,16 +147,14 @@ void Player::updateCollisions(Map& map) {
             continue;
          }
 
-         bool leftWallCollision = (prev.x >= x + 1.f);
-         bool rightWallCollision = (prev.x + size.x <= x);
-         collisionX = (collisionX or leftWallCollision or rightWallCollision);
-
-         if (leftWallCollision) {
+         if (prev.x >= x + 1.f) {
             pos.x = x + 1.f;
+            collisionX = true;
          }
 
-         if (rightWallCollision) {
+         if (prev.x + size.x <= x) {
             pos.x = x - size.x;
+            collisionX = true;
          }
       }
    }

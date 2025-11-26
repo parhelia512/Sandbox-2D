@@ -52,9 +52,9 @@ void GameState::updateControls() {
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp.
 static int index = 0;
-static int size = 14;
+static int size = 15;
 static const char* blockMap[] {
-   "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian", "lava"
+   "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian", "lava", "platform"
 };
 static bool drawWall = false;
 
@@ -143,7 +143,7 @@ void GameState::updatePhysics() {
             map.moveBlock(x, y, x, y + 1);
          }
 
-         if (block.type == Block::dirt and (map.is(x, y - 1, Block::air) or map.is(x, y - 1, Block::water))) {
+         if (block.type == Block::dirt and (map.is(x, y - 1, Block::air) or map.is(x, y - 1, Block::water) or map.is(x, y - 1, Block::platform))) {
             if (map[y][x].value2 == 0) {
                map[y][x].value2 = random(100, 255);
             }
@@ -155,7 +155,7 @@ void GameState::updatePhysics() {
             }
          }
 
-         if (block.type == Block::grass and not map.is(x, y - 1, Block::air) and not map.is(x, y - 1, Block::water)) {
+         if (block.type == Block::grass and not map.is(x, y - 1, Block::air) and not map.is(x, y - 1, Block::water) and not map.is(x, y - 1, Block::platform)) {
             if (map[y][x].value2 == 0) {
                map[y][x].value2 = random(100, 255);
             }
