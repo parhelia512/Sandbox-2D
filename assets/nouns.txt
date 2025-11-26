@@ -4,42 +4,29 @@ Town
 City
 Village
 Metropolis
-Capital
 Downtown
 Suburb
-Muncipality
-Hamlet
 Settlement
 Ghetto
 Outpost
 Barrio
 Harbor
 Port
-Industrial Park
 Park
-Commercial District
-Ghost Town
 Country
 County
 Nation
-Continent
 Island
 Peninsula
-Territory
-Province
 State
-Region
 District
-Empire
 Union
 Homeland
-Mountain
+Mountains
 Valley
-Canyon
+Canyons
 Jungle
 Swamp
-River
-Lake
 Sea
 Bay
 Gulf
@@ -50,34 +37,5 @@ Volcano
 Plateau
 Plain
 Meadow
-Cliff
-Street
-Bridge
-Dock
-Bus Stop
-Workshop
-Temple
-Theme Park
-Amusement Park
-Circus
-Carnival
-Zoo
-Aquarium
-Museum
-Casino
-Resort
-Stadium
-Senate
-Parliament
-Tower
-Jail
-Prison
-Embassy
-Military Base
-Pentagon
-Headquarters
-Office
-Factory
-Studio
-Warehouse
+Cliffs
 Ranch

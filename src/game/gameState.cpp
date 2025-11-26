@@ -52,7 +52,7 @@ void GameState::updateControls() {
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp.
 static int index = 0;
-static int size = 15;
+static int size = 17;
 static const char* blockMap[] {
    "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian", "lava", "platform", "log", "leaf"
 };

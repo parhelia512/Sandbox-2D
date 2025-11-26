@@ -4,4 +4,4 @@ Using the power of text files to show you this message!
 Edit assets/splash.txt for your own messages!
 Thanks to Jhyde for making Windows builds!
 Splash.
-Fatal Error:
+In development.
