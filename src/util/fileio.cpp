@@ -53,9 +53,9 @@ void saveWorldData(const std::string& name, float playerX, float playerY, float 
 void saveWorldData(const std::string& name, float playerX, float playerY, float zoom, const FileMap& map) {
    std::ofstream file (format("data/worlds/{}.txt", name));
    assert(file.is_open(), "Failed to save world 'data/worlds/{}.txt'.", name);
-   save(file, playerX, playerY, zoom, map[0].size(), map.size());
+   save(file, playerX, playerY, zoom, map.sizeX, map.sizeY);
 
-   for (const auto& row: map) {
+   for (const auto& row: map.blocks) {
       for (const auto& tile: row) {
          file << (int)tile << ' ';
       }
@@ -63,7 +63,7 @@ void saveWorldData(const std::string& name, float playerX, float playerY, float 
    }
 
    // Don't forget to dump background walls too
-   for (const auto& row: map) {
+   for (const auto& row: map.blocks) {
       for (const auto& tile: row) {
          file << 0 << ' ';
       }

@@ -5,11 +5,15 @@
 
 // Generate functions
 
-using FileMap = std::vector<std::vector<Block::id_t>>;
+struct FileMap {
+   std::vector<std::vector<Block::id_t>> blocks;
+   int sizeX = 0, sizeY = 0;
+};
 
 void generateMap(const std::string& name, int sizeX, int sizeY);
-void generateTerrain(FileMap& map, int sizeX, int sizeY);
-void generateWater(FileMap& map, int sizeX, int sizeY);
-void generateDebri(FileMap& map, int sizeX, int sizeY);
+void generateTerrain(FileMap& map);
+void generateWater(FileMap& map);
+void generateDebri(FileMap& map);
+void generateTrees(FileMap& map);
 
 #endif

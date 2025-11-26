@@ -8,14 +8,14 @@
 
 // Constants
 
-constexpr Block::id_t idCount = 16;
+constexpr Block::id_t idCount = 18;
 constexpr Color backgroundTint {120, 120, 120, 255};
 
 static std::unordered_map<std::string, Block::id_t> blockIds {
    {"air", 0}, {"grass", 1}, {"dirt", 2}, {"clay", 3}, {"stone", 4},
    {"sand", 5}, {"sandstone", 6}, {"water", 7}, {"bricks", 8}, {"glass", 9},
    {"planks", 10}, {"stone_bricks", 11}, {"tiles", 12}, {"obsidian", 13}, {"lava", 14},
-   {"platform", 15}
+   {"platform", 15}, {"log", 16}, {"leaf", 17}
 };
 
 // Gotta do what you gotta do
@@ -23,14 +23,14 @@ static std::unordered_map<Block::id_t, std::string> blockNames {
    {0, "air"}, {1, "grass"}, {2, "dirt"}, {3, "clay"}, {4, "stone"},
    {5, "sand"}, {6, "sandstone"}, {7, "water"}, {8, "bricks"}, {9, "glass"},
    {10, "planks"}, {11, "stone_bricks"}, {12, "tiles"}, {13, "obsidian"}, {14, "lava"},
-   {15, "platform"}
+   {15, "platform"}, {16, "log"}, {17, "leaf"}
 };
 
 constexpr static std::array<Block::Type, idCount> blockTypes {{
    Block::air, Block::grass, Block::dirt, Block::solid, Block::solid,
    Block::sand, Block::solid, Block::water, Block::solid, Block::transparent,
    Block::solid, Block::solid, Block::solid, Block::solid, Block::lava,
-   Block::platform
+   Block::platform, Block::solid, Block::transparent
 }};
 
 static std::array<Color, idCount> wallColors, blockColors;

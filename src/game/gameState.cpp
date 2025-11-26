@@ -54,7 +54,7 @@ void GameState::updateControls() {
 static int index = 0;
 static int size = 15;
 static const char* blockMap[] {
-   "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian", "lava", "platform"
+   "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian", "lava", "platform", "log", "leaf"
 };
 static bool drawWall = false;
 
