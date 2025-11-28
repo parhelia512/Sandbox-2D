@@ -2,8 +2,7 @@
 #define OBJS_BLOCK_HPP
 
 #include <string>
-#include <vector>
-#include <raylib.h>
+#include "objs/furniture.hpp"
 
 // Block
 
@@ -19,13 +18,13 @@ struct Block {
    id_t id = 0;
 
    // Values used by physics updates, specific to the block type
-   unsigned char value = 0;
-   unsigned char value2 = 0;
+   unsigned char value = 0, value2 = 0;
 
    Color& getColor();
    Color& getWallColor();
    static void initializeColors();
-   static int getId(const std::string& name);
+   static id_t getId(const std::string& name);
+   static Color& getColorFromId(Block::id_t id);
 };
 
 // Map
@@ -33,6 +32,7 @@ struct Block {
 struct Map {
    std::vector<std::vector<Block>> blocks;
    std::vector<std::vector<Block>> walls;
+   std::vector<Furniture> furniture;
    int sizeX = 0;
    int sizeY = 0;
 

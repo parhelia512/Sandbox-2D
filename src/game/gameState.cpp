@@ -52,9 +52,9 @@ void GameState::updateControls() {
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp.
 static int index = 0;
-static int size = 17;
+static int size = 15;
 static const char* blockMap[] {
-   "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian", "lava", "platform", "log", "leaf"
+   "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian", "lava", "platform"
 };
 static bool drawWall = false;
 static bool canDraw = false;
@@ -83,6 +83,18 @@ void GameState::updatePhysics() {
          map.setBlock(mousePos.x, mousePos.y, blockMap[index], drawWall);
       } else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) and (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type != Block::air) {
          index = (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].id - 1;
+      } else if (IsKeyReleased(KEY_F)) {
+         FileMap flmap;
+         flmap.blocks = std::vector<std::vector<Block::id_t>>(map.sizeY, std::vector<Block::id_t>(map.sizeX, 0));
+         flmap.sizeX = map.sizeX;
+         flmap.sizeY = map.sizeY;
+         for (int i = 0; i < map.sizeY; ++i) {
+            for (int j = 0; j < map.sizeX; ++j) {
+               flmap.blocks[i][j] = map.blocks[i][j].id;
+            }
+         }
+         auto t = generateTree(mousePos.x, mousePos.y, flmap);
+         map.furniture.push_back(t);
       }
    }
 

@@ -128,33 +128,35 @@ void generateTrees(FileMap& map) {
       while (y > 0 and map.blocks[y][x] != 0) { y--; }
 
       if (map.blocks[y + 1][x] != Block::getId("water") and map.blocks[y + 1][x] != Block::getId("leaf") and normalizedNoise1D(treeNoise, x, 0.04f) >= .65f and counter >= 2) {
-         int height = random(6, 11);
-         for (int i = 0; i <= height; ++i) {
-            map.blocks[y - i][x] = Block::getId("log");
-         }
+         
+         
+         // int height = random(6, 11);
+         // for (int i = 0; i <= height; ++i) {
+         //    map.blocks[y - i][x] = Block::getId("log");
+         // }
 
-         int radius = random(3, 6);
-         int halfR = radius / 2;
-         for (int i = 0; i < radius; ++i) {
-            for (int j = 0; j < radius; ++j) {
-               auto& block = map.blocks[y + i - height - radius + 1][x + j - halfR];
-               if (block == 0) {
-                  block = Block::getId("leaf");
-               }
-            }
-         }
+         // int radius = random(3, 6);
+         // int halfR = radius / 2;
+         // for (int i = 0; i < radius; ++i) {
+         //    for (int j = 0; j < radius; ++j) {
+         //       auto& block = map.blocks[y + i - height - radius + 1][x + j - halfR];
+         //       if (block == 0) {
+         //          block = Block::getId("leaf");
+         //       }
+         //    }
+         // }
 
-         int radius2 = radius - 2;
-         int halfR2 = radius2 / 2;
-         int tHeight = random(1, 2);
-         for (int i = 0; i < tHeight; ++i) {
-            for (int j = 0; j < radius2; ++j) {
-               auto& block = map.blocks[y + i - height - radius - tHeight + 1][x + j - halfR2];
-               if (block == 0) {
-                  block = Block::getId("leaf");
-               }
-            }
-         }
+         // int radius2 = radius - 2;
+         // int halfR2 = radius2 / 2;
+         // int tHeight = random(1, 2);
+         // for (int i = 0; i < tHeight; ++i) {
+         //    for (int j = 0; j < radius2; ++j) {
+         //       auto& block = map.blocks[y + i - height - radius - tHeight + 1][x + j - halfR2];
+         //       if (block == 0) {
+         //          block = Block::getId("leaf");
+         //       }
+         //    }
+         // }
 
          counter = 0;
       } else {

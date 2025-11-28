@@ -15,21 +15,21 @@ static std::unordered_map<std::string, Block::id_t> blockIds {
    {"air", 0}, {"grass", 1}, {"dirt", 2}, {"clay", 3}, {"stone", 4},
    {"sand", 5}, {"sandstone", 6}, {"water", 7}, {"bricks", 8}, {"glass", 9},
    {"planks", 10}, {"stone_bricks", 11}, {"tiles", 12}, {"obsidian", 13}, {"lava", 14},
-   {"platform", 15}, {"log", 16}, {"leaf", 17}
+   {"platform", 15}
 };
 
 constexpr static std::array<const char*, idCount> blockNames {
    "air", "grass", "dirt", "clay", "stone",
    "sand", "sandstone", "water", "bricks", "glass",
    "planks", "stone_bricks", "tiles", "obsidian", "lava",
-   "platform", "log", "leaf"
+   "platform"
 };
 
 constexpr static std::array<Block::Type, idCount> blockTypes {{
    Block::air, Block::grass, Block::dirt, Block::solid, Block::solid,
    Block::sand, Block::solid, Block::water, Block::solid, Block::transparent,
    Block::solid, Block::solid, Block::solid, Block::solid, Block::lava,
-   Block::platform, Block::solid, Block::transparent
+   Block::platform
 }};
 
 static std::array<Color, idCount> wallColors, blockColors;
@@ -76,8 +76,12 @@ void Block::initializeColors() {
    }
 }
 
-int Block::getId(const std::string& name) {
+Block::id_t Block::getId(const std::string& name) {
    return blockIds[name];
+}
+
+Color& Block::getColorFromId(Block::id_t id) {
+   return blockColors[id];
 }
 
 // Set block functions
@@ -189,5 +193,9 @@ void Map::render(Camera2D& camera) {
          }
          --x;
       }
+   }
+
+   for (auto& obj: furniture) {
+      obj.render(camera.zoom <= 12.5f, minX, minY, maxX, maxY);
    }
 }
