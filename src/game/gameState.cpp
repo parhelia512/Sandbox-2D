@@ -83,18 +83,6 @@ void GameState::updatePhysics() {
          map.setBlock(mousePos.x, mousePos.y, blockMap[index], drawWall);
       } else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) and (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type != Block::air) {
          index = (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].id - 1;
-      } else if (IsKeyReleased(KEY_F)) {
-         FileMap flmap;
-         flmap.blocks = std::vector<std::vector<Block::id_t>>(map.sizeY, std::vector<Block::id_t>(map.sizeX, 0));
-         flmap.sizeX = map.sizeX;
-         flmap.sizeY = map.sizeY;
-         for (int i = 0; i < map.sizeY; ++i) {
-            for (int j = 0; j < map.sizeX; ++j) {
-               flmap.blocks[i][j] = map.blocks[i][j].id;
-            }
-         }
-         auto t = generateTree(mousePos.x, mousePos.y, flmap);
-         map.furniture.push_back(t);
       }
    }
 
@@ -104,7 +92,6 @@ void GameState::updatePhysics() {
    } else {
       return;
    }
-
    
    for (int y = map.sizeY - 1; y >= 0; --y) {
       for (int x = map.sizeX - 1; x >= 0; --x) {
@@ -183,6 +170,10 @@ void GameState::updatePhysics() {
          }
       }
    }
+
+   map.furniture.erase(std::remove_if(map.furniture.begin(), map.furniture.end(), [this](Furniture& f) -> bool {
+      return f.type == Furniture::tree and map.is(f.posX + 1, f.posY + f.sizeY, Block::air);
+   }), map.furniture.end());
 }
 
 // Other functions
@@ -198,8 +189,6 @@ void GameState::render() {
    }
    player.render();
    EndMode2D();
-
-   drawTexture(getTexture(blockMap[index]), {GetScreenWidth() - 75.f, GetScreenHeight() - 75.f}, {50.f, 50.f}, 0.f, (drawWall ? Color{120, 120, 120, 255} : WHITE));
 }
 
 State* GameState::change() {

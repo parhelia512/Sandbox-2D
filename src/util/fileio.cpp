@@ -21,16 +21,30 @@ std::string getRandomLineFromFile(const std::filesystem::path& path) {
    return lines[random(0, lines.size() - 1)];
 }
 
-// World saving functions
+// Utility saving functions
 
-void save(std::ofstream& file, float playerX, float playerY, float zoom, int sizeX, int sizeY) {
+void saveData(std::ofstream& file, float playerX, float playerY, float zoom, int sizeX, int sizeY) {
    file << playerX << ' ' << playerY << ' ' << sizeX << ' ' << sizeY << ' ' << zoom << '\n';
 }
+
+void saveFurniture(std::ofstream& file, const std::vector<Furniture>& furniture) {
+   for (const auto& obj: furniture) {
+      file << obj.posX << ' ' << obj.posY << ' ' << obj.sizeX << ' ' << obj.sizeY << ' ' << obj.type << ' ' << (int)obj.value << ' ' << (int)obj.value2 << ' ' << (int)obj.texId << ' ';
+      for (const auto& row: obj.pieces) {
+         for (const auto& piece: row) {
+            file << piece.nil << ' ' << (int)piece.colorId << ' ' << (int)piece.tx << ' ' << (int)piece.ty << ' ';
+         }
+      }
+      file << '\n';
+   }
+}
+
+// Save world functions
 
 void saveWorldData(const std::string& name, float playerX, float playerY, float zoom, const Map& map) {
    std::ofstream file (format("data/worlds/{}.txt", name));
    assert(file.is_open(), "Failed to save world 'data/worlds/{}.txt'.", name);
-   save(file, playerX, playerY, zoom, map.sizeX, map.sizeY);
+   saveData(file, playerX, playerY, zoom, map.sizeX, map.sizeY);
 
    for (const auto& row: map.blocks) {
       for (const auto& tile: row) {
@@ -45,23 +59,14 @@ void saveWorldData(const std::string& name, float playerX, float playerY, float 
       }
       file << '\n';
    }
-
-   for (const auto& obj: map.furniture) {
-      file << obj.posX << ' ' << obj.posY << ' ' << obj.sizeX << ' ' << obj.sizeY << ' ' << obj.type << ' ' << (int)obj.value << ' ' << (int)obj.value2 << ' ' << (int)obj.texId << ' ';
-      for (const auto& row: obj.pieces) {
-         for (const auto& piece: row) {
-            file << piece.nil << ' ' << (int)piece.colorId << ' ' << (int)piece.tx << ' ' << (int)piece.ty << ' ';
-         }
-      }
-      file << '\n';
-   }
+   saveFurniture(file, map.furniture);   
    file.close();
 }
 
 void saveWorldData(const std::string& name, float playerX, float playerY, float zoom, const FileMap& map) {
    std::ofstream file (format("data/worlds/{}.txt", name));
    assert(file.is_open(), "Failed to save world 'data/worlds/{}.txt'.", name);
-   save(file, playerX, playerY, zoom, map.sizeX, map.sizeY);
+   saveData(file, playerX, playerY, zoom, map.sizeX, map.sizeY);
 
    for (const auto& row: map.blocks) {
       for (const auto& tile: row) {
@@ -77,6 +82,7 @@ void saveWorldData(const std::string& name, float playerX, float playerY, float 
       }
       file << '\n';
    }
+   saveFurniture(file, map.furniture);
    file.close();
 }
 

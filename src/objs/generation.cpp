@@ -1,5 +1,6 @@
 #include "PerlinNoise.hpp"
 #include "objs/generation.hpp"
+#include "objs/map.hpp"
 #include "util/fileio.hpp"
 #include "util/random.hpp"
 
@@ -29,7 +30,7 @@ inline float normalizedNoise1D(siv::PerlinNoise& noise, int x, float amplitude) 
 // Generate functions
 
 void generateMap(const std::string& name, int sizeX, int sizeY) {
-   FileMap map {std::vector<std::vector<Block::id_t>>(sizeY, std::vector<Block::id_t>(sizeX, 0)), sizeX, sizeY};
+   FileMap map {std::vector<std::vector<Block::id_t>>(sizeY, std::vector<Block::id_t>(sizeX, 0)), {}, sizeX, sizeY};
    generateTerrain(map);
    generateDebri(map);
    generateWater(map);
@@ -121,44 +122,17 @@ void generateDebri(FileMap& map) {
 void generateTrees(FileMap& map) {
    siv::PerlinNoise treeNoise (rand());
    float y = startY * map.sizeY + 1;
-   int counter = 0;
+   int counter = 0, counterThreshold = 0;
    
    for (int x = 0; x < map.sizeX; ++x) {
       while (y < map.sizeY - 1 and map.blocks[y + 1][x] == 0) { y++; }
       while (y > 0 and map.blocks[y][x] != 0) { y--; }
 
-      if (map.blocks[y + 1][x] != Block::getId("water") and map.blocks[y + 1][x] != Block::getId("leaf") and normalizedNoise1D(treeNoise, x, 0.04f) >= .65f and counter >= 2) {
-         
-         
-         // int height = random(6, 11);
-         // for (int i = 0; i <= height; ++i) {
-         //    map.blocks[y - i][x] = Block::getId("log");
-         // }
-
-         // int radius = random(3, 6);
-         // int halfR = radius / 2;
-         // for (int i = 0; i < radius; ++i) {
-         //    for (int j = 0; j < radius; ++j) {
-         //       auto& block = map.blocks[y + i - height - radius + 1][x + j - halfR];
-         //       if (block == 0) {
-         //          block = Block::getId("leaf");
-         //       }
-         //    }
-         // }
-
-         // int radius2 = radius - 2;
-         // int halfR2 = radius2 / 2;
-         // int tHeight = random(1, 2);
-         // for (int i = 0; i < tHeight; ++i) {
-         //    for (int j = 0; j < radius2; ++j) {
-         //       auto& block = map.blocks[y + i - height - radius - tHeight + 1][x + j - halfR2];
-         //       if (block == 0) {
-         //          block = Block::getId("leaf");
-         //       }
-         //    }
-         // }
-
+      if (map.blocks[y + 1][x] != Block::getId("water") and map.blocks[y + 1][x] != Block::getId("leaf") and normalizedNoise1D(treeNoise, x, 0.04f) >= .5f and counter >= counterThreshold) {
+         auto tree = generateTree(x, y, map);
+         map.furniture.push_back(tree);
          counter = 0;
+         counterThreshold = random(1, 4);
       } else {
          counter++;
       }
