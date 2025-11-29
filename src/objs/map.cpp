@@ -125,7 +125,7 @@ void Map::moveBlock(int ox, int oy, int nx, int ny) {
 
 // Set furniture functions
 
-void Map::addFurniture(const Furniture& obj) {
+void Map::addFurniture(Furniture& obj) {
    for (int y = obj.posY; y < obj.sizeY + obj.posY; ++y) {
       for (int x = obj.posX; x < obj.sizeX + obj.posX; ++x) {
          if (not obj.pieces[y - obj.posY][x - obj.posX].nil) {
@@ -136,7 +136,7 @@ void Map::addFurniture(const Furniture& obj) {
    furniture.push_back(obj);
 }
 
-void Map::removeFurniture(const Furniture& obj) {
+void Map::removeFurniture(Furniture& obj) {
    for (int y = obj.posY; y < obj.sizeY + obj.posY; ++y) {
       for (int x = obj.posX; x < obj.sizeX + obj.posX; ++x) {
          if (not obj.pieces[y - obj.posY][x - obj.posX].nil) {
@@ -144,6 +144,7 @@ void Map::removeFurniture(const Furniture& obj) {
          }
       }
    }
+   obj.deleted = true;
 }
 
 // Get block functions

@@ -139,7 +139,11 @@ void generateTrees(Map& map) {
       while (y > 0 and not map.isu(x, y, Block::air)) { y--; }
 
       if (normalizedNoise1D(treeNoise, x, 0.04f) >= .5f and counter >= counterThreshold) {
-         generateTree(x, y, map);
+         if (chance(5)) {
+            generateSapling(x, y, map);
+         } else {
+            generateTree(x, y, map);
+         }
          counter = 0;
          counterThreshold = random(1, 4);
       } else {

@@ -49,6 +49,7 @@ void GameState::updateControls() {
    }
 }
 
+/************************************/
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp.
 static int index = 0;
@@ -58,8 +59,10 @@ static const char* blockMap[] {
 };
 static bool drawWall = false;
 static bool canDraw = false;
+/************************************/
 
 void GameState::updatePhysics() {
+   /************************************/
    auto mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
 
    if (IsKeyPressed(KEY_E)) {
@@ -74,6 +77,10 @@ void GameState::updatePhysics() {
       drawWall =! drawWall;
    }
 
+   if (IsKeyPressed(KEY_F) and map.isPositionValid(mousePos.x, mousePos.y)) {
+      generateSapling(mousePos.x, mousePos.y, map);
+   }
+
    if (map.isPositionValid(mousePos.x, mousePos.y)) {
       canDraw = (drawWall or not CheckCollisionRecs(player.getBounds(), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}));
 
@@ -85,6 +92,7 @@ void GameState::updatePhysics() {
          index = (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].id - 1;
       }
    }
+   /************************************/
 
    physicsTimer += GetFrameTime();
    if (physicsTimer >= .1f) {
@@ -170,13 +178,14 @@ void GameState::updatePhysics() {
          }
       }
    }
+   
+   for (auto& obj: map.furniture) {
+      obj.update(map);
+   }
 
+   // Remove deleted furniture
    map.furniture.erase(std::remove_if(map.furniture.begin(), map.furniture.end(), [this](Furniture& f) -> bool {
-      if (f.type != Furniture::tree or not map.is(f.posX + 1, f.posY + f.sizeY, Block::air)) {
-         return false;
-      }
-      map.removeFurniture(f);
-      return true;
+      return f.deleted;
    }), map.furniture.end());
 }
 
@@ -187,10 +196,13 @@ void GameState::render() {
    BeginMode2D(camera);
    map.render(camera);
 
+   /************************************/
    auto mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
    if (canDraw and camera.zoom > 12.5f and map.isPositionValid(mousePos.x, mousePos.y)) {
       drawTextureBlock(getTexture(blockMap[index]), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}, Fade((drawWall ? Color{120, 120, 120, 255} : WHITE), .75f));
    }
+   /************************************/
+
    player.render();
    EndMode2D();
 }

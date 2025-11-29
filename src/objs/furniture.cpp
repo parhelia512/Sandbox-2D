@@ -8,13 +8,13 @@
 
 // Constants
 
-constexpr int furnitureCount = 1;
+constexpr int furnitureCount = 2;
 static std::unordered_map<std::string, int> furnitureTextureIds {
-   {"tree", 0}
+   {"tree", 0}, {"sapling", 1}
 };
 
 constexpr std::array<const char*, furnitureCount> furnitureTextureNames {
-   "tree"
+   "tree", "sapling"
 };
 
 constexpr int texSize = 8;
@@ -34,7 +34,7 @@ bool isBlockSoil(Map& map, int x, int y) {
 
 // Furniture functions
 
-Furniture::Furniture(Type type, id_t texId, unsigned char value, unsigned char value2, int posX, int posY, int sizeX, int sizeY)
+Furniture::Furniture(Type type, id_t texId, int value, int value2, int posX, int posY, int sizeX, int sizeY)
    : type(type), texId(texId), value(value), value2(value2), posX(posX), posY(posY), sizeX(sizeX), sizeY(sizeY) {
    pieces = std::vector<std::vector<FurniturePiece>>(sizeY, std::vector<FurniturePiece>(sizeX, FurniturePiece{}));   
 }
@@ -42,6 +42,55 @@ Furniture::Furniture(Type type, id_t texId, unsigned char value, unsigned char v
 Furniture::Furniture(const std::string& texture, int posX, int posY, int sizeX, int sizeY, Type type)
    : texId(furnitureTextureIds[texture]), posX(posX), posY(posY), sizeX(sizeX), sizeY(sizeY), type(type) {
    pieces = std::vector<std::vector<FurniturePiece>>(sizeY, std::vector<FurniturePiece>(sizeX, FurniturePiece{}));
+}
+
+// Update furniture
+
+void Furniture::update(Map& map) {
+   switch (type) {
+
+   case Type::tree: {
+      if (not isBlockSoil(map, posX + 1, posY + sizeY)) {
+         map.removeFurniture(*this);
+         return;
+      }
+   } break;
+
+   case Type::sapling: {
+      if (not isBlockSoil(map, posX, posY + sizeY)) {
+         map.removeFurniture(*this);
+         return;
+      }
+
+      if (value == 0) {
+         value2 = random(200, 1500);
+      }
+      ++value;
+      if (value >= value2) {
+         value = value2 = 0;
+         map.removeFurniture(*this);
+         generateTree(posX, posY + 1, map);
+      }
+   } break;
+
+   default: break;
+   }
+}
+
+// Render furniture
+
+void Furniture::preview(Map& map, bool zoomedOut) {
+   if (zoomedOut) {
+      return;
+   }
+   
+   for (int y = posY; y - posY < sizeY; ++y) {
+      for (int x = posX; x - posX < sizeX; ++x) {
+         auto& piece = pieces[y - posY][x - posX];
+         Color color = Fade((map.is(x, y, Block::air) ? WHITE : RED), .75f);
+         DrawTexturePro(getTexture(furnitureTextureNames[texId]), {(float)piece.tx, (float)piece.ty, texSize, texSize}, {(float)x, (float)y, 1.f, 1.f}, {0, 0}, 0, color);
+      }
+   }
 }
 
 void Furniture::render(bool zoomedOut, int minX, int minY, int maxX, int maxY) {
@@ -81,7 +130,7 @@ void generateTree(int x, int y, Map& map) {
    int height = random(5, 18);
    for (int i = 0; i < height and i < map.sizeY; ++i) {
       if (not map.isu(x, y - i, Block::air)) {
-         height = i + 1;
+         height = i;
          break;
       }
    }
@@ -127,12 +176,12 @@ void generateTree(int x, int y, Map& map) {
          bool leftFree = (map.is(tree.posX, tree.posY + i, Block::air) and chance(15));
 
          if (rightFree) {
-            setBlock(tree.pieces[i][2], "planks", 4 * texSize, 3 * texSize);
+            setBlock(tree.pieces[i][2], "planks", random(3, 5) * texSize, 2 * texSize);
             piece.tx = 3 * texSize;
-            piece.tx = 3 * texSize;
+            piece.ty = 3 * texSize;
          }
          if (leftFree) {
-            setBlock(tree.pieces[i][0], "planks", 0 * texSize, 3 * texSize);
+            setBlock(tree.pieces[i][0], "planks", random(0, 2) * texSize, 2 * texSize);
             piece.tx = 1 * texSize;
             piece.ty = 3 * texSize;
          }
@@ -143,4 +192,25 @@ void generateTree(int x, int y, Map& map) {
       }
    }
    map.addFurniture(tree);
+}
+
+void generateSapling(int x, int y, Map& map) {
+   if (x < 0 or x >= map.sizeX or y < 0 or not isBlockSoil(map, x , y + 1)) {
+      return;
+   }
+
+   for (int i = 0; i < 2 and i < map.sizeY; ++i) {
+      if (not map.isu(x, y - i, Block::air)) {
+         return;
+      }
+   }
+
+   Furniture sapling ("sapling", x, y - 1, 1, 2, Furniture::sapling);
+   int value = random(0, 100);
+   int offsetTx = (value < 33 ? 0 : (value < 66 ? texSize : 2 * texSize));
+
+   for (int i = 0; i < 2; ++i) {
+      setBlock(sapling.pieces[i][0], "planks", offsetTx, i * texSize);
+   }
+   map.addFurniture(sapling);
 }

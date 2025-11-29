@@ -4,6 +4,7 @@
 #include <raylib.h>
 #include <string>
 #include <vector>
+struct Map;
 
 // Furniture
 
@@ -14,24 +15,30 @@ struct FurniturePiece {
 };
 
 struct Furniture {
-   enum Type { tree };
+   enum Type { tree, sapling };
    using id_t = unsigned char;
 
    std::vector<std::vector<FurniturePiece>> pieces;
    Type type = Type::tree;
    id_t texId = 0;
 
-   unsigned char value = 0, value2 = 0;
+   int value = 0, value2 = 0;
    int posX = 0, posY = 0, sizeX = 0, sizeY = 0;
+   bool deleted = false;
 
    // Constructors
 
    Furniture() = default;
-   Furniture(Type type, id_t texId, unsigned char value, unsigned char value2, int posX, int posY, int sizeX, int sizeY);
+   Furniture(Type type, id_t texId, int value, int value2, int posX, int posY, int sizeX, int sizeY);
    Furniture(const std::string& texture, int posX, int posY, int sizeX, int sizeY, Type type);
+
+   // Update functions
+
+   void update(Map& map);
 
    // Render functions
 
+   void preview(Map& map, bool zoomedOut);
    void render(bool zoomedOut, int minX, int minY, int maxX, int maxY);
 
    // Getter functions
@@ -42,8 +49,7 @@ struct Furniture {
 
 // Furniture methods
 
-struct Map;
 void generateTree(int x, int y, Map& map);
-void renderTree(Furniture& tree);
+void generateSapling(int x, int y, Map& map);
 
 #endif

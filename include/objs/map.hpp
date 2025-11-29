@@ -47,8 +47,8 @@ struct Map {
 
    // Set furniture functions
 
-   void addFurniture(const Furniture& furniture);
-   void removeFurniture(const Furniture& furniture);
+   void addFurniture(Furniture& furniture);
+   void removeFurniture(Furniture& furniture);
 
    // Get block functions
 
