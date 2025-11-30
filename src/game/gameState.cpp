@@ -53,16 +53,16 @@ void GameState::updateControls() {
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp. Everything between these multi-comments is temporary.
 static int index = 0;
-static int size = 18;
+static int size = 20;
 static const char* blockMap[] {
    "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian",
-   "lava", "platform", "snow", "ice",
+   "lava", "platform", "snow", "ice", "jungle_grass", "mud",
    "sapling"
 };
 static bool drawWall = false;
 static bool canDraw = false;
 static Furniture obj;
-inline Furniture::Type getFurnitureType() { return (index == 17 ? Furniture::sapling : Furniture::none); }
+inline Furniture::Type getFurnitureType() { return (index == 19 ? Furniture::sapling : Furniture::none); }
 /************************************/
 
 void GameState::updatePhysics() {
@@ -181,7 +181,7 @@ void GameState::updatePhysics() {
             ++map[y][x].value;
             if (map[y][x].value >= map[y][x].value2) {
                map[y][x].value = 0;
-               map.setBlock(x, y, "grass");
+               map.setBlock(x, y, (block.id == Block::getId("dirt") ? "grass" : "jungle_grass"));
             }
          }
 
@@ -193,7 +193,7 @@ void GameState::updatePhysics() {
             ++map[y][x].value;
             if (map[y][x].value >= map[y][x].value2) {
                map[y][x].value = 0;
-               map.setBlock(x, y, "dirt");
+               map.setBlock(x, y, (block.id == Block::getId("grass") ? "dirt" : "mud"));
             }
          }
       }

@@ -8,13 +8,13 @@
 
 // Constants
 
-constexpr int furnitureCount = 6;
+constexpr int furnitureCount = 8;
 static std::unordered_map<std::string, int> furnitureTextureIds {
-   {"tree", 0}, {"sapling", 1}, {"palm", 2}, {"palm_sapling", 3}, {"pine", 4}, {"pine_sapling", 5}
+   {"tree", 0}, {"sapling", 1}, {"palm", 2}, {"palm_sapling", 3}, {"pine", 4}, {"pine_sapling", 5}, {"jungle_tree", 6}, {"jungle_sapling", 7}
 };
 
 constexpr std::array<const char*, furnitureCount> furnitureTextureNames {
-   "tree", "sapling", "palm", "palm_sapling", "pine", "pine_sapling"
+   "tree", "sapling", "palm", "palm_sapling", "pine", "pine_sapling", "jungle_tree", "jungle_sapling"
 };
 
 constexpr int texSize = 8;
@@ -99,11 +99,12 @@ Furniture Furniture::get(int x, int y, Map& map, Type type, bool debug) {
       if (not debug and (height < (palm ? 8 : 5))) {
          return {};
       }
-      static std::unordered_map<Block::Type, std::string> textureMap {
-         {Block::grass, "tree"}, {Block::dirt, "tree"}, {Block::sand, "palm"}, {Block::snow, "pine"}
+      static std::unordered_map<Block::id_t, std::string> textureMap {
+         {Block::getId("grass"), "tree"}, {Block::getId("dirt"), "tree"}, {Block::getId("sand"), "palm"},
+         {Block::getId("snow"), "pine"}, {Block::getId("mud"), "jungle_tree"}, {Block::getId("jungle_grass"), "jungle_tree"}
       };
 
-      Furniture tree (textureMap[map.blocks[y + 1][x].type], x - 1, y - height + 1, 3, height, Furniture::tree);
+      Furniture tree (textureMap[map.blocks[y + 1][x].id], x - 1, y - height + 1, 3, height, Furniture::tree);
       int offsetTx = (chance(50) ? 0 : 3 * texSize);
 
       for (int i = 0; i < (palm ? 3 : 2); ++i) {
@@ -169,10 +170,11 @@ Furniture Furniture::get(int x, int y, Map& map, Type type, bool debug) {
          return {};
       }
 
-      auto btype = map.blocks[y + 2][x].type;
-      static std::unordered_map<Block::Type, std::string> textureMap {
-         {Block::grass, "sapling"}, {Block::dirt, "sapling"}, {Block::sand, "palm_sapling"}, {Block::snow, "pine_sapling"}
+      static std::unordered_map<Block::id_t, std::string> textureMap {
+         {Block::getId("grass"), "sapling"}, {Block::getId("dirt"), "sapling"}, {Block::getId("sand"), "palm_sapling"},
+         {Block::getId("snow"), "pine_sapling"}, {Block::getId("mud"), "jungle_sapling"}, {Block::getId("jungle_grass"), "jungle_sapling"}
       };
+      auto btype = map.blocks[y + 2][x].id;
       Furniture sapling ((not textureMap.count(btype) ? "sapling" : textureMap[btype]), x, y, 1, 2, Furniture::sapling);
 
       int value = random(0, 100);
