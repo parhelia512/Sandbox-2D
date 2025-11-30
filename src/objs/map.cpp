@@ -161,6 +161,10 @@ bool Map::isu(int x, int y, Block::Type type) {
    return blocks[y][x].type == type;
 }
 
+bool Map::empty(int x, int y) {
+   return not blocks[y][x].furniture and blocks[y][x].type == Block::air;
+}
+
 bool Map::isTransparent(int x, int y) {
    if (not isPositionValid(x, y)) {
       return false;

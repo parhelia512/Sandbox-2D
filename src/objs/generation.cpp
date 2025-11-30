@@ -139,11 +139,8 @@ void generateTrees(Map& map) {
       while (y > 0 and not map.isu(x, y, Block::air)) { y--; }
 
       if (normalizedNoise1D(treeNoise, x, 0.04f) >= .5f and counter >= counterThreshold) {
-         if (chance(5)) {
-            generateSapling(x, y, map);
-         } else {
-            generateTree(x, y, map);
-         }
+         bool sapling = chance(5);
+         Furniture::generate(x, (sapling ? y - 1 : y), map, (sapling ? Furniture::sapling : Furniture::tree));
          counter = 0;
          counterThreshold = random(1, 4);
       } else {

@@ -53,12 +53,15 @@ void GameState::updateControls() {
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp.
 static int index = 0;
-static int size = 15;
+static int size = 16;
 static const char* blockMap[] {
-   "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian", "lava", "platform"
+   "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian", "lava", "platform",
+   "sapling"
 };
 static bool drawWall = false;
 static bool canDraw = false;
+static Furniture obj;
+inline Furniture::Type getFurnitureType() { return (index == 15 ? Furniture::sapling : Furniture::none); }
 /************************************/
 
 void GameState::updatePhysics() {
@@ -77,17 +80,18 @@ void GameState::updatePhysics() {
       drawWall =! drawWall;
    }
 
-   if (IsKeyPressed(KEY_F) and map.isPositionValid(mousePos.x, mousePos.y)) {
-      generateSapling(mousePos.x, mousePos.y, map);
-   }
-
    if (map.isPositionValid(mousePos.x, mousePos.y)) {
-      canDraw = (drawWall or not CheckCollisionRecs(player.getBounds(), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}));
+      auto ftype = getFurnitureType();
+      canDraw = (drawWall or ftype != Furniture::none or not CheckCollisionRecs(player.getBounds(), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}));
 
       if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
          map.deleteBlock(mousePos.x, mousePos.y, drawWall);
       } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) and canDraw and not map.blocks[mousePos.y][mousePos.x].furniture) {
-         map.setBlock(mousePos.x, mousePos.y, blockMap[index], drawWall);
+         if (ftype != Furniture::none) {
+            Furniture::generate(mousePos.x, mousePos.y, map, ftype);
+         } else {
+            map.setBlock(mousePos.x, mousePos.y, blockMap[index], drawWall);
+         }
       } else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) and (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type != Block::air) {
          index = (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].id - 1;
       }
@@ -199,7 +203,21 @@ void GameState::render() {
    /************************************/
    auto mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
    if (canDraw and camera.zoom > 12.5f and map.isPositionValid(mousePos.x, mousePos.y)) {
-      drawTextureBlock(getTexture(blockMap[index]), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}, Fade((drawWall ? Color{120, 120, 120, 255} : WHITE), .75f));
+      auto ftype = getFurnitureType();
+      if (ftype != Furniture::none) {
+         static auto oldBelow = Block::air;
+         auto below = (map.isPositionValid(mousePos.x, mousePos.y + obj.sizeY) ? map.blocks[mousePos.y + obj.sizeY][mousePos.x].type : Block::air);
+         
+         if (ftype != obj.type or oldBelow != below) {
+            obj = Furniture::get(mousePos.x, mousePos.y, map, ftype, true);
+         }
+         oldBelow = below;
+         obj.posX = mousePos.x;
+         obj.posY = mousePos.y;
+         obj.preview(map);
+      } else {
+         drawTextureBlock(getTexture(blockMap[index]), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}, Fade((drawWall ? Color{120, 120, 120, 255} : WHITE), .75f));
+      }
    }
    /************************************/
 

@@ -15,7 +15,7 @@ struct FurniturePiece {
 };
 
 struct Furniture {
-   enum Type { tree, sapling };
+   enum Type { none, tree, sapling };
    using id_t = unsigned char;
 
    std::vector<std::vector<FurniturePiece>> pieces;
@@ -36,20 +36,20 @@ struct Furniture {
 
    void update(Map& map);
 
+   // Getter functions
+
+   static Furniture get(int x, int y, Map& map, Type type, bool debug = false);
+   static void generate(int x, int y, Map& map, Type type);
+
    // Render functions
 
-   void preview(Map& map, bool zoomedOut);
+   void preview(Map& map);
    void render(bool zoomedOut, int minX, int minY, int maxX, int maxY);
 
-   // Getter functions
+   // Id functions
 
    static id_t getId(const std::string& name);
    static std::string getName(id_t id);
 };
-
-// Furniture methods
-
-void generateTree(int x, int y, Map& map);
-void generateSapling(int x, int y, Map& map);
 
 #endif

@@ -55,6 +55,7 @@ struct Map {
    bool isPositionValid(int x, int y);
    bool is(int x, int y, Block::Type type);
    bool isu(int x, int y, Block::Type type); // Unsafe is variant
+   bool empty(int x, int y); // Unsafe too
    bool isTransparent(int x, int y);
 
    std::vector<Block>& operator[](size_t index);
