@@ -4,15 +4,11 @@
 #include <raylib.h>
 #include <string>
 
-// Input
-
 struct Input {
    Rectangle rectangle;
-   std::string text, defaultText;
+   std::string text, fallback;
    bool hovering = false, typing = false;
    int maxChars = 255, counter = 0;
-
-   // Functions
 
    void update();
    void render();

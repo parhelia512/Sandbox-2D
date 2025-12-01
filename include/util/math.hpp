@@ -25,12 +25,4 @@ constexpr float lerp(float a, float b, float t) {
    return a + (b - a) * t;
 }
 
-constexpr bool floatEquals(float a, float b) {
-   return abs(a - b) <= .001f;
-}
-
-constexpr bool floatIsZero(float a) {
-   return floatEquals(a, 0.f);
-}
-
 #endif

@@ -3,6 +3,7 @@
 #include "util/render.hpp"
 #include <raylib.h>
 #include <cstdlib>
+#include <ctime>
 
 int main() {
    // Initialize the game
@@ -15,18 +16,18 @@ int main() {
    
    InitAudioDevice();
    SetExitKey(KEY_NULL);
-   State* current = new LoadingState();
+   State *current = new LoadingState();
 
    // Run the game
 
-   while (not WindowShouldClose()) {
+   while (!WindowShouldClose()) {
       if (current->quitState) {
-         auto* newState = current->change();
+         State *newState = current->change();
          delete current;
          current = newState;
       }
 
-      if (not current) {
+      if (!current) {
          break;
       }
 

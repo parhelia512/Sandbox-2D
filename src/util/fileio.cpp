@@ -8,9 +8,9 @@
 
 // File functions
 
-std::string getRandomLineFromFile(const std::filesystem::path& path) {
+std::string getRandomLineFromFile(const std::filesystem::path &path) {
    std::fstream file (path.string().c_str());
-   if (not file.is_open()) {
+   if (!file.is_open()) {
       return "";
    }
 
@@ -26,29 +26,29 @@ std::string getRandomLineFromFile(const std::filesystem::path& path) {
 // World saving functions
 // Save and load functions must follow the same data arrangement (duh)
 
-void saveWorldData(const std::string& name, float playerX, float playerY, float zoom, const Map& map) {
+void saveWorldData(const std::string &name, float playerX, float playerY, float zoom, const Map &map) {
    std::ofstream file (format("data/worlds/{}.txt", name));
    assert(file.is_open(), "Failed to save world 'data/worlds/{}.txt'.", name);
    file << playerX << ' ' << playerY << ' ' << map.sizeX << ' ' << map.sizeY << ' ' << zoom << '\n';
 
-   for (const auto& row: map.blocks) {
-      for (const auto& tile: row) {
+   for (const std::vector<Block> &row: map.blocks) {
+      for (const Block &tile: row) {
          file << (int)tile.id << ' ';
       }
       file << '\n';
    }
 
-   for (const auto& row: map.walls) {
-      for (const auto& tile: row) {
+   for (const std::vector<Block> &row: map.walls) {
+      for (const Block &tile: row) {
          file << (int)tile.id << ' ';
       }
       file << '\n';
    }
 
-   for (const auto& obj: map.furniture) {
+   for (const Furniture &obj: map.furniture) {
       file << obj.posX << ' ' << obj.posY << ' ' << obj.sizeX << ' ' << obj.sizeY << ' ' << obj.type << ' ' << (int)obj.value << ' ' << (int)obj.value2 << ' ' << (int)obj.texId << ' ';
-      for (const auto& row: obj.pieces) {
-         for (const auto& piece: row) {
+      for (const std::vector<FurniturePiece> &row: obj.pieces) {
+         for (const FurniturePiece &piece: row) {
             file << piece.nil << ' ' << (int)piece.colorId << ' ' << (int)piece.tx << ' ' << (int)piece.ty << ' ';
          }
       }
@@ -59,7 +59,7 @@ void saveWorldData(const std::string& name, float playerX, float playerY, float 
 
 // World loading functions
 
-void loadWorldData(const std::string& name, Player& player, float& zoom, Map& map) {
+void loadWorldData(const std::string &name, Player &player, float &zoom, Map &map) {
    std::ifstream file (format("data/worlds/{}.txt", name));
    assert(file.is_open(), "Failed to load world 'data/worlds/{}.txt'.", name);
 
@@ -94,7 +94,7 @@ void loadWorldData(const std::string& name, Player& player, float& zoom, Map& ma
       Furniture furniture ((Furniture::Type)type, texId, value, value2, posX, posY, sizeX, sizeY);
       for (int y = 0; y < sizeY; ++y) {
          for (int x = 0; x < sizeX; ++x) {
-            auto& piece = furniture.pieces[y][x];
+            FurniturePiece &piece = furniture.pieces[y][x];
             int nil = 0, colorId = 0, tx = 0, ty = 0;
             file >> nil >> colorId >> tx >> ty;
             piece = {(unsigned char)tx, (unsigned char)ty, (unsigned char)colorId, (bool)nil};

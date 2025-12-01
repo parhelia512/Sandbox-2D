@@ -10,13 +10,13 @@
 
 // Constants
 
-constexpr float cameraFollowSpeed = 17.5f;
+constexpr float cameraFollowSpeed = .416f;
 constexpr float maxCameraZoom = 1.f;
 constexpr float minCameraZoom = 100.f;
 
 // Constructors
 
-GameState::GameState(const std::string& worldName)
+GameState::GameState(const std::string &worldName)
    : worldName(worldName) {
    loadWorldData(worldName, player, camera.zoom, map);
    camera.target = player.getCenter();
@@ -37,7 +37,7 @@ void GameState::update() {
 
 void GameState::updateControls() {
    player.updatePlayer(map);
-   camera.target = lerp(camera.target, player.getCenter(), 25.f * GetFrameTime());
+   camera.target = lerp(camera.target, player.getCenter(), cameraFollowSpeed);
 
    float wheel = GetMouseWheelMove();
    if (wheel != 0.f) {
@@ -54,7 +54,7 @@ void GameState::updateControls() {
 // the blockIds map in objs/block.cpp. Everything between these multi-comments is temporary.
 static int index = 0;
 static int size = 20;
-static const char* blockMap[] {
+static const char *blockMap[] {
    "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian",
    "lava", "platform", "snow", "ice", "jungle_grass", "mud",
    "sapling"
@@ -67,7 +67,7 @@ inline Furniture::Type getFurnitureType() { return (index == 19 ? Furniture::sap
 
 void GameState::updatePhysics() {
    /************************************/
-   auto mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
+   Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
 
    if (IsKeyPressed(KEY_E)) {
       index = (index + 1) % size;
@@ -82,18 +82,18 @@ void GameState::updatePhysics() {
    }
 
    if (map.isPositionValid(mousePos.x, mousePos.y)) {
-      auto ftype = getFurnitureType();
-      canDraw = (drawWall or ftype != Furniture::none or not CheckCollisionRecs(player.getBounds(), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}));
+      Furniture::Type ftype = getFurnitureType();
+      canDraw = (drawWall || ftype != Furniture::none || !CheckCollisionRecs(player.getBounds(), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}));
 
       if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
          map.deleteBlock(mousePos.x, mousePos.y, drawWall);
-      } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) and canDraw and not map.blocks[mousePos.y][mousePos.x].furniture) {
+      } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && canDraw && !map.blocks[mousePos.y][mousePos.x].furniture) {
          if (ftype != Furniture::none) {
             Furniture::generate(mousePos.x, mousePos.y, map, ftype);
          } else {
             map.setBlock(mousePos.x, mousePos.y, blockMap[index], drawWall);
          }
-      } else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) and (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type != Block::air) {
+      } else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) && (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type != Block::air) {
          index = (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].id - 1;
       }
    }
@@ -108,9 +108,9 @@ void GameState::updatePhysics() {
    
    for (int y = map.sizeY - 1; y >= 0; --y) {
       for (int x = map.sizeX - 1; x >= 0; --x) {
-         auto& block = map[y][x];
+         Block &block = map[y][x];
 
-         if (block.type == Block::water or block.type == Block::lava) {
+         if (block.type == Block::water || block.type == Block::lava) {
             if (block.type == Block::lava) {
                // Turn into obsidian if water is found adjacently
                if (map.is(x, y + 1, Block::water)) {
@@ -138,7 +138,7 @@ void GameState::updatePhysics() {
 
             if (map.is(x, y + 1, Block::air)) {
                map.moveBlock(x, y, x, y + 1);
-            } else if (map.is(x - 1, y, Block::air) and map.is(x + 1, y, Block::air)) {
+            } else if (map.is(x - 1, y, Block::air) && map.is(x + 1, y, Block::air)) {
                if (chance(50)) {
                   goto moveWaterLeft;
                } else {
@@ -156,24 +156,24 @@ void GameState::updatePhysics() {
 
          // Update sand
          if (block.type == Block::sand) {
-            if (map.is(x, y + 1, Block::air) or map.is(x, y + 1, Block::water)) {
+            if (map.is(x, y + 1, Block::air) || map.is(x, y + 1, Block::water)) {
                map.moveBlock(x, y, x, y + 1);
-            } else if ((map.is(x - 1, y + 1, Block::air) or map.is(x - 1, y + 1, Block::water)) and (map.is(x + 1, y + 1, Block::air) or map.is(x + 1, y + 1, Block::water))) {
+            } else if ((map.is(x - 1, y + 1, Block::air) || map.is(x - 1, y + 1, Block::water)) && (map.is(x + 1, y + 1, Block::air) || map.is(x + 1, y + 1, Block::water))) {
                if (chance(50)) {
                   goto moveSandRight;
                } else {
                   goto moveSandLeft;
                }
-            } else if (map.is(x - 1, y + 1, Block::air) or map.is(x - 1, y + 1, Block::water)) {
+            } else if (map.is(x - 1, y + 1, Block::air) || map.is(x - 1, y + 1, Block::water)) {
             moveSandLeft:
                map.moveBlock(x, y, x - 1, y + 1);
-            } else if (map.is(x + 1, y + 1, Block::air) or map.is(x + 1, y + 1, Block::water)) {
+            } else if (map.is(x + 1, y + 1, Block::air) || map.is(x + 1, y + 1, Block::water)) {
             moveSandRight:
                map.moveBlock(x, y, x + 1, y + 1);
             }
          }
 
-         if (block.type == Block::dirt and (map.is(x, y - 1, Block::air) or map.is(x, y - 1, Block::water) or map.is(x, y - 1, Block::platform))) {
+         if (block.type == Block::dirt && (map.is(x, y - 1, Block::air) || map.is(x, y - 1, Block::water) || map.is(x, y - 1, Block::platform))) {
             if (map[y][x].value2 == 0) {
                map[y][x].value2 = random(100, 255);
             }
@@ -185,7 +185,7 @@ void GameState::updatePhysics() {
             }
          }
 
-         if (block.type == Block::grass and not map.is(x, y - 1, Block::air) and not map.is(x, y - 1, Block::water) and not map.is(x, y - 1, Block::platform)) {
+         if (block.type == Block::grass && !map.is(x, y - 1, Block::air) && !map.is(x, y - 1, Block::water) && !map.is(x, y - 1, Block::platform)) {
             if (map[y][x].value2 == 0) {
                map[y][x].value2 = random(100, 255);
             }
@@ -199,12 +199,12 @@ void GameState::updatePhysics() {
       }
    }
    
-   for (auto& obj: map.furniture) {
+   for (Furniture &obj: map.furniture) {
       obj.update(map);
    }
 
    // Remove deleted furniture
-   map.furniture.erase(std::remove_if(map.furniture.begin(), map.furniture.end(), [this](Furniture& f) -> bool {
+   map.furniture.erase(std::remove_if(map.furniture.begin(), map.furniture.end(), [](Furniture &f) -> bool {
       return f.deleted;
    }), map.furniture.end());
 }
@@ -218,14 +218,14 @@ void GameState::render() {
 
    /************************************/
    // Scary method of rendering furniture and block preview correctly
-   auto mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
-   if (canDraw and camera.zoom > 12.5f and map.isPositionValid(mousePos.x, mousePos.y)) {
-      auto ftype = getFurnitureType();
+   Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
+   if (canDraw && camera.zoom > 12.5f && map.isPositionValid(mousePos.x, mousePos.y)) {
+      Furniture::Type ftype = getFurnitureType();
       if (ftype != Furniture::none) {
-         static auto oldBelow = Block::air;
-         auto below = (map.isPositionValid(mousePos.x, mousePos.y + obj.sizeY) ? map.blocks[mousePos.y + obj.sizeY][mousePos.x].type : Block::air);
+         static Block::Type oldBelow = Block::air;
+         Block::Type below = (map.isPositionValid(mousePos.x, mousePos.y + obj.sizeY) ? map.blocks[mousePos.y + obj.sizeY][mousePos.x].type : Block::air);
          
-         if (ftype != obj.type or oldBelow != below) {
+         if (ftype != obj.type || oldBelow != below) {
             obj = Furniture::get(mousePos.x, mousePos.y, map, ftype, true);
          }
          oldBelow = below;

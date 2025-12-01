@@ -44,9 +44,9 @@ Color& Block::getWallColor() {
 }
 
 void Block::initializeColors() {
-   for (const auto& [name, id]: blockIds) {
-      auto& texture = getTexture(name);
-      auto image = LoadImageFromTexture(texture);
+   for (const auto &[name, id]: blockIds) {
+      Texture2D &texture = getTexture(name);
+      Image image = LoadImageFromTexture(texture);
       Color a = GetImageColor(image, 0, 0);
 
       // Ignore any transparent blocks (like glass)
@@ -58,12 +58,12 @@ void Block::initializeColors() {
 
       // Do some cheats to have our color tinted without having to implement
       // any math ourselves
-      auto target = LoadRenderTexture(1, 1);
+      RenderTexture target = LoadRenderTexture(1, 1);
       BeginTextureMode(target);
       DrawTexture(texture, 0, 0, backgroundTint);
       EndTextureMode();
 
-      auto image2 = LoadImageFromTexture(target.texture);
+      Image image2 = LoadImageFromTexture(target.texture);
       Color b = GetImageColor(image2, 0, 0);
 
       blockColors[id] = a;
@@ -75,7 +75,7 @@ void Block::initializeColors() {
    }
 }
 
-Block::id_t Block::getId(const std::string& name) {
+Block::id_t Block::getId(const std::string &name) {
    return blockIds[name];
 }
 
@@ -90,8 +90,8 @@ void Map::init() {
    walls = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
 }
 
-void Map::setBlock(int x, int y, const std::string& name, bool wall) {
-   auto& block = (wall ? walls : blocks)[y][x];
+void Map::setBlock(int x, int y, const std::string &name, bool wall) {
+   Block &block = (wall ? walls : blocks)[y][x];
    
    block.id = blockIds[name];
    block.value = block.value2 = 0;
@@ -103,7 +103,7 @@ void Map::setBlock(int x, int y, const std::string& name, bool wall) {
 }
 
 void Map::setBlock(int x, int y, Block::id_t id, bool wall) {
-   auto& block = (wall ? walls : blocks)[y][x];
+   Block &block = (wall ? walls : blocks)[y][x];
    block.id = id;
    block.type = blockTypes[block.id];
 
@@ -113,7 +113,7 @@ void Map::setBlock(int x, int y, Block::id_t id, bool wall) {
 }
 
 void Map::deleteBlock(int x, int y, bool wall) {
-   auto& block = (wall ? walls : blocks)[y][x];
+   Block &block = (wall ? walls : blocks)[y][x];
    block.tex = nullptr;
    block.type = Block::air;
    block.id = block.value = block.value2 = 0;
@@ -125,10 +125,10 @@ void Map::moveBlock(int ox, int oy, int nx, int ny) {
 
 // Set furniture functions
 
-void Map::addFurniture(Furniture& obj) {
+void Map::addFurniture(Furniture &obj) {
    for (int y = obj.posY; y < obj.sizeY + obj.posY; ++y) {
       for (int x = obj.posX; x < obj.sizeX + obj.posX; ++x) {
-         if (not obj.pieces[y - obj.posY][x - obj.posX].nil) {
+         if (!obj.pieces[y - obj.posY][x - obj.posX].nil) {
             blocks[y][x].furniture = true;
          }
       }
@@ -136,10 +136,10 @@ void Map::addFurniture(Furniture& obj) {
    furniture.push_back(obj);
 }
 
-void Map::removeFurniture(Furniture& obj) {
+void Map::removeFurniture(Furniture &obj) {
    for (int y = obj.posY; y < obj.sizeY + obj.posY; ++y) {
       for (int x = obj.posX; x < obj.sizeX + obj.posX; ++x) {
-         if (not obj.pieces[y - obj.posY][x - obj.posX].nil) {
+         if (!obj.pieces[y - obj.posY][x - obj.posX].nil) {
             blocks[y][x].furniture = false;
          }
       }
@@ -150,11 +150,11 @@ void Map::removeFurniture(Furniture& obj) {
 // Get block functions
 
 bool Map::isPositionValid(int x, int y) {
-   return x >= 0 and x < sizeX and y >= 0 and y < sizeY;
+   return x >= 0 && x < sizeX && y >= 0 && y < sizeY;
 }
 
 bool Map::is(int x, int y, Block::Type type) {
-   return isPositionValid(x, y) and blocks[y][x].type == type;
+   return isPositionValid(x, y) && blocks[y][x].type == type;
 }
 
 bool Map::isu(int x, int y, Block::Type type) {
@@ -162,15 +162,15 @@ bool Map::isu(int x, int y, Block::Type type) {
 }
 
 bool Map::empty(int x, int y) {
-   return not blocks[y][x].furniture and blocks[y][x].type == Block::air;
+   return !blocks[y][x].furniture && blocks[y][x].type == Block::air;
 }
 
 bool Map::isTransparent(int x, int y) {
-   if (not isPositionValid(x, y)) {
+   if (!isPositionValid(x, y)) {
       return false;
    }
-   auto t = blocks[y][x].type;
-   return t == Block::air or t == Block::water or t == Block::transparent or t == Block::platform;
+   Block::Type t = blocks[y][x].type;
+   return t == Block::air || t == Block::water || t == Block::transparent || t == Block::platform;
 }
 
 std::vector<Block>& Map::operator[](size_t index) {
@@ -179,23 +179,23 @@ std::vector<Block>& Map::operator[](size_t index) {
 
 // Render functions
 
-void Map::render(Camera2D& camera) {
-   auto bounds = getCameraBounds(camera);
+void Map::render(Camera2D &camera) {
+   Rectangle bounds = getCameraBounds(camera);
 
-   auto minX = std::max(0, int(bounds.x));
-   auto minY = std::max(0, int(bounds.y));
-   auto maxX = std::min(sizeX, int((bounds.x + bounds.width)) + 1);
-   auto maxY = std::min(sizeY, int((bounds.y + bounds.height)) + 1);
+   int minX = std::max(0, int(bounds.x));
+   int minY = std::max(0, int(bounds.y));
+   int maxX = std::min(sizeX, int((bounds.x + bounds.width)) + 1);
+   int maxY = std::min(sizeY, int((bounds.y + bounds.height)) + 1);
 
    for (int y = minY; y < maxY; ++y) {
       for (int x = minX; x < maxX; ++x) {
-         auto& wall = walls[y][x];
-         if (wall.type == Block::air or not isTransparent(x, y)) {
+         Block &wall = walls[y][x];
+         if (wall.type == Block::air || !isTransparent(x, y)) {
             continue;
          }
 
          int ox = x;
-         while (x < maxX and walls[y][x].id == wall.id and isTransparent(x, y)) { ++x; }
+         while (x < maxX && walls[y][x].id == wall.id && isTransparent(x, y)) { ++x; }
 
          if (camera.zoom <= 12.5f) {
             DrawRectangle(ox, y, x - ox, 1, wall.getWallColor());
@@ -208,13 +208,13 @@ void Map::render(Camera2D& camera) {
 
    for (int y = minY; y < maxY; ++y) {
       for (int x = minX; x < maxX; ++x) {
-         auto& block = blocks[y][x];
+         Block &block = blocks[y][x];
          if (block.type == Block::air) {
             continue;
          }
 
          int ox = x;
-         while (x < maxX and blocks[y][x].id == block.id) { ++x; }
+         while (x < maxX && blocks[y][x].id == block.id) { ++x; }
 
          if (camera.zoom <= 12.5f) {
             DrawRectangle(ox, y, x - ox, 1, block.getColor());
@@ -225,7 +225,7 @@ void Map::render(Camera2D& camera) {
       }
    }
 
-   for (auto& obj: furniture) {
+   for (Furniture &obj: furniture) {
       obj.render(camera.zoom <= 12.5f, minX, minY, maxX, maxY);
    }
 }

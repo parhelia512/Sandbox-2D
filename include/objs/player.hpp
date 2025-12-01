@@ -28,9 +28,9 @@ struct Player {
 
    // Update functions
 
-   void updatePlayer(Map& map);
+   void updatePlayer(Map &map);
    void updateMovement();
-   void updateCollisions(Map& map);
+   void updateCollisions(Map &map);
    void updateAnimation();
 
    // Render function

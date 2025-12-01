@@ -1,14 +1,13 @@
 #include "mngr/sound.hpp"
 #include "ui/button.hpp"
 #include "util/render.hpp"
-
-// Update function
+#include <raymath.h>
 
 void Button::update(float offsetY) {
    bool was_hovering = hovering;
    hovering = CheckCollisionPointRec({GetMouseX() + rectangle.width / 2.f, GetMouseY() + rectangle.height / 2.f + offsetY}, rectangle);
-   down = hovering and IsMouseButtonDown(MOUSE_LEFT_BUTTON);
-   clicked = hovering and IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
+   down = hovering && IsMouseButtonDown(MOUSE_LEFT_BUTTON);
+   clicked = hovering && IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
 
    if (down) {
       scale = std::max(scale * 1.f - GetFrameTime(), .98f);
@@ -18,7 +17,7 @@ void Button::update(float offsetY) {
       scale = (scale < 1.f ? std::min(1.f, scale * 1.f + GetFrameTime()) : std::max(1.f, scale * 1.f - GetFrameTime()));
    }
 
-   if (not was_hovering and hovering) {
+   if (!was_hovering && hovering) {
       playSound("hover");
    }
 
@@ -27,14 +26,10 @@ void Button::update(float offsetY) {
    }
 }
 
-// Render function
-
 void Button::render(float offsetY) {
-   drawTexture(*texture, {rectangle.x, rectangle.y - offsetY}, {rectangle.width * scale, rectangle.height * scale});
+   drawTexture(*texture, {rectangle.x, rectangle.y - offsetY}, Vector2Scale({rectangle.width, rectangle.height}, scale));
    drawText({rectangle.x, rectangle.y - offsetY}, text.c_str(), 35 * scale);
 }
-
-// Other functions
 
 Rectangle Button::normalizeRect() {
    return {rectangle.x - rectangle.width / 2.f, rectangle.y - rectangle.height / 2.f, rectangle.width, rectangle.height};

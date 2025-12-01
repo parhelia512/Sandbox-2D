@@ -76,7 +76,7 @@ void MenuState::updateLevelSelection() {
    worldFrame.update();
 
    float offsetY = worldFrame.getOffsetY();
-   for (auto& button: worldButtons) {
+   for (Button &button: worldButtons) {
       if (worldFrame.inFrame(button.normalizeRect())) {
          button.update(offsetY);
 
@@ -129,20 +129,20 @@ void MenuState::render() {
 }
 
 void MenuState::renderTitle() {
-   drawText(getScreenCenter(0.f, -200.f), "SANDBOX 2D", 180);
+   drawText(getScreenCenter({0.f, -200.f}), "SANDBOX 2D", 180);
    playButton.render();
    optionsButton.render();
    quitButton.render();
 }
 
 void MenuState::renderLevelSelection() {
-   drawText(getScreenCenter(0.f, -400.f), "SELECT WORLD", 180);
+   drawText(getScreenCenter({0.f, -400.f}), "SELECT WORLD", 180);
    backButton.render();
    newButton.render();
    worldFrame.render();
 
    float offsetY = worldFrame.getOffsetY();
-   for (auto& button: worldButtons) {
+   for (Button &button: worldButtons) {
       if (worldFrame.inFrame(button.normalizeRect())) {
          button.render(offsetY);
       }
@@ -150,7 +150,7 @@ void MenuState::renderLevelSelection() {
 }
 
 void MenuState::renderLevelCreation() {
-   drawText(getScreenCenter(0.f, -400.f), "CREATE WORLD", 180);
+   drawText(getScreenCenter({0.f, -400.f}), "CREATE WORLD", 180);
    backButton.render();
    createButton.render();
    worldName.render();
@@ -175,7 +175,7 @@ void MenuState::loadWorlds() {
    std::filesystem::create_directories("data/worlds/");
    float offsetX = 56.666f;
 
-   for (const auto& file: std::filesystem::directory_iterator("data/worlds")) {
+   for (const auto &file: std::filesystem::directory_iterator("data/worlds")) {
       Button button;
       button.rectangle = {360.f - offsetX / 2.f, 210.f + 110.f * worldButtons.size(), worldFrame.rectangle.width - 120.f - offsetX / 2.f, 100.f};
       button.rectangle.x += button.rectangle.width / 2.f;
@@ -188,7 +188,7 @@ void MenuState::loadWorlds() {
 }
 
 std::string MenuState::getRandomWorldName() {
-   auto adjective = getRandomLineFromFile("assets/adjectives.txt");
-   auto noun = getRandomLineFromFile("assets/nouns.txt");
+   std::string adjective = getRandomLineFromFile("assets/adjectives.txt");
+   std::string noun = getRandomLineFromFile("assets/nouns.txt");
    return adjective + " " + noun;
 }

@@ -1,50 +1,33 @@
 #include "mngr/resource.hpp"
 #include "util/position.hpp"
+#include <raymath.h>
 
-// Screen position functions
-
-Vector2 getScreenSize(float offsetX, float offsetY) {
-   return {offsetX + GetScreenWidth(), offsetY + GetScreenHeight()};
+Vector2 getScreenSize() {
+   return {(float)GetScreenWidth(), (float)GetScreenHeight()};
 }
 
-Vector2 getScreenCenter(float offsetX, float offsetY) {
-   return {offsetX + GetScreenWidth() / 2.f, offsetY + GetScreenHeight() / 2.f};
+Vector2 getScreenCenter(const Vector2 &offset) {
+   return Vector2Add(getOrigin(getScreenSize()), offset);
 }
 
-// Origin functions
-
-Vector2 getOrigin(const Vector2& size) {
-   return {size.x / 2.f, size.y / 2.f};
+Vector2 getOrigin(const Vector2 &size) {
+   return Vector2Scale(size, 0.5f);
 }
 
-Vector2 getOrigin(float x, float y) {
-   return {x / 2.f, y / 2.f};
-}
-
-Vector2 getOrigin(const char* text, float fontSize, float spacing) {
+Vector2 getOrigin(const char *text, float fontSize, float spacing) {
    return getOrigin(MeasureTextEx(getFont("andy"), text, fontSize, spacing));
 }
 
-// Texture functions
-
-Vector2 getSize(const Texture& texture) {
-   return {(float)texture.width, (float)texture.height};
+Rectangle getBox(const Texture &texture) {
+   return {0, 0, (float)texture.width, (float)texture.height};
 }
 
-Rectangle getBox(const Texture& texture) {
-   return {0.f, 0.f, (float)texture.width, (float)texture.height};
-}
-
-// Camera functions
-
-Rectangle getCameraBounds(const Camera2D& camera) {
+Rectangle getCameraBounds(const Camera2D &camera) {
    Vector2 pos = GetScreenToWorld2D({0, 0}, camera);
-   return {pos.x, pos.y, GetScreenWidth() / camera.zoom, GetScreenHeight() / camera.zoom};
+   Vector2 size = Vector2Scale(getScreenSize(), 1.f / camera.zoom);
+   return {pos.x, pos.y, size.x, size.y};
 }
 
-// Vector math functions
-
-Vector2 lerp(const Vector2& a, const Vector2& b, float t) {
-   t = (t < 0.f ? 0.f : (t > 1.f ? 1.f : t));
-   return {a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t};
+Vector2 lerp(const Vector2 &a, const Vector2 &b, float t) {
+   return Vector2Add(a, Vector2Scale(Vector2Subtract(b, a), Clamp(t, 0, 1)));
 }

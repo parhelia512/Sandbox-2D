@@ -21,15 +21,15 @@ constexpr int texSize = 8;
 
 // Helper functions
 
-inline void setBlock(FurniturePiece& piece, const std::string& id, int tx, int ty) {
+inline void setBlock(FurniturePiece &piece, const std::string &id, int tx, int ty) {
    piece.nil = false;
    piece.colorId = Block::getId(id);
    piece.tx = tx;
    piece.ty = ty;
 }
 
-inline bool isBlockSoil(Map& map, int x, int y) {
-   return map.is(x, y, Block::grass) or map.isu(x, y, Block::dirt) or map.isu(x, y, Block::sand) or map.isu(x, y, Block::snow);
+inline bool isBlockSoil(Map &map, int x, int y) {
+   return map.is(x, y, Block::grass) || map.isu(x, y, Block::dirt) || map.isu(x, y, Block::sand) || map.isu(x, y, Block::snow);
 }
 
 // Furniture functions
@@ -39,25 +39,25 @@ Furniture::Furniture(Type type, id_t texId, int value, int value2, int posX, int
    pieces = std::vector<std::vector<FurniturePiece>>(sizeY, std::vector<FurniturePiece>(sizeX, FurniturePiece{}));   
 }
 
-Furniture::Furniture(const std::string& texture, int posX, int posY, int sizeX, int sizeY, Type type)
-   : texId(furnitureTextureIds[texture]), posX(posX), posY(posY), sizeX(sizeX), sizeY(sizeY), type(type) {
+Furniture::Furniture(const std::string &texture, int posX, int posY, int sizeX, int sizeY, Type type)
+   : type(type), texId(furnitureTextureIds[texture]), posX(posX), posY(posY), sizeX(sizeX), sizeY(sizeY) {
    pieces = std::vector<std::vector<FurniturePiece>>(sizeY, std::vector<FurniturePiece>(sizeX, FurniturePiece{}));
 }
 
 // Update furniture
 
-void Furniture::update(Map& map) {
+void Furniture::update(Map &map) {
    switch (type) {
 
    case Type::tree: {
-      if (not isBlockSoil(map, posX + 1, posY + sizeY)) {
+      if (!isBlockSoil(map, posX + 1, posY + sizeY)) {
          map.removeFurniture(*this);
          return;
       }
    } break;
 
    case Type::sapling: {
-      if (not isBlockSoil(map, posX, posY + sizeY)) {
+      if (!isBlockSoil(map, posX, posY + sizeY)) {
          map.removeFurniture(*this);
          return;
       }
@@ -79,24 +79,24 @@ void Furniture::update(Map& map) {
 
 // Get functions
 
-Furniture Furniture::get(int x, int y, Map& map, Type type, bool debug) {
+Furniture Furniture::get(int x, int y, Map &map, Type type, bool debug) {
    switch (type) {
 
    case Type::tree: {
-      if (not debug and (x < 1 or x >= map.sizeX - 1 or y < 0 or not isBlockSoil(map, x , y + 1))) {
+      if (!debug && (x < 1 || x >= map.sizeX - 1 || y < 0 || !isBlockSoil(map, x , y + 1))) {
          return {};
       }
       
       bool palm = (map.isu(x, y + 1, Block::sand));
       int height = (palm ? random(8, 22) : random(5, 18));
-      for (int i = 0; i < height and i < map.sizeY; ++i) {
-         if (not map.empty(x, y - i)) {
+      for (int i = 0; i < height && i < map.sizeY; ++i) {
+         if (!map.empty(x, y - i)) {
             height = i;
             break;
          }
       }
 
-      if (not debug and (height < (palm ? 8 : 5))) {
+      if (!debug && (height < (palm ? 8 : 5))) {
          return {};
       }
       static std::unordered_map<Block::id_t, std::string> textureMap {
@@ -114,7 +114,7 @@ Furniture Furniture::get(int x, int y, Map& map, Type type, bool debug) {
       }
 
       for (int i = (palm ? 3 : 2); i < height; ++i) {
-         auto& piece = tree.pieces[i][1];
+         FurniturePiece &piece = tree.pieces[i][1];
          if (palm) {
             setBlock(piece, "planks", random(0, 2) * texSize, (i + 1 == height ? 4 : 3) * texSize);
             continue;
@@ -123,8 +123,8 @@ Furniture Furniture::get(int x, int y, Map& map, Type type, bool debug) {
          setBlock(piece, "planks", 2 * texSize, 3 * texSize);
 
          if (i + 1 == height) {
-            bool rightFree = (map.empty(tree.posX + 2, tree.posY + i) and isBlockSoil(map, tree.posX + 2, tree.posY + i + 1) and chance(25));
-            bool leftFree = (map.empty(tree.posX, tree.posY + i) and isBlockSoil(map, tree.posX, tree.posY + i + 1) and chance(25));
+            bool rightFree = (map.empty(tree.posX + 2, tree.posY + i) && isBlockSoil(map, tree.posX + 2, tree.posY + i + 1) && chance(25));
+            bool leftFree = (map.empty(tree.posX, tree.posY + i) && isBlockSoil(map, tree.posX, tree.posY + i + 1) && chance(25));
 
             if (rightFree) {
                setBlock(tree.pieces[i][2], "planks", 4 * texSize, 4 * texSize);
@@ -136,15 +136,15 @@ Furniture Furniture::get(int x, int y, Map& map, Type type, bool debug) {
                piece.tx = 1 * texSize;
                piece.ty = 4 * texSize;
             }
-            if (rightFree and leftFree) {
+            if (rightFree && leftFree) {
                piece.tx = 5 * texSize;
                piece.ty = 4 * texSize;
-            } else if (not rightFree and not leftFree) {
+            } else if (!rightFree && !leftFree) {
                piece.ty = 4 * texSize;
             }
          } else {
-            bool rightFree = (map.empty(tree.posX + 2, tree.posY + i) and chance(15));
-            bool leftFree = (map.empty(tree.posX, tree.posY + i) and chance(15));
+            bool rightFree = (map.empty(tree.posX + 2, tree.posY + i) && chance(15));
+            bool leftFree = (map.empty(tree.posX, tree.posY + i) && chance(15));
 
             if (rightFree) {
                setBlock(tree.pieces[i][2], "planks", random(3, 5) * texSize, 2 * texSize);
@@ -156,7 +156,7 @@ Furniture Furniture::get(int x, int y, Map& map, Type type, bool debug) {
                piece.tx = 1 * texSize;
                piece.ty = 3 * texSize;
             }
-            if (rightFree and leftFree) {
+            if (rightFree && leftFree) {
                piece.tx = 5 * texSize;
                piece.ty = 3 * texSize;
             }
@@ -166,7 +166,7 @@ Furniture Furniture::get(int x, int y, Map& map, Type type, bool debug) {
    } break;
 
    case Type::sapling: {
-      if (not debug and (x < 0 or x >= map.sizeX or y < 0 or not isBlockSoil(map, x , y + 2) or not map.empty(x, y) or not map.empty(x, y + 1))) {
+      if (!debug && (x < 0 || x >= map.sizeX || y < 0 || !isBlockSoil(map, x , y + 2) || !map.empty(x, y) || !map.empty(x, y + 1))) {
          return {};
       }
 
@@ -174,8 +174,8 @@ Furniture Furniture::get(int x, int y, Map& map, Type type, bool debug) {
          {Block::getId("grass"), "sapling"}, {Block::getId("dirt"), "sapling"}, {Block::getId("sand"), "palm_sapling"},
          {Block::getId("snow"), "pine_sapling"}, {Block::getId("mud"), "jungle_sapling"}, {Block::getId("jungle_grass"), "jungle_sapling"}
       };
-      auto btype = map.blocks[y + 2][x].id;
-      Furniture sapling ((not textureMap.count(btype) ? "sapling" : textureMap[btype]), x, y, 1, 2, Furniture::sapling);
+      id_t btype = map.blocks[y + 2][x].id;
+      Furniture sapling ((!textureMap.count(btype) ? "sapling" : textureMap[btype]), x, y, 1, 2, Furniture::sapling);
 
       int value = random(0, 100);
       int offsetTx = (value < 33 ? 0 : (value < 66 ? texSize : 2 * texSize));
@@ -189,8 +189,8 @@ Furniture Furniture::get(int x, int y, Map& map, Type type, bool debug) {
    };
 }
 
-void Furniture::generate(int x, int y, Map& map, Type type) {
-   auto furniture = Furniture::get(x, y, map, type);
+void Furniture::generate(int x, int y, Map &map, Type type) {
+   Furniture furniture = Furniture::get(x, y, map, type);
    if (furniture.type != Furniture::none) {
       map.addFurniture(furniture);
    }
@@ -198,10 +198,10 @@ void Furniture::generate(int x, int y, Map& map, Type type) {
 
 // Render furniture
 
-void Furniture::preview(Map& map) {
+void Furniture::preview(Map &map) {
    for (int y = posY; y - posY < sizeY; ++y) {
       for (int x = posX; x - posX < sizeX; ++x) {
-         auto& piece = pieces[y - posY][x - posX];
+         FurniturePiece &piece = pieces[y - posY][x - posX];
          Color color = Fade((map.empty(x, y) ? WHITE : RED), .75f);
          DrawTexturePro(getTexture(furnitureTextureNames[texId]), {(float)piece.tx, (float)piece.ty, texSize, texSize}, {(float)x, (float)y, 1.f, 1.f}, {0, 0}, 0, color);
       }
@@ -209,10 +209,10 @@ void Furniture::preview(Map& map) {
 }
 
 void Furniture::render(bool zoomedOut, int minX, int minY, int maxX, int maxY) {
-   for (int y = posY; y < maxY and y - posY < sizeY; ++y) {
-      for (int x = posX; x < maxX and x - posX < sizeX; ++x) {
-         auto& piece = pieces[y - posY][x - posX];
-         if (y < minY or x < minX or piece.nil) {
+   for (int y = posY; y < maxY && y - posY < sizeY; ++y) {
+      for (int x = posX; x < maxX && x - posX < sizeX; ++x) {
+         FurniturePiece &piece = pieces[y - posY][x - posX];
+         if (y < minY || x < minX || piece.nil) {
             continue;
          }
 
@@ -227,7 +227,7 @@ void Furniture::render(bool zoomedOut, int minX, int minY, int maxX, int maxY) {
 
 // Id functions
 
-Furniture::id_t Furniture::getId(const std::string& name) {
+Furniture::id_t Furniture::getId(const std::string &name) {
    return furnitureTextureIds[name];
 }
 

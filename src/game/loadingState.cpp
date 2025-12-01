@@ -4,8 +4,8 @@
 #include "mngr/sound.hpp"
 #include "objs/map.hpp"
 #include "util/fileio.hpp"
+#include "util/format.hpp"
 #include "util/position.hpp"
-#include "util/text.hpp"
 #include "util/render.hpp"
 
 // Constructors
@@ -55,14 +55,14 @@ void LoadingState::update() {
 // Other functions
 
 void LoadingState::render() {
-   auto& tex = getTexture("loading");
+   Texture2D &tex = getTexture("loading");
    std::string ltext = "Loading Done!";
    if (load != Load::count) {
       ltext = text + std::to_string((int)load) + "/" + std::to_string((int)Load::count);
    }
 
-   drawText(getScreenCenter(0.f, -175.f), ltext.c_str(), 80);
-   drawText(getScreenCenter(0.f, 100.f), splash.c_str(), 40);
+   drawText(getScreenCenter({0.f, -175.f}), ltext.c_str(), 80);
+   drawText(getScreenCenter({0.f, 100.f}), splash.c_str(), 40);
    drawTexture(tex, getScreenCenter(), {70.f, 70.f}, rotation);
 }
 

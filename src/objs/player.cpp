@@ -5,7 +5,7 @@
 // Constants
 
 constexpr Vector2 size {2.f, 3.f};
-constexpr int frameSize = 20;
+constexpr float frameSize = 20;
 
 constexpr float updateSpeed = 1.f / 60.f;
 constexpr float speed = 4.363f * .5f;
@@ -26,7 +26,7 @@ void Player::init() {
 
 // Update functions
 
-void Player::updatePlayer(Map& map) {
+void Player::updatePlayer(Map &map) {
    updateTimer += GetFrameTime();
    while (updateTimer >= updateSpeed) {
       updateTimer -= updateSpeed;
@@ -38,22 +38,22 @@ void Player::updatePlayer(Map& map) {
 }
 
 void Player::updateMovement() {
-   auto dir = IsKeyDown(KEY_D) - IsKeyDown(KEY_A);
+   int dir = IsKeyDown(KEY_D) - IsKeyDown(KEY_A);
 
-   if (not onGround) {
+   if (!onGround) {
       vel.y = min(maxGravity, vel.y + gravity);
    } else {
       vel.y = min(maxGravity, gravity);
    }
 
    if (dir != 0) {
-      auto speedX = (onGround ? speed : speed * .6f);
+      float speedX = (onGround ? speed : speed * .6f);
       vel.x = lerp(vel.x, dir * speedX, acceleration * iceMult);
    } else {
       vel.x = lerp(vel.x, 0.f, deceleration * iceMult);
    }
 
-   if (IsKeyDown(KEY_SPACE) and canHoldJump) {
+   if (IsKeyDown(KEY_SPACE) && canHoldJump) {
       vel.y = jumpSpeed;
 
       holdJumpTimer += updateSpeed;
@@ -65,7 +65,7 @@ void Player::updateMovement() {
    if (onGround) {
       canHoldJump = true;
       holdJumpTimer = 0.f;
-   } else if (not IsKeyDown(KEY_SPACE)) {
+   } else if (!IsKeyDown(KEY_SPACE)) {
       canHoldJump = false;
    }
    vel.x *= waterMult;
@@ -76,27 +76,27 @@ void Player::updateMovement() {
    }
 }
 
-void Player::updateCollisions(Map& map) {
+void Player::updateCollisions(Map &map) {
    pos.y = lerp(pos.y, pos.y + vel.y, smoothing);
-   bool collisionX = false, collisionY = false;
+   bool collisionY = false;
    int waterTileCount = 0, iceTileCount = 0;
 
-   auto maxX = min(map.sizeX, int(pos.x + size.x) + 1);
-   auto maxY = min(map.sizeY, int(pos.y + size.y) + 1);
+   int maxX = min(map.sizeX, int(pos.x + size.x) + 1);
+   int maxY = min(map.sizeY, int(pos.y + size.y) + 1);
 
    for (int y = max(0, (int)pos.y); y < maxY; ++y) {
       for (int x = max(0, (int)pos.x); x < maxX; ++x) {
-         if (map.isu(x, y, Block::air) or map.isu(x, y, Block::water) or (IsKeyDown(KEY_S) and map.isu(x, y, Block::platform))) {
+         if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || (IsKeyDown(KEY_S) && map.isu(x, y, Block::platform))) {
             // Only check water tile count in the first iteration
             waterTileCount += map.isu(x, y, Block::water);
             continue;
          }
 
-         if (not CheckCollisionRecs({pos.x, pos.y, size.x, size.y}, {(float)x, (float)y, 1.f, 1.f})) {
+         if (!CheckCollisionRecs({pos.x, pos.y, size.x, size.y}, {(float)x, (float)y, 1.f, 1.f})) {
             continue;
          }
 
-         if (prev.y >= y + 1.f and not map.isu(x, y, Block::platform)) {
+         if (prev.y >= y + 1.f && !map.isu(x, y, Block::platform)) {
             pos.y = y + 1.f;
             canHoldJump = false;
             collisionY = true;
@@ -111,7 +111,7 @@ void Player::updateCollisions(Map& map) {
       }
    }
 
-   if (not torsoCollision and feetCollision and not IsKeyDown(KEY_S)) {
+   if (!torsoCollision && feetCollision && !IsKeyDown(KEY_S)) {
       pos.y = feetCollisionY - size.y;
    }
 
@@ -127,11 +127,11 @@ void Player::updateCollisions(Map& map) {
 
    for (int y = max(0, (int)pos.y - 1); y < maxY; ++y) {
       for (int x = max(0, (int)pos.x); x < maxX; ++x) {
-         if (map.isu(x, y, Block::air) or map.isu(x, y, Block::water) or (map.isu(x, y, Block::platform) and not IsKeyDown(KEY_W))) {
+         if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || (map.isu(x, y, Block::platform) && !IsKeyDown(KEY_W))) {
             continue;
          }
 
-         if (not feetCollision and CheckCollisionRecs(feet, {(float)x, (float)y, 1.f, 1.f})) {
+         if (!feetCollision && CheckCollisionRecs(feet, {(float)x, (float)y, 1.f, 1.f})) {
             feetCollision = true;
             feetCollisionY = y;
          }
@@ -140,28 +140,26 @@ void Player::updateCollisions(Map& map) {
             continue;
          }
 
-         if (not torsoCollision and CheckCollisionRecs(torso, {(float)x, (float)y, 1.f, 1.f})) {
+         if (!torsoCollision && CheckCollisionRecs(torso, {(float)x, (float)y, 1.f, 1.f})) {
             torsoCollision = true;
          }
 
-         if (not CheckCollisionRecs({pos.x, pos.y, size.x, size.y}, {(float)x, (float)y, 1.f, 1.f})) {
+         if (!CheckCollisionRecs({pos.x, pos.y, size.x, size.y}, {(float)x, (float)y, 1.f, 1.f})) {
             continue;
          }
 
          if (prev.x >= x + 1.f) {
             pos.x = x + 1.f;
-            collisionX = true;
          }
 
          if (prev.x + size.x <= x) {
             pos.x = x - size.x;
-            collisionX = true;
          }
       }
    }
 
    waterMult = (waterTileCount > 0 ? .9f : 1.f);
-   if (not collisionY) {
+   if (!collisionY) {
       onGround = false;
    }
    if (onGround) {
@@ -170,7 +168,7 @@ void Player::updateCollisions(Map& map) {
 }
 
 void Player::updateAnimation() {
-   if (not onGround) {
+   if (!onGround) {
       fallTimer += GetFrameTime();
       if (fallTimer >= .05f) {
          fx = 5;
@@ -178,7 +176,7 @@ void Player::updateAnimation() {
    } else {
       fallTimer = 0.f;
 
-      if (not floatEquals(prev.x, pos.x)) {
+      if (prev.x != pos.x) {
          walkTimer += GetFrameTime() * clamp(abs(vel.x) / speed, .1f, 1.5f);
          if (walkTimer >= .03f) {
             fx = (fx + 1) % 18;
@@ -194,8 +192,8 @@ void Player::updateAnimation() {
 // Render functions
 
 void Player::render() {
-   auto& texture = getTexture("player");
-   DrawTexturePro(texture, {fx * 20.f, 0.f, (flipX ? -20.f : 20.f), (float)texture.height}, {pos.x, pos.y, size.x, size.y}, {0, 0}, 0, WHITE);
+   Texture2D &texture = getTexture("player");
+   DrawTexturePro(texture, {fx * frameSize, 0.f, (flipX ? -frameSize : frameSize), (float)texture.height}, {pos.x, pos.y, size.x, size.y}, {0, 0}, 0, WHITE);
 }
 
 // Getter functions

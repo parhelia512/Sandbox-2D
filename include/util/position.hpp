@@ -3,28 +3,14 @@
 
 #include <raylib.h>
 
-// Screen position functions
+Vector2 getScreenSize();
+Vector2 getScreenCenter(const Vector2 &offset = {0, 0});
+Vector2 getOrigin(const Vector2 &size);
+Vector2 getOrigin(const char *text, float fontSize, float spacing);
 
-Vector2 getScreenSize(float offsetX = 0, float offsetY = 0);
-Vector2 getScreenCenter(float offsetX = 0, float offsetY = 0);
+Rectangle getBox(const Texture &texture);
+Rectangle getCameraBounds(const Camera2D &camera);
 
-// Origin functions
-
-Vector2 getOrigin(const Vector2& size);
-Vector2 getOrigin(float x, float y);
-Vector2 getOrigin(const char* text, float fontSize, float spacing);
-
-// Texture functions
-
-Vector2 getSize(const Texture& texture);
-Rectangle getBox(const Texture& texture);
-
-// Camera functions
-
-Rectangle getCameraBounds(const Camera2D& camera);
-
-// Vector math functions
-
-Vector2 lerp(const Vector2& a, const Vector2& b, float t);
+Vector2 lerp(const Vector2 &a, const Vector2 &b, float t);
 
 #endif

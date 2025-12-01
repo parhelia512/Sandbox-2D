@@ -7,7 +7,7 @@
 // String conversion functions
 
 template<typename T>
-std::string toString(const T& value) {
+inline std::string toString(const T &value) {
    std::stringstream s;
    s << std::boolalpha << value;
    return s.str();
@@ -16,7 +16,7 @@ std::string toString(const T& value) {
 // Format functions
 
 template<typename... Args>
-std::string format(const char* base, const Args&... args) {
+std::string format(const char *base, const Args&...args) {
    std::string result = base;
 
    size_t pos = 0;
@@ -28,27 +28,21 @@ std::string format(const char* base, const Args&... args) {
    return result;
 }
 
-// Debug print functions
-
 template<typename... Args>
-void printf(const char* base, const Args&... args) {
-   std::cout << format(base, args...) << '\n';
+void warn(const char *base, const Args&...args) {
+   std::cout << "WARNING: " << format(base, args...) << "\n";
 }
 
 template<typename... Args>
-void print(const Args&... args) {
-   ((std::cout << std::boolalpha << args << ' '), ...);
-   std::cout << '\n';
+void assert(bool condition, const char *base, const Args&...args) {
+   if (!condition) {
+      std::cout << "ERROR: " << format(base, args...) << '\n';
+      std::exit(-1);
+   }
 }
 
-// Macros
+// Wrap function
 
-#undef warn
-#undef assert
-#undef debugPrint
-
-#define warn(base, ...) std::cout << "WARNING: '" << __FILE__ << ":" << __LINE__ << "': " << format(base, __VA_ARGS__) << '\n';
-#define assert(condition, base, ...) if (not (condition)) { std::cout << "ERROR: '" << __FILE__ << ":" << __LINE__ << "': " << format(base, __VA_ARGS__) << '\n'; std::exit(-1); }
-#define debugPrint() std::cout << "LINE: " << __LINE__ << '\n';
+void wrapText(std::string &string, float maxWidth, float fontSize, float spacing);
 
 #endif

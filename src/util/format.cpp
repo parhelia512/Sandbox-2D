@@ -1,18 +1,22 @@
 #include "mngr/resource.hpp"
-#include "util/text.hpp"
+#include "util/format.hpp"
 
-void wrapText(std::string& string, float maxWidth, float fontSize, float spacing) {
-   auto& font = getFont("andy");
+void wrapText(std::string &string, float maxWidth, float fontSize, float spacing) {
+   Font &font = getFont("andy");
 
-   if (MeasureTextEx(font, string.c_str(), fontSize, spacing).x <= maxWidth) {
+   auto wrap = [&font, &string, &maxWidth, &fontSize, &spacing]() -> bool {
+      return MeasureTextEx(font, string.c_str(), fontSize, spacing).x > maxWidth;
+   };
+
+   if (!wrap()) {
       return;
    }
 
-   auto original = string;
-   std::string_view view = original, split = original;
+   std::string original = string;
+   std::string_view split = original;
    std::stringstream result;
 
-   while (MeasureTextEx(font, string.c_str(), fontSize, spacing).x > maxWidth) {
+   while (wrap()) {
       size_t left = 0, right = split.size();
       std::string_view truncated;
 
@@ -21,7 +25,7 @@ void wrapText(std::string& string, float maxWidth, float fontSize, float spacing
          truncated = split.substr(0, mid);
          string = std::string(truncated) + "-";
 
-         if (MeasureTextEx(font, string.c_str(), fontSize, spacing).x > maxWidth) {
+         if (wrap()) {
             right = mid;
          } else {
             left = mid + 1;
@@ -30,11 +34,11 @@ void wrapText(std::string& string, float maxWidth, float fontSize, float spacing
       truncated = split.substr(0, left - 1);
       split = split.substr(left - 1);
 
-      bool dash = isalpha(truncated.back()) and isalpha(split.front());
+      bool dash = isalpha(truncated.back()) && isalpha(split.front());
       result << truncated << (dash ? "-\n" : "\n");
       string = std::string(split);
 
-      if (MeasureTextEx(font, string.c_str(), fontSize, spacing).x <= maxWidth) {
+      if (!wrap()) {
          result << split;
          break;
       }

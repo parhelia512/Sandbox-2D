@@ -1,18 +1,18 @@
 #include "mngr/resource.hpp"
-#include "ui/input.hpp"
 #include "mngr/sound.hpp"
+#include "ui/input.hpp"
+#include "util/format.hpp"
+#include "util/position.hpp"
 #include "util/render.hpp"
-#include "util/text.hpp"
+#include <raymath.h>
 #include <cmath>
-
-// Update function
 
 void Input::update() {
    bool wasTyping = typing;
    hovering = CheckCollisionPointRec(GetMousePosition(), rectangle);
 
    if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
-      typing = (hovering and not typing);
+      typing = (hovering && !typing);
    }
 
    if ((IsKeyReleased(KEY_ENTER))) {
@@ -20,13 +20,13 @@ void Input::update() {
    }
 
    if (typing) {
-      auto previous = text.size();
-      if ((IsKeyPressed(KEY_BACKSPACE) or IsKeyPressedRepeat(KEY_BACKSPACE) or IsKeyPressed(KEY_DELETE) or IsKeyPressedRepeat(KEY_DELETE)) and not text.empty()) {
+      std::size_t previous = text.size();
+      if ((IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE) || IsKeyPressed(KEY_DELETE) || IsKeyPressedRepeat(KEY_DELETE)) && !text.empty()) {
          text.pop_back();
       }
 
       char pressed = GetCharPressed();
-      while (pressed != 0 and text.size() < maxChars) {
+      while (pressed != 0 && text.size() < maxChars) {
          text += pressed;
          pressed = GetCharPressed();
       }
@@ -50,5 +50,5 @@ void Input::render() {
    wrapText(wrapped, rectangle.width - 10.f, 35, 1);
 
    drawTextureNoOrigin(getTexture("button"), {rectangle.x, rectangle.y}, {rectangle.width, rectangle.height});
-   drawText({rectangle.x + rectangle.width / 2.f, rectangle.y + rectangle.height / 2.f}, (text.empty() ? defaultText : wrapped).c_str(), 35, Color{value, value, value, 255});
+   drawText(Vector2Add({rectangle.x, rectangle.y}, getOrigin({rectangle.width, rectangle.height})), (text.empty() ? fallback : wrapped).c_str(), 35, Color{value, value, value, 255});
 }

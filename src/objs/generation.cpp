@@ -20,11 +20,11 @@ constexpr int rockOffsetMax = 25;
 
 // Private functions
 
-inline float normalizedNoise2D(siv::PerlinNoise& noise, int x, int y, float amplitude) {
+inline float normalizedNoise2D(siv::PerlinNoise &noise, int x, int y, float amplitude) {
    return (noise.octave2D(x * amplitude, y * amplitude, 4) + 1.f) / 2.f;
 }
 
-inline float normalizedNoise1D(siv::PerlinNoise& noise, int x, float amplitude) {
+inline float normalizedNoise1D(siv::PerlinNoise &noise, int x, float amplitude) {
    return (noise.octave1D(x * amplitude, 4) + 1.f) / 2.f;
 }
 
@@ -55,14 +55,14 @@ Biome getBiome(int x) {
       return Biome::forest;
    }
 
-   auto value1 = normalizedNoise1D(mountainDesertNoise , x, 0.004f);
+   float value1 = normalizedNoise1D(mountainDesertNoise , x, 0.004f);
    if (value1 <= .4f) {
       return Biome::desert;
    } else if (value1 >= .75f) {
       return Biome::mountains;
    }
 
-   auto value2 = normalizedNoise1D(tundraJungleNoise, x, 0.004f);
+   float value2 = normalizedNoise1D(tundraJungleNoise, x, 0.004f);
    if (value2 <= .3f) {
       return Biome::tundra;
    } else if (value2 >= .75f) {
@@ -73,7 +73,7 @@ Biome getBiome(int x) {
 
 // Generate functions
 
-void generateMap(const std::string& name, int sizeX, int sizeY) {
+void generateMap(const std::string &name, int sizeX, int sizeY) {
    Map map;
    map.sizeX = sizeX;
    map.sizeY = sizeY;
@@ -87,7 +87,7 @@ void generateMap(const std::string& name, int sizeX, int sizeY) {
    saveWorldData(name, sizeX / 2.f, 0.f, 50.f, map);
 }
 
-void generateTerrain(Map& map) {
+void generateTerrain(Map &map) {
    siv::PerlinNoise noise (rand());
    int y = startY * map.sizeY;
    int rockOffset = rockOffsetStart;
@@ -146,22 +146,22 @@ void generateTerrain(Map& map) {
    }
 }
 
-void generateWater(Map& map) {
+void generateWater(Map &map) {
    int seaY = map.sizeY * seaLevel;
    for (int x = 0; x < map.sizeX; ++x) {
-      for (int y = seaY; y < map.sizeY and map.isu(x, y, Block::air); ++y) {
+      for (int y = seaY; y < map.sizeY && map.isu(x, y, Block::air); ++y) {
          map.setBlock(x, y, (getBiome(x) == Biome::tundra ? "ice" : "water"));
       }
    }
 }
 
-void generateDebri(Map& map) {
+void generateDebri(Map &map) {
    siv::PerlinNoise sandNoise (rand());
    siv::PerlinNoise dirtNoise (rand());
 
    for (int x = 0; x < map.sizeX; ++x) {
       for (int y = 0; y < map.sizeY; ++y) {
-         if (map.isu(x, y, Block::air) or map.isu(x, y, Block::grass)) {
+         if (map.isu(x, y, Block::air) || map.isu(x, y, Block::grass)) {
             continue;
          }
 
@@ -170,22 +170,22 @@ void generateDebri(Map& map) {
             map.setBlock(x, y, "clay");
          } else if (value <= .2f) {
             map.setBlock(x, y, "dirt");
-         } else if (not map.isu(x, y, Block::dirt) and normalizedNoise2D(sandNoise, x, y, 0.04f) <= .15f) {
+         } else if (!map.isu(x, y, Block::dirt) && normalizedNoise2D(sandNoise, x, y, 0.04f) <= .15f) {
             map.setBlock(x, y, "sand");
          }
       }
    }
 }
 
-void generateTrees(Map& map) {
+void generateTrees(Map &map) {
    float y = startY * map.sizeY + 1;
    int counter = 0, counterThreshold = 0;
    
    for (int x = 0; x < map.sizeX; ++x) {
-      while (y < map.sizeY - 1 and map.isu(x, y + 1, Block::air)) { y++; }
-      while (y > 0 and not map.isu(x, y, Block::air)) { y--; }
+      while (y < map.sizeY - 1 && map.isu(x, y + 1, Block::air)) { y++; }
+      while (y > 0 && !map.isu(x, y, Block::air)) { y--; }
 
-      if (counter >= counterThreshold and chance(treeRates[getBiome(x)])) {
+      if (counter >= counterThreshold && chance(treeRates[getBiome(x)])) {
          bool sapling = chance(5);
          Furniture::generate(x, (sapling ? y - 1 : y), map, (sapling ? Furniture::sapling : Furniture::tree));
          counter = 0;

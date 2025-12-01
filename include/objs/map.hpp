@@ -10,7 +10,7 @@ struct Block {
    enum Type { air, grass, dirt, solid, platform, transparent, sand, snow, ice, water, lava };
    using id_t = unsigned char;
    
-   Texture* tex = nullptr;
+   Texture *tex = nullptr;
    Type type = Type::air;
 
    // Unsigned chars can only hold 256 unique IDs. Currently trying to save
@@ -24,7 +24,7 @@ struct Block {
    Color& getColor();
    Color& getWallColor();
    static void initializeColors();
-   static id_t getId(const std::string& name);
+   static id_t getId(const std::string &name);
    static Color& getColorFromId(Block::id_t id);
 };
 
@@ -40,15 +40,15 @@ struct Map {
    // Set block functions
 
    void init();
-   void setBlock(int x, int y, const std::string& name, bool walls = false);
+   void setBlock(int x, int y, const std::string &name, bool walls = false);
    void setBlock(int x, int y, Block::id_t id, bool walls = false);
    void deleteBlock(int x, int y, bool walls = false);
    void moveBlock(int ox, int oy, int nx, int ny);
 
    // Set furniture functions
 
-   void addFurniture(Furniture& furniture);
-   void removeFurniture(Furniture& furniture);
+   void addFurniture(Furniture &furniture);
+   void removeFurniture(Furniture &furniture);
 
    // Get block functions
 
@@ -62,7 +62,7 @@ struct Map {
 
    // Render map
 
-   void render(Camera2D& camera);
+   void render(Camera2D &camera);
 };
 
 #endif

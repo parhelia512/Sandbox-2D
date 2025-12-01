@@ -3,8 +3,6 @@
 
 #include <cstdlib>
 
-// Random functions
-
 inline int random(int min, int max) {
    return min + (rand() % (max - min + 1));
 }
@@ -12,8 +10,6 @@ inline int random(int min, int max) {
 inline float random(float min, float max) {
    return min + (float)rand() / (float)RAND_MAX / (max - min);
 }
-
-// Chance functions
 
 inline bool chance(int percent) {
    return random(0, 100) <= percent;
