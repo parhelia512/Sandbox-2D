@@ -31,56 +31,10 @@ constexpr static std::array<Block::Type, idCount> blockTypes {{
    Block::platform, Block::snow, Block::ice, Block::dirt, Block::grass
 }};
 
-static std::array<Color, idCount> wallColors, blockColors;
-
 // Block functions
-
-Color& Block::getColor() {
-   return blockColors[id];
-}
-
-Color& Block::getWallColor() {
-   return wallColors[id];
-}
-
-void Block::initializeColors() {
-   for (const auto &[name, id]: blockIds) {
-      Texture2D &texture = getTexture(name);
-      Image image = LoadImageFromTexture(texture);
-      Color a = GetImageColor(image, 0, 0);
-
-      // Ignore any transparent blocks (like glass)
-      if (a.a == 0) {
-         blockColors[id] = wallColors[id] = a;
-         UnloadImage(image);
-         continue;
-      }
-
-      // Do some cheats to have our color tinted without having to implement
-      // any math ourselves
-      RenderTexture target = LoadRenderTexture(1, 1);
-      BeginTextureMode(target);
-      DrawTexture(texture, 0, 0, backgroundTint);
-      EndTextureMode();
-
-      Image image2 = LoadImageFromTexture(target.texture);
-      Color b = GetImageColor(image2, 0, 0);
-
-      blockColors[id] = a;
-      wallColors[id] = b;
-
-      UnloadImage(image);
-      UnloadImage(image2);
-      UnloadRenderTexture(target);
-   }
-}
 
 Block::id_t Block::getId(const std::string &name) {
    return blockIds[name];
-}
-
-Color& Block::getColorFromId(Block::id_t id) {
-   return blockColors[id];
 }
 
 // Set block functions
@@ -162,7 +116,7 @@ bool Map::isu(int x, int y, Block::Type type) {
 }
 
 bool Map::empty(int x, int y) {
-   return !blocks[y][x].furniture && blocks[y][x].type == Block::air;
+   return isPositionValid(x, y) and !blocks[y][x].furniture && blocks[y][x].type == Block::air;
 }
 
 bool Map::isTransparent(int x, int y) {
@@ -196,12 +150,7 @@ void Map::render(Camera2D &camera) {
 
          int ox = x;
          while (x < maxX && walls[y][x].id == wall.id && isTransparent(x, y)) { ++x; }
-
-         if (camera.zoom <= 12.5f) {
-            DrawRectangle(ox, y, x - ox, 1, wall.getWallColor());
-         } else {
-            drawTextureBlock(*wall.tex, {(float)ox, (float)y, float(x - ox), 1.f}, backgroundTint);
-         }
+         drawTextureBlock(*wall.tex, {(float)ox, (float)y, float(x - ox), 1.f}, backgroundTint);
          --x;
       }
    }
@@ -215,17 +164,12 @@ void Map::render(Camera2D &camera) {
 
          int ox = x;
          while (x < maxX && blocks[y][x].id == block.id) { ++x; }
-
-         if (camera.zoom <= 12.5f) {
-            DrawRectangle(ox, y, x - ox, 1, block.getColor());
-         } else {
-            drawTextureBlock(*block.tex, {(float)ox, (float)y, float(x - ox), 1.f});
-         }
+         drawTextureBlock(*block.tex, {(float)ox, (float)y, float(x - ox), 1.f});
          --x;
       }
    }
 
    for (Furniture &obj: furniture) {
-      obj.render(camera.zoom <= 12.5f, minX, minY, maxX, maxY);
+      obj.render(minX, minY, maxX, maxY);
    }
 }

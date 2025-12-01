@@ -49,7 +49,7 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
       file << obj.posX << ' ' << obj.posY << ' ' << obj.sizeX << ' ' << obj.sizeY << ' ' << obj.type << ' ' << (int)obj.value << ' ' << (int)obj.value2 << ' ' << (int)obj.texId << ' ';
       for (const std::vector<FurniturePiece> &row: obj.pieces) {
          for (const FurniturePiece &piece: row) {
-            file << piece.nil << ' ' << (int)piece.colorId << ' ' << (int)piece.tx << ' ' << (int)piece.ty << ' ';
+            file << piece.nil << ' ' << (int)piece.tx << ' ' << (int)piece.ty << ' ';
          }
       }
       file << '\n';
@@ -95,9 +95,9 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
       for (int y = 0; y < sizeY; ++y) {
          for (int x = 0; x < sizeX; ++x) {
             FurniturePiece &piece = furniture.pieces[y][x];
-            int nil = 0, colorId = 0, tx = 0, ty = 0;
-            file >> nil >> colorId >> tx >> ty;
-            piece = {(unsigned char)tx, (unsigned char)ty, (unsigned char)colorId, (bool)nil};
+            int nil = 0, tx = 0, ty = 0;
+            file >> nil >> tx >> ty;
+            piece = {(unsigned char)tx, (unsigned char)ty, (bool)nil};
          }
       }
       map.addFurniture(furniture);

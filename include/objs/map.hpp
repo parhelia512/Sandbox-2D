@@ -21,11 +21,7 @@ struct Block {
    // Values used by physics updates, specific to the block type
    unsigned char value = 0, value2 = 0;
 
-   Color& getColor();
-   Color& getWallColor();
-   static void initializeColors();
    static id_t getId(const std::string &name);
-   static Color& getColorFromId(Block::id_t id);
 };
 
 // Map

@@ -2,7 +2,6 @@
 #include "game/menuState.hpp"
 #include "mngr/resource.hpp"
 #include "mngr/sound.hpp"
-#include "objs/map.hpp"
 #include "util/fileio.hpp"
 #include "util/format.hpp"
 #include "util/position.hpp"
@@ -30,7 +29,6 @@ void LoadingState::update() {
    } else if (load == Load::textures) {
       text = "Loading Textures... ";
       loadTextures();
-      Block::initializeColors();
       load = Load::sounds;
    } else if (load == Load::sounds) {
       text = "Loading Sounds... ";

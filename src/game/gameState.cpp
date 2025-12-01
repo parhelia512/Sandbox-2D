@@ -11,7 +11,7 @@
 // Constants
 
 constexpr float cameraFollowSpeed = .416f;
-constexpr float maxCameraZoom = 1.f;
+constexpr float maxCameraZoom = 12.5f;
 constexpr float minCameraZoom = 100.f;
 
 // Constructors
@@ -56,7 +56,7 @@ static int index = 0;
 static int size = 20;
 static const char *blockMap[] {
    "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian",
-   "lava", "platform", "snow", "ice", "jungle_grass", "mud",
+   "lava", "platform", "snow", "ice", "mud", "jungle_grass",
    "sapling"
 };
 static bool drawWall = false;
@@ -105,9 +105,19 @@ void GameState::updatePhysics() {
    } else {
       return;
    }
-   
-   for (int y = map.sizeY - 1; y >= 0; --y) {
-      for (int x = map.sizeX - 1; x >= 0; --x) {
+
+   Rectangle bounds = getCameraBounds(camera);
+   Vector2 min {
+      (float)std::max(0, int(bounds.x)),
+      (float)std::max(0, int(bounds.y)),
+   };
+   Vector2 max {
+      (float)std::min(map.sizeX, int((bounds.x + bounds.width))),
+      (float)std::min(map.sizeY, int((bounds.y + bounds.height))),
+   };
+
+   for (int y = max.y; y >= min.y; --y) {
+      for (int x = max.x; x >= min.x; --x) {
          Block &block = map[y][x];
 
          if (block.type == Block::water || block.type == Block::lava) {
@@ -136,19 +146,19 @@ void GameState::updatePhysics() {
                }
             }
 
-            if (map.is(x, y + 1, Block::air)) {
+            if (map.empty(x, y + 1)) {
                map.moveBlock(x, y, x, y + 1);
-            } else if (map.is(x - 1, y, Block::air) && map.is(x + 1, y, Block::air)) {
+            } else if (map.empty(x - 1, y) && map.empty(x + 1, y)) {
                if (chance(50)) {
                   goto moveWaterLeft;
                } else {
                   goto moveWaterRight;
                }
-            } else if (map.is(x - 1, y, Block::air)) {
+            } else if (map.empty(x - 1, y)) {
             moveWaterLeft:
                map.moveBlock(x, y, x - 1, y);
                --x; // Prevent the water tile from updating twice
-            } else if (map.is(x + 1, y, Block::air)) {
+            } else if (map.empty(x + 1, y)) {
             moveWaterRight:
                map.moveBlock(x, y, x + 1, y);
             }
@@ -156,18 +166,18 @@ void GameState::updatePhysics() {
 
          // Update sand
          if (block.type == Block::sand) {
-            if (map.is(x, y + 1, Block::air) || map.is(x, y + 1, Block::water)) {
+            if (map.empty(x, y + 1) || map.is(x, y + 1, Block::water)) {
                map.moveBlock(x, y, x, y + 1);
-            } else if ((map.is(x - 1, y + 1, Block::air) || map.is(x - 1, y + 1, Block::water)) && (map.is(x + 1, y + 1, Block::air) || map.is(x + 1, y + 1, Block::water))) {
+            } else if ((map.empty(x - 1, y + 1) || map.is(x - 1, y + 1, Block::water)) && (map.empty(x + 1, y + 1) || map.is(x + 1, y + 1, Block::water))) {
                if (chance(50)) {
                   goto moveSandRight;
                } else {
                   goto moveSandLeft;
                }
-            } else if (map.is(x - 1, y + 1, Block::air) || map.is(x - 1, y + 1, Block::water)) {
+            } else if (map.empty(x - 1, y + 1) || map.is(x - 1, y + 1, Block::water)) {
             moveSandLeft:
                map.moveBlock(x, y, x - 1, y + 1);
-            } else if (map.is(x + 1, y + 1, Block::air) || map.is(x + 1, y + 1, Block::water)) {
+            } else if (map.empty(x + 1, y + 1) || map.is(x + 1, y + 1, Block::water)) {
             moveSandRight:
                map.moveBlock(x, y, x + 1, y + 1);
             }
@@ -219,7 +229,7 @@ void GameState::render() {
    /************************************/
    // Scary method of rendering furniture and block preview correctly
    Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
-   if (canDraw && camera.zoom > 12.5f && map.isPositionValid(mousePos.x, mousePos.y)) {
+   if (canDraw && map.isPositionValid(mousePos.x, mousePos.y)) {
       Furniture::Type ftype = getFurnitureType();
       if (ftype != Furniture::none) {
          static Block::Type oldBelow = Block::air;

@@ -21,9 +21,8 @@ constexpr int texSize = 8;
 
 // Helper functions
 
-inline void setBlock(FurniturePiece &piece, const std::string &id, int tx, int ty) {
+inline void setBlock(FurniturePiece &piece, int tx, int ty) {
    piece.nil = false;
-   piece.colorId = Block::getId(id);
    piece.tx = tx;
    piece.ty = ty;
 }
@@ -109,30 +108,30 @@ Furniture Furniture::get(int x, int y, Map &map, Type type, bool debug) {
 
       for (int i = 0; i < (palm ? 3 : 2); ++i) {
          for (int j = 0; j < 3; ++j) {
-            setBlock(tree.pieces[i][j], (tree.texId == furnitureTextureIds["pine"] ? "snow" : "grass"), offsetTx + j * texSize, i * texSize);
+            setBlock(tree.pieces[i][j], offsetTx + j * texSize, i * texSize);
          }
       }
 
       for (int i = (palm ? 3 : 2); i < height; ++i) {
          FurniturePiece &piece = tree.pieces[i][1];
          if (palm) {
-            setBlock(piece, "planks", random(0, 2) * texSize, (i + 1 == height ? 4 : 3) * texSize);
+            setBlock(piece, random(0, 2) * texSize, (i + 1 == height ? 4 : 3) * texSize);
             continue;
          }
 
-         setBlock(piece, "planks", 2 * texSize, 3 * texSize);
+         setBlock(piece, 2 * texSize, 3 * texSize);
 
          if (i + 1 == height) {
             bool rightFree = (map.empty(tree.posX + 2, tree.posY + i) && isBlockSoil(map, tree.posX + 2, tree.posY + i + 1) && chance(25));
             bool leftFree = (map.empty(tree.posX, tree.posY + i) && isBlockSoil(map, tree.posX, tree.posY + i + 1) && chance(25));
 
             if (rightFree) {
-               setBlock(tree.pieces[i][2], "planks", 4 * texSize, 4 * texSize);
+               setBlock(tree.pieces[i][2], 4 * texSize, 4 * texSize);
                piece.tx = 3 * texSize;
                piece.ty = 4 * texSize;
             }
             if (leftFree) {
-               setBlock(tree.pieces[i][0], "planks", 0 * texSize, 4 * texSize);
+               setBlock(tree.pieces[i][0], 0 * texSize, 4 * texSize);
                piece.tx = 1 * texSize;
                piece.ty = 4 * texSize;
             }
@@ -147,12 +146,12 @@ Furniture Furniture::get(int x, int y, Map &map, Type type, bool debug) {
             bool leftFree = (map.empty(tree.posX, tree.posY + i) && chance(15));
 
             if (rightFree) {
-               setBlock(tree.pieces[i][2], "planks", random(3, 5) * texSize, 2 * texSize);
+               setBlock(tree.pieces[i][2], random(3, 5) * texSize, 2 * texSize);
                piece.tx = 3 * texSize;
                piece.ty = 3 * texSize;
             }
             if (leftFree) {
-               setBlock(tree.pieces[i][0], "planks", random(0, 2) * texSize, 2 * texSize);
+               setBlock(tree.pieces[i][0], random(0, 2) * texSize, 2 * texSize);
                piece.tx = 1 * texSize;
                piece.ty = 3 * texSize;
             }
@@ -180,8 +179,8 @@ Furniture Furniture::get(int x, int y, Map &map, Type type, bool debug) {
       int value = random(0, 100);
       int offsetTx = (value < 33 ? 0 : (value < 66 ? texSize : 2 * texSize));
 
-      setBlock(sapling.pieces[0][0], "planks", offsetTx, 0 * texSize);
-      setBlock(sapling.pieces[1][0], "planks", offsetTx, 1 * texSize);
+      setBlock(sapling.pieces[0][0], offsetTx, 0 * texSize);
+      setBlock(sapling.pieces[1][0], offsetTx, 1 * texSize);
       return sapling;
    } break;
 
@@ -208,19 +207,14 @@ void Furniture::preview(Map &map) {
    }
 }
 
-void Furniture::render(bool zoomedOut, int minX, int minY, int maxX, int maxY) {
+void Furniture::render(int minX, int minY, int maxX, int maxY) {
    for (int y = posY; y < maxY && y - posY < sizeY; ++y) {
       for (int x = posX; x < maxX && x - posX < sizeX; ++x) {
          FurniturePiece &piece = pieces[y - posY][x - posX];
          if (y < minY || x < minX || piece.nil) {
             continue;
          }
-
-         if (zoomedOut) {
-            DrawRectangle(x, y, 1, 1, Block::getColorFromId(piece.colorId));
-         } else {
-            DrawTexturePro(getTexture(furnitureTextureNames[texId]), {(float)piece.tx, (float)piece.ty, texSize, texSize}, {(float)x, (float)y, 1.f, 1.f}, {0, 0}, 0, WHITE);
-         }
+         DrawTexturePro(getTexture(furnitureTextureNames[texId]), {(float)piece.tx, (float)piece.ty, texSize, texSize}, {(float)x, (float)y, 1.f, 1.f}, {0, 0}, 0, WHITE);
       }
    }
 }

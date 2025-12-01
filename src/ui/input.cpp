@@ -26,7 +26,7 @@ void Input::update() {
       }
 
       char pressed = GetCharPressed();
-      while (pressed != 0 && text.size() < maxChars) {
+      while (pressed != 0 && text.size() < (std::size_t)maxChars) {
          text += pressed;
          pressed = GetCharPressed();
       }

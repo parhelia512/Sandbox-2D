@@ -10,7 +10,6 @@ struct Map;
 
 struct FurniturePiece {
    unsigned char tx = 0, ty = 0;
-   unsigned char colorId = 0;
    bool nil = true;
 };
 
@@ -44,7 +43,7 @@ struct Furniture {
    // Render functions
 
    void preview(Map &map);
-   void render(bool zoomedOut, int minX, int minY, int maxX, int maxY);
+   void render(int minX, int minY, int maxX, int maxY);
 
    // Id functions
 
