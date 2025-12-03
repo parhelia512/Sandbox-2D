@@ -12,6 +12,7 @@ constexpr float seaLevel = .4f;
 constexpr int rockOffsetStart = 12;
 constexpr int rockOffsetMin = 5;
 constexpr int rockOffsetMax = 25;
+constexpr int maxWaterLength = 100;
 
 // Private functions
 
@@ -42,12 +43,12 @@ struct BiomeHeightData {
 };
 
 constexpr std::array<BiomeHeightData, biomeCount> biomeHeightData {{
-   {{-2, -1, 0, 0, 0},   {0, 0, 0, 1, 2}, 20, .3f,  .5f},
-   {{-3, -2, -1, 0, 0},  {0, 0, 1, 2, 3}, 80, .2f,  .55f},
-   {{-7, -5, -3, -2, 0}, {0, 2, 3, 5, 7}, 80, .05f, .5f},
-   {{-1, -1, 0, 0, 0},   {0, 0, 1, 1, 1}, 15, .3f,  .5f},
-   {{-3, -2, -1, 0, 0},  {0, 0, 1, 2, 3}, 80, .2f,  .55f},
-   {{-3, -2, -1, 0, 0},  {0, 0, 1, 2, 3}, 80, .2f,  .55f},
+   {{-2, -1, 0, 0, 0},   {0, 0, 0, 1, 2}, 20, .3f,  .45f},
+   {{-3, -2, -1, 0, 0},  {0, 0, 1, 2, 3}, 80, .2f,  .5f},
+   {{-7, -5, -3, -2, 0}, {0, 2, 3, 5, 7}, 80, .05f, .45f},
+   {{-1, -1, 0, 0, 0},   {0, 0, 1, 1, 1}, 15, .3f,  .45f},
+   {{-3, -2, -1, 0, 0},  {0, 0, 1, 2, 3}, 80, .2f,  .5f},
+   {{-3, -2, -1, 0, 0},  {0, 0, 1, 2, 3}, 80, .2f,  .5f},
 }};
 
 // A single noise object can do two things, one for the 0.0-0.1 and one for 0.9-1.0
@@ -102,7 +103,7 @@ void generateTerrain(Map &map) {
    Biome current = Biome::plains, last = Biome::plains;
    siv::PerlinNoise noise (rand());
    int y = startY * map.sizeY;
-   int rockOffset = rockOffsetStart;
+   int rockOffset = rockOffsetStart, waterLength = 0;
 
    for (int x = 0; x < map.sizeX; ++x) {
       float value = normalizedNoise2D(noise, x, y, 0.01f);
@@ -121,13 +122,20 @@ void generateTerrain(Map &map) {
          y += random(-1, 1);
       }
 
+      if (y > map.sizeY * seaLevel) {
+         waterLength += 1;
+      } else {
+         waterLength = 0;
+      }
+
       if (y < map.sizeY * data.highestPoint) {
          y += data.hmax[4];
       }
 
-      if (y > map.sizeY * data.lowestPoint) {
-         y += data.hmin[0];
+      if (y > map.sizeY * data.lowestPoint or waterLength >= maxWaterLength) {
+         y += data.hmin[random(0, 2)];
       }
+
       y = std::clamp(y, 0, map.sizeY - 1);
       rockOffset = std::clamp(rockOffset, rockOffsetMin, rockOffsetMax);
 
