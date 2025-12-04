@@ -58,7 +58,9 @@ void Map::setBlock(int x, int y, const std::string &name, bool wall) {
 
 void Map::setBlock(int x, int y, Block::id_t id, bool wall) {
    Block &block = (wall ? walls : blocks)[y][x];
+
    block.id = id;
+   block.value = block.value2 = 0;
    block.type = blockTypes[block.id];
 
    if (block.id != 0) {

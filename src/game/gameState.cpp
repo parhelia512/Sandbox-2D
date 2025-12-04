@@ -181,8 +181,19 @@ void GameState::updatePhysics() {
             moveSandRight:
                map.moveBlock(x, y, x + 1, y + 1);
             }
+
+            if (map[y][x].value2 == 0) {
+               map[y][x].value2 = random(175, 255);
+            }
+
+            map[y][x].value += chance(5);
+            if (map[y][x].value >= map[y][x].value2 && map[y][x].value2 != 0 && map.empty(x, y - 1) && map.empty(x, y - 2)) {
+               map[y][x].value = map[y][x].value2 = 0;
+               Furniture::generate(x, y - 1, map, Furniture::cactus_seed);
+            }
          }
 
+         // Update grass and dirt
          if (block.type == Block::dirt && (map.is(x, y - 1, Block::air) || map.is(x, y - 1, Block::water) || map.is(x, y - 1, Block::platform))) {
             if (map[y][x].value2 == 0) {
                map[y][x].value2 = random(100, 255);
@@ -190,7 +201,7 @@ void GameState::updatePhysics() {
 
             ++map[y][x].value;
             if (map[y][x].value >= map[y][x].value2) {
-               map[y][x].value = 0;
+               map[y][x].value = map[y][x].value2 = 0;
                map.setBlock(x, y, (block.id == Block::getId("dirt") ? "grass" : "jungle_grass"));
             }
          }
@@ -202,7 +213,7 @@ void GameState::updatePhysics() {
 
             ++map[y][x].value;
             if (map[y][x].value >= map[y][x].value2) {
-               map[y][x].value = 0;
+               map[y][x].value = map[y][x].value2 = 0;
                map.setBlock(x, y, (block.id == Block::getId("grass") ? "dirt" : "mud"));
             }
          }

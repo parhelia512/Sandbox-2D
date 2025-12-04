@@ -58,7 +58,7 @@ void Furniture::update(Map &map) {
    } break;
 
    case Type::sapling: {
-      if (!isBlockSoil(map, posX, posY + sizeY)) {
+      if (!isBlockSoil(map, posX, posY + sizeY) || map.is(posX, posY - 1, Block::sand)) {
          map.removeFurniture(*this);
          return;
       }
@@ -82,7 +82,7 @@ void Furniture::update(Map &map) {
    } break;
 
    case Type::cactus_seed: {
-      if (!map.isu(posX, posY + sizeY, Block::sand)) {
+      if (!map.isu(posX, posY + sizeY, Block::sand) || map.is(posX, posY - 1, Block::sand)) {
          map.removeFurniture(*this);
          return;
       }
@@ -287,9 +287,6 @@ Furniture Furniture::get(int x, int y, Map &map, Type type, bool debug) {
    } break;
 
    case Type::cactus_seed: {
-      printf(
-         "GENERATING CACTUS SEED\n"
-      );
       if (!debug && (!map.is(x, y + 1, Block::sand) or !map.empty(x, y))) {
          return {};
       }
