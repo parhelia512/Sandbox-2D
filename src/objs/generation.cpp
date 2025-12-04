@@ -27,11 +27,11 @@ inline float normalizedNoise1D(siv::PerlinNoise &noise, int x, float amplitude) 
 // Biome functions
 
 constexpr int biomeCount = 6;
-static std::unordered_map<Biome, int> treeRates {
+static inline std::unordered_map<Biome, int> treeRates {
    {Biome::plains, 2}, {Biome::forest, 90}, {Biome::mountains, 1}, {Biome::desert, 50}, {Biome::tundra, 60}, {Biome::jungle, 95}
 };
 
-constexpr std::array<std::pair<const char*, const char*>, biomeCount> biomeBlocks {{
+static inline std::array<std::pair<const char*, const char*>, biomeCount> biomeBlocks {{
    {"grass", "dirt"}, {"grass", "dirt"}, {"stone", "stone"}, {"sand", "sand"}, {"snow", "snow"}, {"jungle_grass", "mud"}
 }};
 
@@ -42,7 +42,7 @@ struct BiomeHeightData {
    float highestPoint, lowestPoint;
 };
 
-constexpr std::array<BiomeHeightData, biomeCount> biomeHeightData {{
+static inline std::array<BiomeHeightData, biomeCount> biomeHeightData {{
    {{-2, -1, 0, 0, 0},   {0, 0, 0, 1, 2}, 20, .3f,  .45f},
    {{-3, -2, -1, 0, 0},  {0, 0, 1, 2, 3}, 80, .2f,  .5f},
    {{-7, -5, -3, -2, 0}, {0, 2, 3, 5, 7}, 80, .05f, .45f},

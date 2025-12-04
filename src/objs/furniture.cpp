@@ -9,12 +9,12 @@
 // Constants
 
 constexpr int furnitureCount = 10;
-static std::unordered_map<std::string, int> furnitureTextureIds {
+static inline std::unordered_map<std::string, int> furnitureTextureIds {
    {"tree", 0}, {"sapling", 1}, {"palm", 2}, {"palm_sapling", 3}, {"pine", 4}, {"pine_sapling", 5},
    {"jungle_tree", 6}, {"jungle_sapling", 7}, {"cactus", 8}, {"cactus_seed", 9}
 };
 
-constexpr std::array<const char*, furnitureCount> furnitureTextureNames {
+static inline std::array<const char*, furnitureCount> furnitureTextureNames {
    "tree", "sapling", "palm", "palm_sapling", "pine", "pine_sapling",
    "jungle_tree", "jungle_sapling", "cactus", "cactus_seed"
 };
