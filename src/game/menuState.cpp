@@ -3,6 +3,7 @@
 #include "mngr/resource.hpp"
 #include "objs/generation.hpp"
 #include "util/fileio.hpp"
+#include "util/parallax.hpp"
 #include "util/position.hpp"
 #include "util/render.hpp"
 #include <cmath>
@@ -15,7 +16,8 @@ constexpr int defaultMapSizeY = 750;
 
 // Constructors
 
-MenuState::MenuState() {
+MenuState::MenuState()
+   : backgroundTexture(getRandomBackground()), foregroundTexture(getRandomForeground()) {
    // Init title screen
    playButton.rectangle = {GetScreenWidth() / 2.f, GetScreenHeight() / 2.f, 210.f, 70.f};
    playButton.text = "Play";
@@ -123,8 +125,8 @@ void MenuState::updateGeneratingLevel() {
 void MenuState::render() {
    // Render the parallax background
    drawTextureNoOrigin(getTexture("sky"), {0, 0}, getScreenSize());
-   drawParallaxTexture(getTexture("mountains1"), scrollingBg, 150.f);
-   drawParallaxTexture(getTexture("bg_trees1"), scrollingFg, 200.f);
+   drawParallaxTexture(backgroundTexture, scrollingBg, 150.f);
+   drawParallaxTexture(foregroundTexture, scrollingFg, 200.f);
 
    // Render everything else
    switch (phase) {

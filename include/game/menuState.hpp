@@ -43,6 +43,7 @@ private:
    std::vector<Button> worldButtons;
    Scrollframe worldFrame;
    Input worldName;
+   Texture &backgroundTexture, &foregroundTexture;
 
    std::string selectedWorld;
    Phase phase = Phase::title;
