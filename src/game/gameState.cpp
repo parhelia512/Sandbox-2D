@@ -2,6 +2,7 @@
 #include "game/menuState.hpp"
 #include "mngr/resource.hpp"
 #include "util/fileio.hpp"
+#include "util/parallax.hpp"
 #include "util/position.hpp"
 #include "util/random.hpp"
 #include "util/render.hpp"
@@ -17,7 +18,7 @@ constexpr float maxCameraZoom = 200.f;
 // Constructors
 
 GameState::GameState(const std::string &worldName)
-   : worldName(worldName) {
+   : backgroundTexture(getRandomBackground()), foregroundTexture(getRandomForeground()), worldName(worldName) {
    loadWorldData(worldName, player, camera.zoom, map);
    camera.target = player.getCenter();
    camera.offset = getScreenCenter();
@@ -236,7 +237,11 @@ void GameState::updatePhysics() {
 // Other functions
 
 void GameState::render() {
-   drawRect(BLUE);
+   // Draw parallax background
+   drawTextureNoOrigin(getTexture("sky"), {0, 0}, getScreenSize());
+   drawParallaxTexture(backgroundTexture, scrollingBg, player.vel.x * 30.f);
+   drawParallaxTexture(foregroundTexture, scrollingFg, player.vel.x * 40.f);
+
    BeginMode2D(camera);
    map.render(camera);
 

@@ -43,13 +43,13 @@ private:
    std::vector<Button> worldButtons;
    Scrollframe worldFrame;
    Input worldName;
+
    Texture &backgroundTexture, &foregroundTexture;
+   float scrollingBg = 0.f, scrollingFg = 0.f;
 
    std::string selectedWorld;
    Phase phase = Phase::title;
    bool playing = false;
-   float scrollingBg = 0.f;
-   float scrollingFg = 0.f;
 };
 
 #endif
