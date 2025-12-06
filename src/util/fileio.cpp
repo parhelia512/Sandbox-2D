@@ -78,8 +78,8 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
    std::ifstream file (format("data/worlds/{}.txt", name));
    assert(file.is_open(), "Failed to load world 'data/worlds/{}.txt'.", name);
 
-   file >> player.pos.x;
-   file >> player.pos.y;
+   file >> player.position.x;
+   file >> player.position.y;
    file >> map.sizeX;
    file >> map.sizeY;
    file >> zoom;

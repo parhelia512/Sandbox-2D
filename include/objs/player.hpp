@@ -6,21 +6,22 @@
 // Player
 
 struct Player {
-   Vector2 pos, vel, prev, delta;
-   bool onGround = false;
-   bool canHoldJump = true;
-   bool feetCollision = false;
-   bool torsoCollision = false;
-   bool flipX = false;
+   Vector2 position, velocity, previousPosition, delta;
+   bool onGround = false, canHoldJump = true;
+   bool feetCollision = false, torsoCollision = false;
    int feetCollisionY = 0;
-   float waterMult = 1.f, iceMult = 1.f;
+
+   float waterMultiplier = 1.f, iceMultiplier = 1.f;
    float holdJumpTimer = 0.f;
 
    float updateTimer = 0.f;
    float fallTimer = 0.f;
    float walkTimer = 0.f;
    int walkFrame = 6;
-   int fx = 0;
+   bool flipX = false;
+   int frameX = 0;
+
+   bool debugging = false;
 
    // Constructors
 
@@ -30,6 +31,7 @@ struct Player {
 
    void updatePlayer(Map &map);
    void updateMovement();
+   void updateDebugMovement();
    void updateCollisions(Map &map);
    void updateAnimation();
 

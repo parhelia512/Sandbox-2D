@@ -9,6 +9,8 @@ constexpr float frameSize = 16;
 
 constexpr float updateSpeed = 1.f / 60.f;
 constexpr float speed = 4.363f * .5f;
+constexpr float debugFlySpeed = speed * 2.f;
+constexpr float debugFastFlySpeed = speed * 5.f;
 constexpr float jumpSpeed = -6.667f * .5f;
 constexpr float gravity = .533f * .5f;
 constexpr float maxGravity = 14.667f * .5f;
@@ -20,43 +22,54 @@ constexpr float jumpHoldTime = .4f;
 // Constructors
 
 void Player::init() {
-   vel = {0, 0};
-   prev = pos;
+   velocity = {0, 0};
+   previousPosition = position;
 }
 
 // Update functions
 
 void Player::updatePlayer(Map &map) {
+   if (IsKeyReleased(KEY_TAB)) {
+      debugging = !debugging;
+   }
+
    updateTimer += GetFrameTime();
    while (updateTimer >= updateSpeed) {
       updateTimer -= updateSpeed;
-      updateMovement();
+
+      if (debugging) {
+         updateDebugMovement();
+      } else {
+         updateMovement();
+      }
       updateCollisions(map);
    }
-   updateAnimation();
 
-   delta = {pos.x - prev.x, pos.y - prev.y};
-   prev = pos;
+   updateAnimation();
+   delta = {position.x - previousPosition.x, position.y - previousPosition.y};
+   previousPosition = position;
 }
 
+// Movement functions
+
 void Player::updateMovement() {
-   int dir = IsKeyDown(KEY_D) - IsKeyDown(KEY_A);
+   int directionX = IsKeyDown(KEY_D) - IsKeyDown(KEY_A);
 
    if (!onGround) {
-      vel.y = min(maxGravity, vel.y + gravity);
+      velocity.y = min(maxGravity, velocity.y + gravity);
    } else {
-      vel.y = min(maxGravity, gravity);
+      velocity.y = min(maxGravity, gravity);
    }
 
-   if (dir != 0) {
+   if (directionX != 0) {
       float speedX = (onGround ? speed : speed * .6f);
-      vel.x = lerp(vel.x, dir * speedX, acceleration * iceMult);
+      velocity.x = lerp(velocity.x, directionX * speedX, acceleration * iceMultiplier);
    } else {
-      vel.x = lerp(vel.x, 0.f, deceleration * iceMult);
+      velocity.x = lerp(velocity.x, 0.f, deceleration * iceMultiplier);
    }
 
    if (IsKeyDown(KEY_SPACE) && canHoldJump) {
-      vel.y = jumpSpeed;
+      velocity.y = jumpSpeed;
 
       holdJumpTimer += updateSpeed;
       if (holdJumpTimer >= jumpHoldTime) {
@@ -70,33 +83,48 @@ void Player::updateMovement() {
    } else if (!IsKeyDown(KEY_SPACE)) {
       canHoldJump = false;
    }
-   vel.x *= waterMult;
-   vel.y *= waterMult;
+   velocity.x *= waterMultiplier;
+   velocity.y *= waterMultiplier;
 
-   if (dir != 0 ) {
-      flipX = (dir == 1);
+   if (directionX != 0 ) {
+      flipX = (directionX == 1);
    }
 }
 
+void Player::updateDebugMovement() {
+   int directionX = IsKeyDown(KEY_D) - IsKeyDown(KEY_A);
+   int directionY = IsKeyDown(KEY_S) - IsKeyDown(KEY_W);
+   float speed = (IsKeyDown(KEY_LEFT_SHIFT) ? debugFastFlySpeed : debugFlySpeed);
+
+   velocity.x = lerp(velocity.x, directionX * speed, acceleration * iceMultiplier) * waterMultiplier;
+   velocity.y = lerp(velocity.y, directionY * speed, acceleration * iceMultiplier) * waterMultiplier;
+
+   if (directionX != 0) {
+      flipX = (directionX == 1);
+   }
+}
+
+// Update collisions
+
 void Player::updateCollisions(Map &map) {
-   pos.y = lerp(pos.y, pos.y + vel.y, smoothing);
+   position.y = lerp(position.y, position.y + velocity.y, smoothing);
    bool collisionY = false, canGoUpSlopes = true;
    int waterTileCount = 0, lavaTileCount = 0, iceTileCount = 0;
 
-   if (pos.y < 0) {
-      pos.y = 0;
+   if (position.y < 0) {
+      position.y = 0;
       canGoUpSlopes = canHoldJump = false;
       collisionY = true;
-   } else if (pos.y > map.sizeY - size.y) {
-      pos.y = map.sizeY - size.y;
+   } else if (position.y > map.sizeY - size.y) {
+      position.y = map.sizeY - size.y;
       onGround = collisionY = true;
    }
 
-   int maxX = min(map.sizeX, int(pos.x + size.x) + 1);
-   int maxY = min(map.sizeY, int(pos.y + size.y) + 1);
+   int maxX = min(map.sizeX, int(position.x + size.x) + 1);
+   int maxY = min(map.sizeY, int(position.y + size.y) + 1);
 
-   for (int y = max(0, (int)pos.y); y < maxY; ++y) {
-      for (int x = max(0, (int)pos.x); x < maxX; ++x) {
+   for (int y = max(0, (int)position.y); y < maxY; ++y) {
+      for (int x = max(0, (int)position.x); x < maxX; ++x) {
          if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || map.isu(x, y, Block::lava) || (IsKeyDown(KEY_S) && map.isu(x, y, Block::platform))) {
             // Only check water and lava tile count in the first iteration
             waterTileCount += map.isu(x, y, Block::water);
@@ -104,18 +132,18 @@ void Player::updateCollisions(Map &map) {
             continue;
          }
 
-         if (!CheckCollisionRecs({pos.x, pos.y, size.x, size.y}, {(float)x, (float)y, 1.f, 1.f})) {
+         if (!CheckCollisionRecs({position.x, position.y, size.x, size.y}, {(float)x, (float)y, 1.f, 1.f})) {
             continue;
          }
 
-         if (prev.y >= y + 1.f && !map.isu(x, y, Block::platform)) {
-            pos.y = y + 1.f;
+         if (previousPosition.y >= y + 1.f && !map.isu(x, y, Block::platform)) {
+            position.y = y + 1.f;
             canHoldJump = false;
             collisionY = true;
          }
 
-         if (prev.y + size.y <= y) {
-            pos.y = y - size.y;
+         if (previousPosition.y + size.y <= y) {
+            position.y = y - size.y;
             onGround = true;
             collisionY = true;
             iceTileCount += map.isu(x, y, Block::ice);
@@ -124,22 +152,22 @@ void Player::updateCollisions(Map &map) {
    }
 
    if (!torsoCollision && feetCollision && !IsKeyDown(KEY_S)) {
-      pos.y = feetCollisionY - size.y;
+      position.y = feetCollisionY - size.y;
    }
 
-   pos.x = lerp(pos.x, pos.x + vel.x, smoothing);
+   position.x = lerp(position.x, position.x + velocity.x, smoothing);
 
-   Rectangle torso {pos.x, pos.y - 1.f, size.x, size.y};
-   Rectangle feet {pos.x, pos.y + 2.f, size.x, 1.f};
+   Rectangle torso {position.x, position.y - 1.f, size.x, size.y};
+   Rectangle feet {position.x, position.y + 2.f, size.x, 1.f};
    torsoCollision = feetCollision = false;
    feetCollisionY = 0;
 
-   pos.x = clamp(pos.x, 0.f, map.sizeX - size.x);
-   maxX = min(map.sizeX, int(pos.x + size.x) + 1);
-   maxY = min(map.sizeY, int(pos.y + size.y) + 1);
+   position.x = clamp(position.x, 0.f, map.sizeX - size.x);
+   maxX = min(map.sizeX, int(position.x + size.x) + 1);
+   maxY = min(map.sizeY, int(position.y + size.y) + 1);
 
-   for (int y = max(0, (int)pos.y - 1); y < maxY; ++y) {
-      for (int x = max(0, (int)pos.x); x < maxX; ++x) {
+   for (int y = max(0, (int)position.y - 1); y < maxY; ++y) {
+      for (int x = max(0, (int)position.x); x < maxX; ++x) {
          if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || map.isu(x, y, Block::lava) || (map.isu(x, y, Block::platform) && !IsKeyDown(KEY_W))) {
             continue;
          }
@@ -153,61 +181,66 @@ void Player::updateCollisions(Map &map) {
             continue;
          }
 
-         if (!torsoCollision && (CheckCollisionRecs(torso, {(float)x, (float)y, 1.f, 1.f}) || pos.y <= 0.f)) {
+         if (!torsoCollision && (CheckCollisionRecs(torso, {(float)x, (float)y, 1.f, 1.f}) || position.y <= 0.f)) {
             torsoCollision = true;
          }
 
-         if (!CheckCollisionRecs({pos.x, pos.y, size.x, size.y}, {(float)x, (float)y, 1.f, 1.f})) {
+         if (!CheckCollisionRecs({position.x, position.y, size.x, size.y}, {(float)x, (float)y, 1.f, 1.f})) {
             continue;
          }
 
-         if (prev.x >= x + 1.f) {
-            pos.x = x + 1.f;
+         if (previousPosition.x >= x + 1.f) {
+            position.x = x + 1.f;
          }
 
-         if (prev.x + size.x <= x) {
-            pos.x = x - size.x;
+         if (previousPosition.x + size.x <= x) {
+            position.x = x - size.x;
          }
       }
    }
 
-   pos.x = clamp(pos.x, 0.f, map.sizeX - size.x);
-   pos.y = clamp(pos.y, 0.f, map.sizeY - size.y);
+   position.x = clamp(position.x, 0.f, map.sizeX - size.x);
+   position.y = clamp(position.y, 0.f, map.sizeY - size.y);
 
    if (lavaTileCount > 0) {
-      waterMult = .6f;
+      waterMultiplier = .6f;
    } else if (waterTileCount > 0) {
-      waterMult = .9f;
+      waterMultiplier = .9f;
    } else {
-      waterMult = 1.f;
+      waterMultiplier = 1.f;
    }
 
    if (!collisionY) {
       onGround = false;
    }
    if (onGround) {
-      iceMult = (iceTileCount > 0 ? .2f : 1.f);
+      iceMultiplier = (iceTileCount > 0 ? .2f : 1.f);
    }
 }
 
 void Player::updateAnimation() {
+   if (debugging) {
+      frameX = 0;
+      return;
+   }
+
    if (!onGround) {
       fallTimer += GetFrameTime();
       if (fallTimer >= .05f) {
-         fx = 1;
+         frameX = 1;
       }
    } else {
       fallTimer = 0.f;
 
-      if (prev.x != pos.x) {
-         walkTimer += GetFrameTime() * clamp(abs(vel.x) / speed, .1f, 1.5f);
+      if (previousPosition.x != position.x) {
+         walkTimer += GetFrameTime() * clamp(abs(velocity.x) / speed, .1f, 1.5f);
          if (walkTimer >= .04f) {
-            fx = (fx + 1) % 13;
-            fx = (fx < 2 ? 2 : fx);
+            frameX = (frameX + 1) % 13;
+            frameX = (frameX < 2 ? 2 : frameX);
             walkTimer -= .04f;
          }
       } else {
-         fx = 0;
+         frameX = 0;
       }
    }
 }
@@ -216,15 +249,15 @@ void Player::updateAnimation() {
 
 void Player::render() {
    Texture2D &texture = getTexture("player");
-   DrawTexturePro(texture, {fx * frameSize, 0.f, (flipX ? -frameSize : frameSize), (float)texture.height}, {pos.x, pos.y, size.x, size.y}, {0, 0}, 0, WHITE);
+   DrawTexturePro(texture, {frameX * frameSize, 0.f, (flipX ? -frameSize : frameSize), (float)texture.height}, {position.x, position.y, size.x, size.y}, {0, 0}, 0, WHITE);
 }
 
 // Getter functions
 
 Vector2 Player::getCenter() {
-   return {pos.x + size.x / 2.f, pos.y + size.y / 2.f};
+   return {position.x + size.x / 2.f, position.y + size.y / 2.f};
 }
 
 Rectangle Player::getBounds() {
-   return {pos.x, pos.y, size.x, size.y};
+   return {position.x, position.y, size.x, size.y};
 }

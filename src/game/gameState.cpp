@@ -26,7 +26,7 @@ GameState::GameState(const std::string &worldName)
 }
 
 GameState::~GameState() {
-   saveWorldData(worldName, player.pos.x, player.pos.y, camera.zoom, map);
+   saveWorldData(worldName, player.position.x, player.position.y, camera.zoom, map);
 }
 
 // Update functions
