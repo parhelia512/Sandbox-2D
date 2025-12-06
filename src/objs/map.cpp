@@ -1,5 +1,6 @@
 #include "mngr/resource.hpp"
 #include "objs/map.hpp"
+#include "util/math.hpp"
 #include "util/position.hpp"
 #include "util/render.hpp"
 #include <array>
@@ -7,7 +8,7 @@
 
 // Constants
 
-constexpr Block::id_t idCount = 20;
+constexpr Block::id_t blockCount = 20;
 constexpr Color backgroundTint {120, 120, 120, 255};
 
 static inline std::unordered_map<std::string, Block::id_t> blockIds {
@@ -17,14 +18,14 @@ static inline std::unordered_map<std::string, Block::id_t> blockIds {
    {"platform", 15}, {"snow", 16}, {"ice", 17}, {"mud", 18}, {"jungle_grass", 19}
 };
 
-static inline std::array<const char*, idCount> blockNames {
+static inline std::array<const char*, blockCount> blockNames {
    "air", "grass", "dirt", "clay", "stone",
    "sand", "sandstone", "water", "bricks", "glass",
    "planks", "stone_bricks", "tiles", "obsidian", "lava",
    "platform", "snow", "ice", "mud", "jungle_grass"
 };
 
-static inline std::array<Block::Type, idCount> blockTypes {{
+static inline std::array<Block::Type, blockCount> blockTypes {{
    Block::air, Block::grass, Block::dirt, Block::solid, Block::solid,
    Block::sand, Block::solid, Block::water, Block::solid, Block::transparent,
    Block::solid, Block::solid, Block::solid, Block::solid, Block::lava,
@@ -41,66 +42,58 @@ Block::id_t Block::getId(const std::string &name) {
 
 void Map::init() {
    blocks = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
-   walls = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
+   walls  = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
 }
 
-void Map::setBlock(int x, int y, const std::string &name, bool wall) {
-   Block &block = (wall ? walls : blocks)[y][x];
+void Map::setBlock(int x, int y, const std::string &name, bool isWall) {
+   Block &block = (isWall ? walls : blocks)[y][x];
    
    block.id = blockIds[name];
    block.value = block.value2 = 0;
    block.type = blockTypes[block.id];
 
    if (block.id != 0) {
-      block.tex = &getTexture(name);
+      block.texture = &getTexture(name);
    }
 }
 
-void Map::setBlock(int x, int y, Block::id_t id, bool wall) {
-   Block &block = (wall ? walls : blocks)[y][x];
-
-   block.id = id;
-   block.value = block.value2 = 0;
-   block.type = blockTypes[block.id];
-
-   if (block.id != 0) {
-      block.tex = &getTexture(blockNames[id]);
-   }
+void Map::setBlock(int x, int y, Block::id_t id, bool isWall) {
+   setBlock(x, y, blockNames[id], isWall);
 }
 
 void Map::deleteBlock(int x, int y, bool wall) {
    Block &block = (wall ? walls : blocks)[y][x];
-   block.tex = nullptr;
+   block.texture = nullptr;
    block.type = Block::air;
    block.id = block.value = block.value2 = 0;
 }
 
-void Map::moveBlock(int ox, int oy, int nx, int ny) {
-   std::swap(blocks[oy][ox], blocks[ny][nx]);
+void Map::moveBlock(int oldX, int oldY, int newX, int newY) {
+   std::swap(blocks[oldY][oldX], blocks[newY][newX]);
 }
 
 // Set furniture functions
 
-void Map::addFurniture(Furniture &obj) {
-   for (int y = obj.posY; y < obj.sizeY + obj.posY; ++y) {
-      for (int x = obj.posX; x < obj.sizeX + obj.posX; ++x) {
-         if (!obj.pieces[y - obj.posY][x - obj.posX].nil) {
+void Map::addFurniture(Furniture &object) {
+   for (int y = object.posY; y < object.sizeY + object.posY; ++y) {
+      for (int x = object.posX; x < object.sizeX + object.posX; ++x) {
+         if (!object.pieces[y - object.posY][x - object.posX].nil) {
             blocks[y][x].furniture = true;
          }
       }
    }
-   furniture.push_back(obj);
+   furniture.push_back(object);
 }
 
-void Map::removeFurniture(Furniture &obj) {
-   for (int y = obj.posY; y < obj.sizeY + obj.posY; ++y) {
-      for (int x = obj.posX; x < obj.sizeX + obj.posX; ++x) {
-         if (!obj.pieces[y - obj.posY][x - obj.posX].nil) {
+void Map::removeFurniture(Furniture &object) {
+   for (int y = object.posY; y < object.sizeY + object.posY; ++y) {
+      for (int x = object.posX; x < object.sizeX + object.posX; ++x) {
+         if (!object.pieces[y - object.posY][x - object.posX].nil) {
             blocks[y][x].furniture = false;
          }
       }
    }
-   obj.deleted = true;
+   object.deleted = true;
 }
 
 // Get block functions
@@ -122,11 +115,8 @@ bool Map::empty(int x, int y) {
 }
 
 bool Map::isTransparent(int x, int y) {
-   if (!isPositionValid(x, y)) {
-      return false;
-   }
-   Block::Type t = blocks[y][x].type;
-   return t == Block::air || t == Block::water || t == Block::transparent || t == Block::platform;
+   Block::Type type = blocks[y][x].type;
+   return type == Block::air || type == Block::water || type == Block::transparent || type == Block::platform;
 }
 
 std::vector<Block>& Map::operator[](size_t index) {
@@ -138,10 +128,10 @@ std::vector<Block>& Map::operator[](size_t index) {
 void Map::render(Camera2D &camera) {
    Rectangle bounds = getCameraBounds(camera);
 
-   int minX = std::max(0, int(bounds.x));
-   int minY = std::max(0, int(bounds.y));
-   int maxX = std::min(sizeX, int((bounds.x + bounds.width)) + 1);
-   int maxY = std::min(sizeY, int((bounds.y + bounds.height)) + 1);
+   int minX = max(0, int(bounds.x));
+   int minY = max(0, int(bounds.y));
+   int maxX = min(sizeX, int((bounds.x + bounds.width)) + 1);
+   int maxY = min(sizeY, int((bounds.y + bounds.height)) + 1);
 
    for (int y = minY; y < maxY; ++y) {
       for (int x = minX; x < maxX; ++x) {
@@ -150,10 +140,13 @@ void Map::render(Camera2D &camera) {
             continue;
          }
 
-         int ox = x;
-         while (x < maxX && walls[y][x].id == wall.id && isTransparent(x, y)) { ++x; }
-         drawTextureBlock(*wall.tex, {(float)ox, (float)y, float(x - ox), 1.f}, backgroundTint);
-         --x;
+         int oldX = x;
+         while (x < maxX && walls[y][x].id == wall.id && isTransparent(x, y)) {
+            x += 1;
+         }
+
+         drawTextureBlock(*wall.texture, {(float)oldX, (float)y, float(x - oldX), 1}, backgroundTint);
+         x -= 1;
       }
    }
 
@@ -164,10 +157,13 @@ void Map::render(Camera2D &camera) {
             continue;
          }
 
-         int ox = x;
-         while (x < maxX && blocks[y][x].id == block.id) { ++x; }
-         drawTextureBlock(*block.tex, {(float)ox, (float)y, float(x - ox), 1.f});
-         --x;
+         int oldX = x;
+         while (x < maxX && blocks[y][x].id == block.id) {
+            x += 1;
+         }
+
+         drawTextureBlock(*block.texture, {(float)oldX, (float)y, float(x - oldX), 1});
+         x -= 1;
       }
    }
 

@@ -4,7 +4,7 @@
 void wrapText(std::string &string, float maxWidth, float fontSize, float spacing) {
    Font &font = getFont("andy");
 
-   auto wrap = [&font, &string, &maxWidth, &fontSize, &spacing]() -> bool {
+   auto wrap = [=]() -> bool {
       return MeasureTextEx(font, string.c_str(), fontSize, spacing).x > maxWidth;
    };
 
@@ -34,7 +34,7 @@ void wrapText(std::string &string, float maxWidth, float fontSize, float spacing
       truncated = split.substr(0, left - 1);
       split = split.substr(left - 1);
 
-      bool dash = isalpha(truncated.back()) && isalpha(split.front());
+      bool dash = std::isalpha(truncated.back()) && std::isalpha(split.front());
       result << truncated << (dash ? "-\n" : "\n");
       string = std::string(split);
 

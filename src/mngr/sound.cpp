@@ -45,16 +45,16 @@ void loadMusic() {
 
 void playSound(const std::string &name) {
    assert(savedSounds.count(name) || sounds.count(name), "Sound '{}' does not exist.", name);
-   Sound *sound = nullptr;
-   
+   Sound sound;
+
    if (savedSounds.count(name)) {
-      std::string &randomName = savedSounds[name][random(0, savedSounds[name].size() - 1)];
-      sound = &sounds[randomName];
+      std::string &randomName = random(savedSounds[name]);
+      sound = sounds[randomName];
    } else {
-      sound = &sounds[name];
+      sound = sounds[name];
    }
-   SetSoundPitch(*sound, random(.75f, 1.25f));
-   PlaySound(*sound);
+   SetSoundPitch(sound, random(.75f, 1.25f));
+   PlaySound(sound);
 }
 
 void playMusic(const std::string &name) {

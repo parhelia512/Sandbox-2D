@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <sstream>
+#undef assert
 
 // String conversion functions
 

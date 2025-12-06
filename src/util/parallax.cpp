@@ -34,9 +34,9 @@ void drawParallaxTexture(const Texture &texture, float &progress, float speed) {
 }
 
 Texture& getRandomBackground() {
-   return getTexture(backgroundTextures[random(0, backgroundTextures.size() - 1)]);
+   return getTexture(random(backgroundTextures));
 }
 
 Texture& getRandomForeground() {
-   return getTexture(foregroundTextures[random(0, foregroundTextures.size() - 1)]);
+   return getTexture(random(foregroundTextures));
 }

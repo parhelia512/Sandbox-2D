@@ -1,5 +1,5 @@
-#ifndef OBJS_BLOCK_HPP
-#define OBJS_BLOCK_HPP
+#ifndef OBJS_MAP_HPP
+#define OBJS_MAP_HPP
 
 #include "objs/furniture.hpp"
 #include <string>
@@ -10,7 +10,7 @@ struct Block {
    enum Type { air, grass, dirt, solid, platform, transparent, sand, snow, ice, water, lava };
    using id_t = unsigned char;
    
-   Texture *tex = nullptr;
+   Texture *texture = nullptr;
    Type type = Type::air;
 
    // Unsigned chars can only hold 256 unique IDs. Currently trying to save
@@ -27,32 +27,30 @@ struct Block {
 // Map
 
 struct Map {
-   std::vector<std::vector<Block>> blocks;
-   std::vector<std::vector<Block>> walls;
+   std::vector<std::vector<Block>> blocks, walls;
    std::vector<Furniture> furniture;
-   int sizeX = 0;
-   int sizeY = 0;
+   int sizeX = 0, sizeY = 0;
 
    // Set block functions
 
    void init();
-   void setBlock(int x, int y, const std::string &name, bool walls = false);
-   void setBlock(int x, int y, Block::id_t id, bool walls = false);
-   void deleteBlock(int x, int y, bool walls = false);
-   void moveBlock(int ox, int oy, int nx, int ny);
+   void setBlock(int x, int y, const std::string &name, bool isWall = false);
+   void setBlock(int x, int y, Block::id_t id, bool isWall = false);
+   void deleteBlock(int x, int y, bool isWall = false);
+   void moveBlock(int oldX, int oldY, int newX, int newY);
 
    // Set furniture functions
 
-   void addFurniture(Furniture &furniture);
-   void removeFurniture(Furniture &furniture);
+   void addFurniture(Furniture &object);
+   void removeFurniture(Furniture &object);
 
    // Get block functions
 
    bool isPositionValid(int x, int y);
    bool is(int x, int y, Block::Type type);
    bool isu(int x, int y, Block::Type type); // Unsafe is variant
-   bool empty(int x, int y); // Unsafe too
-   bool isTransparent(int x, int y);
+   bool empty(int x, int y);
+   bool isTransparent(int x, int y); // Unsafe
 
    std::vector<Block>& operator[](size_t index);
 
