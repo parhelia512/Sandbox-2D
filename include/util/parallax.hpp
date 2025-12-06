@@ -3,7 +3,7 @@
 
 #include <raylib.h>
 
-void drawParallaxTexture(const Texture &texture, float &progress, float speed);
+void drawParallaxTexture(const Texture &texture, float &progress, float speed, bool background);
 Texture& getRandomBackground();
 Texture& getRandomForeground();
 

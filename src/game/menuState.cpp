@@ -127,8 +127,8 @@ void MenuState::updateGeneratingLevel() {
 void MenuState::render() {
    // Render the parallax background
    drawTextureNoOrigin(getTexture("sky"), {0, 0}, getScreenSize());
-   drawParallaxTexture(backgroundTexture, scrollingBg, 75.f);
-   drawParallaxTexture(foregroundTexture, scrollingFg, 100.f);
+   drawParallaxTexture(backgroundTexture, scrollingBg, 75.f, true);
+   drawParallaxTexture(foregroundTexture, scrollingFg, 100.f, false);
 
    // Render everything else
    switch (phase) {

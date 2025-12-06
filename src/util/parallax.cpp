@@ -18,7 +18,7 @@ static inline std::vector<std::string> foregroundTextures {
 
 // Parallax functions
 
-void drawParallaxTexture(const Texture &texture, float &progress, float speed) {
+void drawParallaxTexture(const Texture &texture, float &progress, float speed, bool background) {
    Vector2 screenSize = getScreenSize();
    progress -= speed * GetFrameTime();
    
@@ -29,8 +29,9 @@ void drawParallaxTexture(const Texture &texture, float &progress, float speed) {
       progress = -screenSize.x;
    }
 
-   drawTextureNoOrigin(texture, {progress, 0}, screenSize);
-   drawTextureNoOrigin(texture, {screenSize.x + progress, 0}, screenSize);
+   Color color = (background ? Color{190, 190, 170, 255} : Color{210, 210, 190, 255}); 
+   drawTextureNoOrigin(texture, {progress, 0}, screenSize, color);
+   drawTextureNoOrigin(texture, {screenSize.x + progress, 0}, screenSize, color);
 }
 
 Texture& getRandomBackground() {
