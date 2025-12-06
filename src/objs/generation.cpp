@@ -37,26 +37,32 @@ static inline std::array<BiomeData, biomeCount> biomeData {{
 
 // Constructors
 
-MapGenerator::MapGenerator(const std::string &name, int sizeX, int sizeY)
-   : name(name) {
+MapGenerator::MapGenerator(const std::string &name, int sizeX, int sizeY, bool isFlat)
+   : name(name), isFlat(isFlat) {
    map.sizeX = sizeX;
    map.sizeY = sizeY;
    map.init();
 
-   biomeTemperatureNoise.reseed(rand());
-   biomeMoistureNoise.reseed(rand());
-   heightNoise.reseed(rand());
-   sandDebriNoise.reseed(rand());
-   dirtDebriNoise.reseed(rand());
+   if (!isFlat) {
+      biomeTemperatureNoise.reseed(rand());
+      biomeMoistureNoise.reseed(rand());
+      heightNoise.reseed(rand());
+      sandDebriNoise.reseed(rand());
+      dirtDebriNoise.reseed(rand());
+   }
 }
 
 // Generation functions
 
 void MapGenerator::generate() {
-   generateTerrain();
-   generateDebri();
-   generateWater();
-   generateTrees();
+   if (isFlat) {
+      generateFlatWorld();
+   } else {
+      generateTerrain();
+      generateDebri();
+      generateWater();
+      generateTrees();
+   }
    saveWorldData(name, map.sizeX / 2.f, 0.f, 50.f, map);
 }
 
@@ -168,6 +174,27 @@ void MapGenerator::generateTrees() {
          counterThreshold = random(1, 4);
       } else {
          counter++;
+      }
+   }
+}
+
+// Generation functions for flat worlds
+
+void MapGenerator::generateFlatWorld() {
+   int y = startY * map.sizeY;
+   
+   for (int x = 0; x < map.sizeX; ++x) {
+      map.setBlock(x, y, "grass");
+
+      for (int yy = y + 1; yy < map.sizeY; ++yy) {
+         // Set both the wall and the block
+         if (yy - y < rockOffsetStart) {
+            map.setBlock(x, yy, "dirt");
+            map.setBlock(x, yy, "dirt", true);
+         } else {
+            map.setBlock(x, yy, "stone");
+            map.setBlock(x, yy, "stone", true);
+         }
       }
    }
 }

@@ -3,6 +3,7 @@
 
 #include "game/state.hpp"
 #include "ui/button.hpp"
+#include "ui/checkbox.hpp"
 #include "ui/input.hpp"
 #include "ui/scrollframe.hpp"
 #include <vector>
@@ -43,6 +44,7 @@ private:
    std::vector<Button> worldButtons;
    Scrollframe worldFrame;
    Input worldName;
+   CheckBox shouldWorldBeFlat;
 
    Texture &backgroundTexture, &foregroundTexture;
    float scrollingBg = 0.f, scrollingFg = 0.f;

@@ -10,6 +10,7 @@ struct MapGenerator {
    enum class BiomeWarmth { cold, warm, hot };
 
    std::string name;
+   bool isFlat = false;
    Map map;
 
    siv::PerlinNoise biomeTemperatureNoise;
@@ -20,7 +21,7 @@ struct MapGenerator {
 
    // Constructors
 
-   MapGenerator(const std::string &name, int sizeX, int sizeY);
+   MapGenerator(const std::string &name, int sizeX, int sizeY, bool isFlat);
 
    // Generation functions
 
@@ -29,6 +30,10 @@ struct MapGenerator {
    void generateWater();
    void generateDebri();
    void generateTrees();
+
+   // Generation functions for flat worlds
+
+   void generateFlatWorld();
 
    // Getter functions
 

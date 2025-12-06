@@ -41,6 +41,8 @@ MenuState::MenuState()
    createButton.text = "Create";
    worldName.rectangle = {GetScreenWidth() / 2.f - 210.f, GetScreenHeight() / 2.f - 70.f, 420.f, 140.f};
    worldName.maxChars = 48;
+   shouldWorldBeFlat.rectangle = {GetScreenWidth() / 2.f - 25.f, worldName.rectangle.y + 200.f, 50.f, 50.f};
+
    playButton.texture = optionsButton.texture = quitButton.texture = backButton.texture = newButton.texture = createButton.texture = &getTexture("button");
 }
 
@@ -104,6 +106,7 @@ void MenuState::updateLevelCreation() {
    backButton.update();
    createButton.update();
    worldName.update();
+   shouldWorldBeFlat.update();
 
    if (backButton.clicked) {
       phase = Phase::levelSelection;
@@ -115,9 +118,9 @@ void MenuState::updateLevelCreation() {
 }
 
 void MenuState::updateGeneratingLevel() {
-   MapGenerator generator (worldName.text, defaultMapSizeX, defaultMapSizeY);
+   MapGenerator generator (worldName.text, defaultMapSizeX, defaultMapSizeY, shouldWorldBeFlat.checked);
    generator.generate();
-   
+
    loadWorlds();
    phase = Phase::levelSelection;
 }
@@ -165,7 +168,9 @@ void MenuState::renderLevelCreation() {
    backButton.render();
    createButton.render();
    worldName.render();
+   shouldWorldBeFlat.render();
    drawText({worldName.rectangle.x - 125.f, worldName.rectangle.y + worldName.rectangle.height / 2.f}, "World Name:", 50);
+   drawText({worldName.rectangle.x - 125.f, shouldWorldBeFlat.rectangle.y + shouldWorldBeFlat.rectangle.height / 2.f}, "Flat World:", 50);
 }
 
 void MenuState::renderGeneratingLevel() {
