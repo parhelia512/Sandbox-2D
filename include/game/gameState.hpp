@@ -3,6 +3,7 @@
 
 #include "game/state.hpp"
 #include "objs/player.hpp"
+#include "ui/button.hpp"
 
 // Game state
 
@@ -13,6 +14,7 @@ struct GameState: public State {
    // Update
 
    void update() override;
+   void updatePauseScreen();
    void updateControls();
    void updatePhysics();
 
@@ -31,6 +33,9 @@ private:
 
    std::string worldName;
    float physicsTimer = 0.f;
+
+   Button continueButton, menuButton, pauseButton;
+   bool inventoryOpen = false, paused = false;
 };
 
 #endif

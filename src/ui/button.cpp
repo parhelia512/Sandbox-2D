@@ -27,7 +27,9 @@ void Button::update(float offsetY) {
 }
 
 void Button::render(float offsetY) {
-   drawTexture(*texture, {rectangle.x, rectangle.y - offsetY}, Vector2Scale({rectangle.width, rectangle.height}, scale));
+   if (texture) {
+      drawTexture(*texture, {rectangle.x, rectangle.y - offsetY}, Vector2Scale({rectangle.width, rectangle.height}, scale));
+   }
    drawText({rectangle.x, rectangle.y - offsetY}, text.c_str(), 35 * scale);
 }
 

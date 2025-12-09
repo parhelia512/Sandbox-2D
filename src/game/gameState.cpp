@@ -1,6 +1,7 @@
 #include "game/gameState.hpp"
 #include "game/menuState.hpp"
 #include "mngr/resource.hpp"
+#include "mngr/sound.hpp"
 #include "util/debug.hpp"
 #include "util/fileio.hpp"
 #include "util/math.hpp"
@@ -29,6 +30,15 @@ GameState::GameState(const std::string &worldName)
    camera.target = player.getCenter();
    camera.offset = getScreenCenter();
    camera.rotation = 0.0f;
+
+   // Init UI
+   continueButton.rectangle = {GetScreenWidth() / 2.f, GetScreenHeight() / 2.f, 210.f, 70.f};
+   continueButton.text = "Continue";
+   menuButton.rectangle = {continueButton.rectangle.x, continueButton.rectangle.y + 90.f, 210.f, 70.f};
+   menuButton.text = "Save & Quit";
+   pauseButton.rectangle = {GetScreenWidth() - 105.f, GetScreenHeight() - 35.f, 210.f, 70.f};
+   pauseButton.text = "Pause";
+   continueButton.texture = menuButton.texture = &getTexture("button");
 }
 
 GameState::~GameState() {
@@ -38,13 +48,48 @@ GameState::~GameState() {
 // Update functions
 
 void GameState::update() {
+   updatePauseScreen();
    updateControls();
    updatePhysics();
 }
 
+void GameState::updatePauseScreen() {
+   pauseButton.update();
+   if (pauseButton.clicked) {
+      paused = !paused;
+   }
+   
+   if (IsKeyReleased(KEY_E)) {
+      playSound("click");
+      inventoryOpen = !inventoryOpen;
+   }
+
+   if (IsKeyReleased(KEY_ESCAPE)) {
+      playSound("click");
+      paused = !paused;
+   }
+
+   if (!paused) {
+      return;
+   }
+   
+   continueButton.update();
+   menuButton.update();
+
+   if (continueButton.clicked) {
+      paused = false;
+   }
+   if (menuButton.clicked) {
+      fadingOut = true;
+   }
+}
+
 void GameState::updateControls() {
-   player.updatePlayer(map);
    camera.target = lerp(camera.target, player.getCenter(), cameraFollowSpeed);
+
+   if (paused) {
+      return;
+   }
 
    float wheel = GetMouseWheelMove();
    if (wheel != 0.f) {
@@ -52,10 +97,7 @@ void GameState::updateControls() {
       float maxZoom = (isDebugModeActive() ? maxCameraZoomDebug : maxCameraZoom);
       camera.zoom = clamp(std::exp(std::log(camera.zoom) + wheel * 0.2f), minZoom, maxZoom);
    }
-
-   if (IsKeyReleased(KEY_ESCAPE)) {
-      fadingOut = true;
-   }
+   player.updatePlayer(map);
 }
 
 /************************************/
@@ -75,6 +117,10 @@ inline Furniture::Type getFurnitureType() { return (index == 19 ? Furniture::sap
 /************************************/
 
 void GameState::updatePhysics() {
+   if (paused) {
+      return;
+   }
+   
    /************************************/
    Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
 
@@ -246,9 +292,10 @@ void GameState::updatePhysics() {
 
 void GameState::render() {
    // Draw parallax background
+   float delta = (paused ? 0 : player.delta.x);
    drawTextureNoOrigin(getTexture("sky"), {0, 0}, getScreenSize());
-   drawParallaxTexture(backgroundTexture, scrollingBg, player.delta.x * 75.f, true);
-   drawParallaxTexture(foregroundTexture, scrollingFg, player.delta.x * 100.f, false);
+   drawParallaxTexture(backgroundTexture, scrollingBg, delta * 75.f, true);
+   drawParallaxTexture(foregroundTexture, scrollingFg, delta * 100.f, false);
 
    BeginMode2D(camera);
    map.render(camera);
@@ -279,12 +326,23 @@ void GameState::render() {
    EndMode2D();
 
    // Draw the UI
-   for (int i = 0; i < 10; ++i) {
-      Vector2 position = {i * 65.f + 15.f, 15.f};
-      Vector2 textPosition = Vector2Add(position, {15.f, 15.f});
-      drawTextureNoOrigin(getTexture("small_frame"), position, {60.f, 60.f});
-      drawText(textPosition, std::to_string(i + 1).c_str(), 25);
+   for (int y = 0; y < (inventoryOpen ? 4 : 1); ++y) {
+      for (int x = 0; x < 10; ++x) {
+         Vector2 position = {x * 65.f + 15.f, y * 65.f + 15.f};
+         drawTextureNoOrigin(getTexture("small_frame"), position, {60.f, 60.f});
+
+         if (y == 0) {
+            Vector2 textPosition = Vector2Add(position, {15.f, 15.f});
+            drawText(textPosition, std::to_string(x + 1).c_str(), 25);
+         }
+      }
    }
+
+   if (paused) {
+      continueButton.render();
+      menuButton.render();
+   }
+   pauseButton.render();
 }
 
 State* GameState::change() {
