@@ -9,11 +9,11 @@
 // Constants
 
 static inline std::vector<std::string> backgroundTextures {
-   "mountains1", "mountains2", "mountains3"
+   "mountains1", "mountains2", "mountains3", "mountains4"
 };
 
 static inline std::vector<std::string> foregroundTextures {
-   "bg_trees1", "bg_trees2", "bg_trees3"
+   "bg_trees1", "bg_trees2", "bg_trees3", "bg_trees4"
 };
 
 // Parallax functions
