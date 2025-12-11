@@ -64,14 +64,18 @@ Font& loadFont(const std::string &name, const std::string &path) {
 void loadTextures() {
    std::filesystem::create_directories("assets/sprites/");
    for (const auto &file: std::filesystem::recursive_directory_iterator("assets/sprites/")) {
-      loadTexture(file.path().stem().string(), file.path().string());
+      if (file.is_regular_file()) {
+         loadTexture(file.path().stem().string(), file.path().string());
+      }
    }
 }
 
 void loadFonts() {
    std::filesystem::create_directories("assets/fonts/");
    for (const auto &file: std::filesystem::recursive_directory_iterator("assets/fonts/")) {
-      loadFont(file.path().stem().string(), file.path().string());
+      if (file.is_regular_file()) {
+         loadFont(file.path().stem().string(), file.path().string());
+      }
    }
 }
 

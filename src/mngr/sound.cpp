@@ -31,14 +31,18 @@ void saveSound(const std::string &name, const std::vector<std::string> &soundLis
 void loadSounds() {
    std::filesystem::create_directories("assets/sounds/");
    for (const auto &file: std::filesystem::recursive_directory_iterator("assets/sounds/")) {
-      loadSound(file.path().stem().string(), file.path().string());
+      if (file.is_regular_file()) {
+         loadSound(file.path().stem().string(), file.path().string());
+      }
    }
 }
 
 void loadMusic() {
    std::filesystem::create_directories("assets/music/");
    for (const auto &file: std::filesystem::recursive_directory_iterator("assets/music/")) {
-      loadMusic(file.path().stem().string(), file.path().string());
+      if (file.is_regular_file()) {
+         loadMusic(file.path().stem().string(), file.path().string());
+      }
    }
 }
 
