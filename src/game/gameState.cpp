@@ -18,7 +18,9 @@
 
 GameState::GameState(const std::string &worldName)
    : backgroundTexture(getRandomBackground()), foregroundTexture(getRandomForeground()), worldName(worldName) {
+   resetBackground();
    loadWorldData(worldName, player, camera.zoom, map);
+
    camera.zoom = clamp(camera.zoom, minCameraZoom, maxCameraZoom);
    camera.target = player.getCenter();
    camera.offset = getScreenCenter();
@@ -41,7 +43,6 @@ GameState::GameState(const std::string &worldName)
    inventory.items[0][5] = Item{1, true, 5};
    inventory.items[3][6] = Item{9, true, 40};
    /********************************************************/
-   resetBackground();
 }
 
 GameState::~GameState() {
@@ -295,7 +296,7 @@ void GameState::updatePhysics() {
 
 void GameState::render() {
    // Draw parallax background
-   float delta = (paused ? 0 : player.delta.x);
+   float delta = (paused ? 0 : player.delta.x / GetFrameTime() / 60.0f); // To avoid delta time clash
    drawBackground(foregroundTexture, backgroundTexture, delta * parallaxBgSpeed, delta * parallaxFgSpeed, (paused ? 0 : gameSunSpeed));
 
    BeginMode2D(camera);

@@ -2,6 +2,7 @@
 #include "objs/player.hpp"
 #include "util/fileio.hpp"
 #include "util/format.hpp"
+#include "util/parallax.hpp"
 #include "util/random.hpp"
 #include <fstream>
 #include <vector>
@@ -24,7 +25,7 @@ std::string getRandomLineFromFile(const std::string &path) {
 }
 
 // World saving functions
-// Save and load functions must follow the same data arrangement (duh)
+// Save and load functions must follow the same data arrangement
 
 void saveWorldData(const std::string &name, float playerX, float playerY, float zoom, const Map &map) {
    std::ofstream file (format("data/worlds/{}.txt", name));
@@ -34,7 +35,9 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
    file << playerY << ' ';
    file << map.sizeX << ' ';
    file << map.sizeY << ' ';
-   file << zoom << '\n';
+   file << zoom << ' ';
+   file << getLastTimeOfDay() << ' ';
+   file << getLastMoonPhase() << '\n';
 
    for (const std::vector<Block> &row: map.blocks) {
       for (const Block &tile: row) {
@@ -83,6 +86,8 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
    file >> map.sizeX;
    file >> map.sizeY;
    file >> zoom;
+   file >> getTimeOfDay();
+   file >> getMoonPhase();
    map.init();
 
    for (int y = 0; y < map.sizeY; ++y) {

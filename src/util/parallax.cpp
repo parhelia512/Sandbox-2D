@@ -52,7 +52,9 @@ static int starCount = 0;
 static float fgProgress = 0;
 static float bgProgress = 0;
 static float currentTime = 0;
+static float lastTime = 0;
 static int moonPhase = -1;
+static int lastMoonPhase = -1;
 static bool isNight = false;
 
 // Background functions
@@ -68,7 +70,7 @@ void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bg
    Vector2 origin = getOrigin(screenSize);
 
    bool wasNight = isNight;
-   int lastMoonPhase = moonPhase;
+   int prevMoonPhase = moonPhase;
 
    // Update parallax backgrounds
    bgProgress -= bgSpeed * GetFrameTime();
@@ -90,10 +92,12 @@ void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bg
 
    // Update night
    currentTime = std::fmod(currentTime + daySpeed * GetFrameTime(), 360.0f);
+   lastTime = currentTime;
    isNight = (currentTime >= 180.0f);
 
    if ((wasNight && !isNight) || moonPhase < 0) {
       moonPhase = (moonPhase + 1) % moonPhaseCount;
+      lastMoonPhase = moonPhase;
    }
 
    float t = getFadeStrengthBasedOnTime(currentTime);
@@ -102,7 +106,7 @@ void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bg
    DrawTexturePro(getTexture("sky"), getBox(getTexture("sky")), {0, 0, getScreenSize().x, getScreenSize().y}, {0, 0}, 0, fadeColor(skyColorNight, skyColorDay, t));
 
    // Draw the stars
-   if (lastMoonPhase != moonPhase) {
+   if (prevMoonPhase != moonPhase) {
       starCount = random(starCountMin, starCountMax);
       for (int i = 0; i < starCount; ++i) {
          Star &star = stars[i];
@@ -140,6 +144,24 @@ void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bg
    Color fgColor = fadeColor(foregroundTintNight, foregroundTintDay, t);
    drawTextureNoOrigin(fgTexture, {fgProgress, 0}, screenSize, fgColor);
    drawTextureNoOrigin(fgTexture, {screenSize.x + fgProgress, 0}, screenSize, fgColor);
+}
+
+// Time functions
+
+float getLastTimeOfDay() {
+   return lastTime;
+}
+
+float& getTimeOfDay() {
+   return currentTime;
+}
+
+int getLastMoonPhase() {
+   return lastMoonPhase;
+}
+
+int& getMoonPhase() {
+   return moonPhase;
 }
 
 // Texture functions
