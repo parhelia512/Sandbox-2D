@@ -91,7 +91,7 @@ void GameState::updateControls() {
       return;
    }
 
-   float wheel = GetMouseWheelMove();
+   float wheel = IsKeyReleased(zoomInKey) - IsKeyReleased(zoomOutKey);
    if (wheel != 0.f) {
       float minZoom = (isDebugModeActive() ? minCameraZoomDebug : minCameraZoom);
       float maxZoom = (isDebugModeActive() ? maxCameraZoomDebug : maxCameraZoom);

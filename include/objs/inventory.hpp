@@ -6,6 +6,7 @@
 
 struct Inventory {
    Item items[inventoryHeight][inventoryWidth];
+   int selectedX = 0, selectedY = 0;
    bool open = false;
 
    void update();

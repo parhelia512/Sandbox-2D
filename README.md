@@ -29,6 +29,8 @@ Sandbox-2D is a 2D sidescrolling sandbox where you can build, destroy and play w
 - LEFT CLICK - destroy a block
 - RIGHT CLICK - place a block
 - MIDDLE CLICK - select a block
+- MINUS - zoom out
+- EQUAL - zoom in
 
 ## Installation
 

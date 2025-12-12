@@ -13,11 +13,14 @@ using objid_t   = unsigned char;
 constexpr int pauseKey           = KEY_ESCAPE;
 constexpr int toggleInventoryKey = KEY_E;
 
-constexpr int moveRightKey     = KEY_D;
-constexpr int moveLeftKey      = KEY_A;
-constexpr int moveDownKey      = KEY_S;
-constexpr int moveUpKey        = KEY_W;
-constexpr int jumpKey          = KEY_SPACE;
+constexpr int moveRightKey = KEY_D;
+constexpr int moveLeftKey  = KEY_A;
+constexpr int moveDownKey  = KEY_S;
+constexpr int moveUpKey    = KEY_W;
+constexpr int jumpKey      = KEY_SPACE;
+
+constexpr int zoomInKey  = KEY_EQUAL;
+constexpr int zoomOutKey = KEY_MINUS;
 
 constexpr int moveFastDebugKey   = KEY_LEFT_SHIFT;
 constexpr int toggleDebugModeKey = KEY_F2;
@@ -163,12 +166,14 @@ constexpr Vector2 worldFramePosition       = {280.0f, 200.0f};
 constexpr Vector2 worldFrameSizeOffset     = {600.0f, 360.0f};
 constexpr float worldCreationButtonOffsetX = 120.0f;
 
-constexpr Vector2 itemframeSize        = {60.0f, 60.0f};
-constexpr Vector2 itemframePadding     = {itemframeSize.x + 5.f, itemframeSize.y + 5.f};
-constexpr Vector2 itemframeTopLeft     = {15.0f, 15.0f};
-constexpr Vector2 itemframeIndexOffset = {15.0f, 15.0f};
-constexpr Vector2 itemframeItemSize    = {30.0f, 30.0f};
-constexpr Vector2 itemframeItemOffset  = {(itemframeSize.x - itemframeItemSize.x) / 2.f, (itemframeSize.y - itemframeItemSize.y) / 2.f};
+constexpr Vector2 itemframeSize           = {60.0f, 60.0f};
+constexpr Vector2 itemframePadding        = {itemframeSize.x + 5.0f, itemframeSize.y + 5.0f};
+constexpr Vector2 itemframeTopLeft        = {15.0f, 15.0f};
+constexpr Vector2 itemframeIndexOffset    = {15.0f, 15.0f};
+constexpr Vector2 itemframeItemSize       = {30.0f, 30.0f};
+constexpr Vector2 itemframeItemOffset     = {(itemframeSize.x - itemframeItemSize.x) / 2.0f, (itemframeSize.y - itemframeItemSize.y) / 2.0f};
+constexpr Vector2 selectedItemFrameSize   = {65.0f, 65.0f};
+constexpr Vector2 selectedItemFrameOffset = {(selectedItemFrameSize.x - itemframeSize.x) / 2.0f, (selectedItemFrameSize.y - itemframeSize.y) / 2.0f};
 
 constexpr float titleOffsetX  = -200.0f;
 constexpr float titleOffsetX2 = -400.0f;
