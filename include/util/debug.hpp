@@ -10,9 +10,6 @@ constexpr bool isProjectInDebug() {
 }
 
 bool isDebugModeActive();
-bool isStatModeActive();
-
-void updateDebugOverlay();
-void renderDebugOverlay();
+void updateDebugMode();
 
 #endif

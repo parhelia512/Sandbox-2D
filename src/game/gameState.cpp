@@ -63,12 +63,7 @@ void GameState::updatePauseScreen() {
       paused = !paused;
    }
    
-   if (IsKeyReleased(KEY_E)) {
-      playSound("click");
-      inventory.open = !inventory.open;
-   }
-
-   if (IsKeyReleased(KEY_ESCAPE)) {
+   if (IsKeyReleased(pauseKey)) {
       playSound("click");
       paused = !paused;
    }
@@ -90,6 +85,7 @@ void GameState::updatePauseScreen() {
 
 void GameState::updateControls() {
    camera.target = lerp(camera.target, player.getCenter(), cameraFollowSpeed);
+   inventory.update();
 
    if (paused) {
       return;
@@ -128,15 +124,15 @@ void GameState::updatePhysics() {
    /************************************/
    Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
 
-   if (IsKeyPressed(KEY_E)) {
+   if (IsKeyPressed(tempSwitchForward)) {
       index = (index + 1) % size;
    }
 
-   if (IsKeyPressed(KEY_Q)) {
+   if (IsKeyPressed(tempSwitchBackward)) {
       index = (index == 0 ? size - 1 : index - 1);
    }
 
-   if (IsKeyPressed(KEY_R)) {
+   if (IsKeyPressed(tempSwitchWall)) {
       drawWall =! drawWall;
    }
 

@@ -33,13 +33,12 @@ int main() {
       }
 
       updateMusic();
-      updateDebugOverlay();
+      updateDebugMode();
       current->updateStateLogic();
 
       BeginDrawing();
          ClearBackground(BLACK);
          current->render();
-         renderDebugOverlay();
          drawRect(Fade(BLACK, current->alpha));
       EndDrawing();
    }

@@ -8,6 +8,24 @@
 using blockid_t = unsigned char;
 using objid_t   = unsigned char;
 
+// Keybinds
+
+constexpr int pauseKey           = KEY_ESCAPE;
+constexpr int toggleInventoryKey = KEY_E;
+
+constexpr int moveRightKey     = KEY_D;
+constexpr int moveLeftKey      = KEY_A;
+constexpr int moveDownKey      = KEY_S;
+constexpr int moveUpKey        = KEY_W;
+constexpr int jumpKey          = KEY_SPACE;
+
+constexpr int moveFastDebugKey   = KEY_LEFT_SHIFT;
+constexpr int toggleDebugModeKey = KEY_F2;
+
+constexpr int tempSwitchForward  = KEY_E;
+constexpr int tempSwitchBackward = KEY_Q;
+constexpr int tempSwitchWall     = KEY_R;
+
 // Camera constants
 
 constexpr float cameraFollowSpeed  = 0.416f;

@@ -35,7 +35,7 @@ void Player::updatePlayer(Map &map) {
 // Movement functions
 
 void Player::updateMovement() {
-   int directionX = IsKeyDown(KEY_D) - IsKeyDown(KEY_A);
+   int directionX = IsKeyDown(moveRightKey) - IsKeyDown(moveLeftKey);
 
    if (!onGround) {
       velocity.y = min(maxGravity, velocity.y + gravity);
@@ -50,7 +50,7 @@ void Player::updateMovement() {
       velocity.x = lerp(velocity.x, 0.f, deceleration * iceMultiplier);
    }
 
-   if (IsKeyDown(KEY_SPACE) && canHoldJump) {
+   if (IsKeyDown(jumpKey) && canHoldJump) {
       if (!justJumped) {
          playSound("jump");
          justJumped = true;
@@ -68,7 +68,7 @@ void Player::updateMovement() {
    if (onGround) {
       canHoldJump = true;
       holdJumpTimer = 0.f;
-   } else if (!IsKeyDown(KEY_SPACE)) {
+   } else if (!IsKeyDown(jumpKey)) {
       canHoldJump = false;
    }
    velocity.x *= waterMultiplier;
@@ -80,11 +80,11 @@ void Player::updateMovement() {
 }
 
 void Player::updateDebugMovement() {
-   float directionX = IsKeyDown(KEY_D) - IsKeyDown(KEY_A);
-   float directionY = IsKeyDown(KEY_S) - (IsKeyDown(KEY_W) || IsKeyDown(KEY_SPACE));
+   float directionX = IsKeyDown(moveRightKey) - IsKeyDown(moveLeftKey);
+   float directionY = IsKeyDown(moveDownKey) - (IsKeyDown(moveUpKey) || IsKeyDown(jumpKey));
    Vector2 normalized = Vector2Normalize({directionX, directionY});
 
-   float speed = (IsKeyDown(KEY_LEFT_SHIFT) ? debugFastFlySpeed : debugFlySpeed);
+   float speed = (IsKeyDown(moveFastDebugKey) ? debugFastFlySpeed : debugFlySpeed);
 
    // Ice multiplier doesn't work as intended here
    velocity.x = lerp(velocity.x, normalized.x * speed, acceleration) * waterMultiplier;
@@ -116,7 +116,7 @@ void Player::updateCollisions(Map &map) {
 
    for (int y = max(0, (int)position.y); y < maxY; ++y) {
       for (int x = max(0, (int)position.x); x < maxX; ++x) {
-         if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || map.isu(x, y, Block::lava) || (IsKeyDown(KEY_S) && map.isu(x, y, Block::platform))) {
+         if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || map.isu(x, y, Block::lava) || (IsKeyDown(moveDownKey) && map.isu(x, y, Block::platform))) {
             // Only check water and lava tile count in the first iteration
             waterTileCount += map.isu(x, y, Block::water);
             lavaTileCount += map.isu(x, y, Block::lava);
@@ -142,7 +142,7 @@ void Player::updateCollisions(Map &map) {
       }
    }
 
-   if (!torsoCollision && feetCollision && !IsKeyDown(KEY_S)) {
+   if (!torsoCollision && feetCollision && !IsKeyDown(moveDownKey)) {
       position.y = feetCollisionY - playerSize.y;
    }
 
@@ -159,7 +159,7 @@ void Player::updateCollisions(Map &map) {
 
    for (int y = max(0, (int)position.y - 1); y < maxY; ++y) {
       for (int x = max(0, (int)position.x); x < maxX; ++x) {
-         if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || map.isu(x, y, Block::lava) || (map.isu(x, y, Block::platform) && !IsKeyDown(KEY_W))) {
+         if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || map.isu(x, y, Block::lava) || (map.isu(x, y, Block::platform) && !IsKeyDown(moveUpKey))) {
             continue;
          }
 

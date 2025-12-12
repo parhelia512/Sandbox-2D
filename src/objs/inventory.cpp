@@ -1,8 +1,16 @@
 #include "objs/inventory.hpp"
 #include "mngr/resource.hpp"
+#include "mngr/sound.hpp"
 #include "objs/map.hpp"
 #include "util/render.hpp"
 #include <raymath.h>
+
+void Inventory::update() {
+   if (IsKeyReleased(toggleInventoryKey)) {
+      playSound("click");
+      open = !open;
+   }
+}
 
 void Inventory::render() {
    for (int y = 0; y < (open ? inventoryHeight : 1); ++y) {

@@ -8,6 +8,7 @@ struct Inventory {
    Item items[inventoryHeight][inventoryWidth];
    bool open = false;
 
+   void update();
    void render();
 };
 
