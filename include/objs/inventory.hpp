@@ -12,7 +12,7 @@ struct Inventory {
    bool anySelected = false;
    Item *selectedItem = nullptr;
 
-   bool anyTrashed = false;
+   bool anyTrashed = false, wasTrashed = false;
    Item trashedItem;
 
    void update();

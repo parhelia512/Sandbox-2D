@@ -16,6 +16,7 @@ void Inventory::update() {
    int lastSelectedX = selectedX;
    int lastSelectedY = selectedY;
 
+   // Gotta do what you gotta do
    if (IsKeyReleased(KEY_ONE)) {
       selectedX = 0;
       selectedY = 0;
@@ -68,6 +69,9 @@ void Inventory::update() {
       playSound("hover");
    }
 
+   // WARNING: scary and hard-to-track logic. Using a lot of returns and GOTO statements. This whole file is pretty
+   // scary and you shouldn't be here for long. If it works, don't touch it.
+
    // Handle dragging
    Vector2 mousePosition = GetMousePosition();
    bool shouldDiscard = false;
@@ -90,6 +94,7 @@ void Inventory::update() {
          // Handle trashing items
          if (IsKeyDown(KEY_LEFT_CONTROL) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && open && items[y][x].id != 0) {
             // TODO: add trash sound
+            wasTrashed = false;
             anyTrashed = true;
             trashedItem = std::move(items[y][x]);
             items[y][x] = Item{};
@@ -113,11 +118,15 @@ void Inventory::update() {
                shouldDiscard = true;
                goto breakOut;
             } else {
+               if (wasTrashed) {
+                  anyTrashed = (items[y][x].id != 0);
+               }
                std::swap(items[y][x], *selectedItem);
+               wasTrashed = false;
                anySelected = false;
                selectedItem = nullptr;
-               return;
             }
+            return;
          }
 
          // Handle dragging items around
@@ -129,15 +138,54 @@ void Inventory::update() {
          }
       }
    }
-breakOut:
+
+   // Handle trash frame
+   if (open) {
+      Vector2 trashPosition = Vector2Add(Vector2Multiply(itemframePadding, {(float)inventoryWidth - 1, (float)inventoryHeight}), itemframeTopLeft);
+      Vector2 trashSize = itemframeSize;
+      Rectangle trashRect {trashPosition.x, trashPosition.y, trashSize.x, trashSize.y};
+
+      if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || !CheckCollisionPointRec(mousePosition, trashRect)) {
+         goto breakOut;
+      }
+
+      if (anySelected) {
+         playSound("click");
+         anyTrashed = true;
+         trashedItem = *selectedItem;
+
+         if (!wasTrashed) {
+            *selectedItem = Item{};
+         }
+         selectedItem = nullptr;
+         anySelected = false;
+         return;
+      }
+
+      if (!anySelected && anyTrashed) {
+         playSound("click");
+         anySelected = true;
+         wasTrashed = true;
+         selectedItem = &trashedItem;
+         anyTrashed = false;
+         return;
+      }
+   }
+   breakOut:
 
    // Discard items here
    bool pressedOutside = (anySelected && open && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
    if (shouldDiscard || (anySelected && !open) || pressedOutside) {
+      if (wasTrashed) {
+         trashedItem = *selectedItem;
+         anyTrashed = true;
+      }
+
       if (pressedOutside) {
          playSound("click");
       }
-      
+
+      wasTrashed = false;
       anySelected = false;
       selectedItem = nullptr;
    }
