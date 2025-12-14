@@ -15,7 +15,30 @@ struct Inventory {
    bool anyTrashed = false, wasTrashed = false;
    Item trashedItem;
 
+   // Update functions
+
    void update();
+
+   // Helper functions
+
+   void toggleInventoryOpen();
+   void switchOnKeyPress(int key, int hotbarX);
+   void switchOnMouseWheel();
+
+   void handleDiscarding();
+   void discardItem();
+
+   // Frame functions
+
+   Vector2 getFramePosition(float x, float y, bool isSelected);
+   Vector2 getFrameSize(bool isSelected);
+   bool mouseClicked(const Vector2 &position, const Vector2 &size);
+
+   Texture& getFrameTexture(bool isSelected, bool isFavorite);
+   Texture& getTrashTexture();
+
+   // Render functions
+   
    void render();
    void renderItem(Item &item, const Vector2 &position);
 };

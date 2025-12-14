@@ -6,102 +6,53 @@
 #include <raymath.h>
 
 void Inventory::update() {
-   // Handle opening inventory
-   if (IsKeyReleased(toggleInventoryKey)) {
-      playSound("click");
-      open = !open;
-   }
+   toggleInventoryOpen();
 
    // Handle switching
    int lastSelectedX = selectedX;
    int lastSelectedY = selectedY;
 
-   // Gotta do what you gotta do
-   if (IsKeyReleased(KEY_ONE)) {
-      selectedX = 0;
-      selectedY = 0;
-   }
-   if (IsKeyReleased(KEY_TWO)) {
-      selectedX = 1;
-      selectedY = 0;
-   }
-   if (IsKeyReleased(KEY_THREE)) {
-      selectedX = 2;
-      selectedY = 0;
-   }
-   if (IsKeyReleased(KEY_FOUR)) {
-      selectedX = 3;
-      selectedY = 0;
-   }
-   if (IsKeyReleased(KEY_FIVE)) {
-      selectedX = 4;
-      selectedY = 0;
-   }
-   if (IsKeyReleased(KEY_SIX)) {
-      selectedX = 5;
-      selectedY = 0;
-   }
-   if (IsKeyReleased(KEY_SEVEN)) {
-      selectedX = 6;
-      selectedY = 0;
-   }
-   if (IsKeyReleased(KEY_EIGHT)) {
-      selectedX = 7;
-      selectedY = 0;
-   }
-   if (IsKeyReleased(KEY_NINE)) {
-      selectedX = 8;
-      selectedY = 0;
-   }
-   if (IsKeyReleased(KEY_ZERO)) {
-      selectedX = 9;
-      selectedY = 0;
-   }
+   switchOnKeyPress(KEY_ONE,   0);
+   switchOnKeyPress(KEY_TWO,   1);
+   switchOnKeyPress(KEY_THREE, 2);
+   switchOnKeyPress(KEY_FOUR,  3);
+   switchOnKeyPress(KEY_FIVE,  4);
+   switchOnKeyPress(KEY_SIX,   5);
+   switchOnKeyPress(KEY_SEVEN, 6);
+   switchOnKeyPress(KEY_EIGHT, 7);
+   switchOnKeyPress(KEY_NINE,  8);
+   switchOnKeyPress(KEY_ZERO,  9);
 
-   float wheel = GetMouseWheelMove();
-   if (wheel >= 1.0f) {
-      selectedX = (selectedX + 1) % 10;
-   } else if (wheel <= -1.0f) {
-      selectedX = (selectedX == 0 ? 9 : selectedX - 1);
-   }
+   switchOnMouseWheel();
 
    if (selectedX != lastSelectedX || selectedY != lastSelectedY) {
       playSound("hover");
    }
 
-   // WARNING: scary and hard-to-track logic. Using a lot of returns and GOTO statements. This whole file is pretty
-   // scary and you shouldn't be here for long. If it works, don't touch it.
-
-   // Handle dragging
-   Vector2 mousePosition = GetMousePosition();
-   bool shouldDiscard = false;
-   
-   for (int y = 0; y < (open ? inventoryHeight : 1); ++y) {
+   // Handle item operations
+   int height = (open ? inventoryHeight : 1);
+ 
+   for (int y = 0; y < height; ++y) {
       for (int x = 0; x < inventoryWidth; ++x) {
-         Vector2 position = Vector2Add(Vector2Multiply(itemframePadding, {(float)x, (float)y}), itemframeTopLeft);
-         Vector2 size = itemframeSize;
+         bool isSelected = (x == selectedX && y == selectedY);
+         Item &item = items[y][x];
+         
+         Vector2 position = getFramePosition(x, y, isSelected);
+         Vector2 size = getFrameSize(isSelected);
 
-         if (x == selectedX && y == selectedY) {
-            position = Vector2Subtract(position, selectedItemFrameOffset);
-            size = selectedItemFrameSize;
-         }
-
-         Rectangle rect {position.x, position.y, size.x, size.y};
-         if (!CheckCollisionPointRec(mousePosition, rect)) {
+         if (!mouseClicked(position, size)) {
             continue;
          }
 
-         Item &item = items[y][x];
-
          // Handle favoriting items
-         if (IsKeyDown(KEY_LEFT_ALT) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && open && item.id != 0) {
+         if (IsKeyDown(KEY_LEFT_ALT) && open && item.id != 0) {
             playSound("click");
             item.favorite = !item.favorite;
             return;
          }
 
          // Handle trashing items
-         if (IsKeyDown(KEY_LEFT_CONTROL) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && open && item.id != 0) {
+         if (IsKeyDown(KEY_LEFT_CONTROL) && open && item.id != 0) {
             if (item.favorite) {
                return;
             }
@@ -115,7 +66,7 @@ void Inventory::update() {
          }
 
          // When pressing on frames while the inventory is closed, select the item
-         if (y == 0 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+         if (y == 0) {
             if (!open) {
                playSound("click");
             }
@@ -124,26 +75,26 @@ void Inventory::update() {
          }
 
          // Handle swapping/discarding items
-         if (open && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && anySelected) {
+         if (open && anySelected) {
             playSound("click");
 
             if (&item == selectedItem) {
-               shouldDiscard = true;
-               goto breakOut;
-            } else {
-               if (wasTrashed) {
-                  anyTrashed = (item.id != 0);
-               }
-               std::swap(item, *selectedItem);
-               wasTrashed = false;
-               anySelected = false;
-               selectedItem = nullptr;
+               discardItem();
+               return;
             }
+
+            if (wasTrashed) {
+               anyTrashed = (item.id != 0);
+            }
+            std::swap(item, *selectedItem);
+            wasTrashed = false;
+            anySelected = false;
+            selectedItem = nullptr;
             return;
          }
 
          // Handle dragging items around
-         if (open && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !anySelected && item.id != 0) {
+         if (open && !anySelected && item.id != 0) {
             playSound("click");
             anySelected = true;
             selectedItem = &item;
@@ -154,19 +105,19 @@ void Inventory::update() {
 
    // Handle trash frame
    if (open) {
-      Vector2 trashPosition = Vector2Add(Vector2Multiply(itemframePadding, {(float)inventoryWidth - 1, (float)inventoryHeight}), itemframeTopLeft);
-      Vector2 trashSize = itemframeSize;
-      Rectangle trashRect {trashPosition.x, trashPosition.y, trashSize.x, trashSize.y};
+      Vector2 trashPosition = getFramePosition(inventoryWidth - 1, inventoryHeight, false);
+      Vector2 trashSize = getFrameSize(false);
 
-      if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || !CheckCollisionPointRec(mousePosition, trashRect)) {
-         goto breakOut;
+      if (!mouseClicked(trashPosition, trashSize)) {
+         handleDiscarding();
+         return;
       }
 
       // Trash the item
       if (anySelected) {
          if (selectedItem->favorite) {
-            shouldDiscard = true;
-            goto breakOut;
+            discardItem();
+            return;
          }
 
          playSound("click");
@@ -191,24 +142,94 @@ void Inventory::update() {
          return;
       }
    }
-   breakOut:
+}
 
-   // Discard items here
-   bool pressedOutside = (anySelected && open && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
-   if (shouldDiscard || (anySelected && !open) || pressedOutside) {
-      if (wasTrashed) {
-         trashedItem = *selectedItem;
-         anyTrashed = true;
-      }
+// Helper functions
 
-      if (pressedOutside) {
-         playSound("click");
-      }
-
-      wasTrashed = false;
-      anySelected = false;
-      selectedItem = nullptr;
+void Inventory::toggleInventoryOpen() {
+   if (IsKeyReleased(toggleInventoryKey)) {
+      playSound("click");
+      open = !open;
    }
+}
+
+void Inventory::switchOnKeyPress(int key, int hotbarX) {
+   if (IsKeyPressed(key)) {
+      selectedX = hotbarX;
+      selectedY = 0;
+   }
+}
+
+void Inventory::switchOnMouseWheel() {
+   float wheel = GetMouseWheelMove();
+   if (wheel >= 1.0f) {
+      selectedX = (selectedX + 1) % 10;
+   } else if (wheel <= -1.0f) {
+      selectedX -= 1;
+      if (selectedX < 0) selectedX = 9;
+   }
+}
+
+void Inventory::handleDiscarding() {
+   bool pressedOutside = (anySelected && open && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
+   if (pressedOutside) {
+      playSound("click");
+   }
+
+   if ((anySelected && !open) || pressedOutside) {
+      discardItem();
+   }
+}
+
+void Inventory::discardItem() {
+   if (wasTrashed) {
+      trashedItem = *selectedItem;
+      anyTrashed = true;
+   }
+
+   wasTrashed = false;
+   anySelected = false;
+   selectedItem = nullptr;
+}
+
+// Frame functions
+
+Vector2 Inventory::getFramePosition(float x, float y, bool isSelected) {
+   Vector2 position = Vector2Add(Vector2Multiply(itemframePadding, {x, y}), itemframeTopLeft);
+
+   if (isSelected) {
+      return Vector2Subtract(position, selectedItemFrameOffset);
+   }
+   return position;
+}
+
+Vector2 Inventory::getFrameSize(bool isSelected) {
+   return (isSelected ? selectedItemFrameSize : itemframeSize);
+}
+
+bool Inventory::mouseClicked(const Vector2 &position, const Vector2 &size) {
+   if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+      return false;
+   }
+
+   Rectangle bounds {position.x, position.y, size.x, size.y};
+   return CheckCollisionPointRec(GetMousePosition(), bounds);
+}
+
+Texture& Inventory::getFrameTexture(bool isSelected, bool isFavorite) {
+   if (isSelected && isFavorite) {
+      return getTexture("small_frame_favorite_selected");
+   } else if (isSelected) {
+      return getTexture("small_frame_selected");
+   } else if (isFavorite) {
+      return getTexture("small_frame_favorite");
+   } else {
+      return getTexture("small_frame");
+   }
+}
+
+Texture& Inventory::getTrashTexture() {
+   return getTexture(anyTrashed ? "small_frame" : "small_frame_trash");
 }
 
 // Render functions
@@ -216,16 +237,15 @@ void Inventory::update() {
 void Inventory::render() {
    for (int y = 0; y < (open ? inventoryHeight : 1); ++y) {
       for (int x = 0; x < inventoryWidth; ++x) {
-         Vector2 position = Vector2Add(Vector2Multiply(itemframePadding, {(float)x, (float)y}), itemframeTopLeft);
          Item &item = items[y][x];
+         bool isSelected = (x == selectedX && y == selectedY);
+         bool isFavorite = item.favorite;
 
-         if (x == selectedX && y == selectedY) {
-            drawTextureNoOrigin(getTexture((item.favorite ? "small_frame_favorite_selected" : "small_frame_selected")), Vector2Subtract(position, selectedItemFrameOffset), selectedItemFrameSize);
-         } else {
-            drawTextureNoOrigin(getTexture((item.favorite ? "small_frame_favorite" : "small_frame")), position, itemframeSize);
-         }
+         Vector2 position = getFramePosition(x, y, isSelected);
+         Vector2 size = getFrameSize(isSelected);
 
-         if (!anySelected || &item != selectedItem) {
+         drawTextureNoOrigin(getFrameTexture(isSelected, isFavorite), position, size);
+         if (item.id != 0 && (!anySelected || &item != selectedItem)) {
             renderItem(item, position);
          }
 
@@ -238,9 +258,10 @@ void Inventory::render() {
 
    // Render trash frame if inventory is open
    if (open) {
-      Vector2 position = Vector2Add(Vector2Multiply(itemframePadding, {(float)inventoryWidth - 1, (float)inventoryHeight}), itemframeTopLeft);
-      drawTextureNoOrigin(getTexture((anyTrashed ? "small_frame" : "small_frame_trash")), position, itemframeSize);
+      Vector2 position = getFramePosition(inventoryWidth - 1, inventoryHeight, false);
+      Vector2 size = getFrameSize(false);
 
+      drawTextureNoOrigin(getTrashTexture(), position, size);
       if (anyTrashed) {
          renderItem(trashedItem, position);
       }
@@ -253,12 +274,11 @@ void Inventory::render() {
 }
 
 void Inventory::renderItem(Item &item, const Vector2 &position) {
-   bool isItemValid = (item.id != 0);
    Color drawColor = (anySelected &&& item == selectedItem ? Fade(WHITE, 0.75f) : WHITE);
 
-   if (isItemValid && !item.isFurniture) {
+   if (!item.isFurniture) {
       drawTextureNoOrigin(getTexture(Block::getName(item.id)), Vector2Add(position, itemframeItemOffset), itemframeItemSize, drawColor);
-   } else if (isItemValid && item.isFurniture) {
+   } else if (item.isFurniture) {
       FurnitureTexture texture = Furniture::getFurnitureIcon(item.id);
       Vector2 newPos = Vector2Add(position, Vector2Scale(itemframeSize, 0.5f));
       Vector2 fSize = itemframeItemSize;
@@ -271,7 +291,7 @@ void Inventory::renderItem(Item &item, const Vector2 &position) {
       DrawTexturePro(texture.texture, {0, 0, (float)texture.sizeX, (float)texture.sizeY}, {newPos.x, newPos.y, fSize.x, fSize.y}, Vector2Scale(fSize, 0.5f), 0, drawColor);
    }
 
-   if (isItemValid && item.count > 1) {
+   if (item.count > 1) {
       Vector2 textPosition = Vector2Subtract(Vector2Add(position, itemframeSize), itemframeIndexOffset);
       drawText(textPosition, std::to_string(item.count).c_str(), 25, drawColor);
    }
