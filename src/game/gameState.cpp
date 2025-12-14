@@ -19,7 +19,7 @@
 GameState::GameState(const std::string &worldName)
    : backgroundTexture(getRandomBackground()), foregroundTexture(getRandomForeground()), worldName(worldName) {
    resetBackground();
-   loadWorldData(worldName, player, camera.zoom, map);
+   loadWorldData(worldName, player, camera.zoom, map, inventory);
 
    camera.zoom = clamp(camera.zoom, minCameraZoom, maxCameraZoom);
    camera.target = player.getCenter();
@@ -34,19 +34,10 @@ GameState::GameState(const std::string &worldName)
    pauseButton.rectangle = {GetScreenWidth() - buttonWidth / 2.f, GetScreenHeight() - buttonHeight / 2.f, buttonWidth, buttonHeight};
    pauseButton.text = "Pause";
    continueButton.texture = menuButton.texture = &getTexture("button");
-
-   /********************************************************/
-   // Give player some items
-   inventory.items[0][0] = Item{3, false, false, 50};
-   inventory.items[0][1] = Item{4, false, false, 9999};
-   inventory.items[2][6] = Item{8, false, false, 1};
-   inventory.items[0][5] = Item{1, true,  false, 5};
-   inventory.items[3][6] = Item{9, true,  false, 40};
-   /********************************************************/
 }
 
 GameState::~GameState() {
-   saveWorldData(worldName, player.position.x, player.position.y, camera.zoom, map);
+   saveWorldData(worldName, player.position.x, player.position.y, camera.zoom, map, inventory);
 }
 
 // Update functions

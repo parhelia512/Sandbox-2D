@@ -1,3 +1,4 @@
+#include "objs/inventory.hpp"
 #include "objs/map.hpp"
 #include "objs/player.hpp"
 #include "util/fileio.hpp"
@@ -27,7 +28,7 @@ std::string getRandomLineFromFile(const std::string &path) {
 // World saving functions
 // Save and load functions must follow the same data arrangement
 
-void saveWorldData(const std::string &name, float playerX, float playerY, float zoom, const Map &map) {
+void saveWorldData(const std::string &name, float playerX, float playerY, float zoom, const Map &map, const Inventory &inventory) {
    std::ofstream file (format("data/worlds/{}.txt", name));
    assert(file.is_open(), "Failed to save world 'data/worlds/{}.txt'.", name);
 
@@ -37,7 +38,20 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
    file << map.sizeY << ' ';
    file << zoom << ' ';
    file << getLastTimeOfDay() << ' ';
-   file << getLastMoonPhase() << '\n';
+   file << getLastMoonPhase() << ' ';
+   file << inventory.selectedX << ' ';
+   file << inventory.selectedY << '\n';
+
+   for (int y = 0; y < inventoryHeight; ++y) {
+      for (int x = 0; x < inventoryWidth; ++x) {
+         const Item &item = inventory.items[y][x];
+         file << (int)item.id << ' ';
+         file << item.isFurniture << ' ';
+         file << item.favorite << ' ';
+         file << item.count << ' ';
+      }
+      file << '\n';
+   }
 
    for (const std::vector<Block> &row: map.blocks) {
       for (const Block &tile: row) {
@@ -77,7 +91,7 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
 
 // World loading functions
 
-void loadWorldData(const std::string &name, Player &player, float &zoom, Map &map) {
+void loadWorldData(const std::string &name, Player &player, float &zoom, Map &map, Inventory &inventory) {
    std::ifstream file (format("data/worlds/{}.txt", name));
    assert(file.is_open(), "Failed to load world 'data/worlds/{}.txt'.", name);
 
@@ -88,7 +102,23 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
    file >> zoom;
    file >> getTimeOfDay();
    file >> getMoonPhase();
+   file >> inventory.selectedX;
+   file >> inventory.selectedY;
    map.init();
+
+   for (int y = 0; y < inventoryHeight; ++y) {
+      for (int x = 0; x < inventoryWidth; ++x) {
+         Item &item = inventory.items[y][x];
+
+         int newId = 0;
+         file >> newId;
+         item.id = newId;
+
+         file >> item.isFurniture;
+         file >> item.favorite;
+         file >> item.count;
+      }
+   }
 
    for (int y = 0; y < map.sizeY; ++y) {
       for (int x = 0; x < map.sizeX; ++x) {

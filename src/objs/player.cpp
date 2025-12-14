@@ -215,28 +215,28 @@ void Player::updateAnimation() {
       if (fallTimer >= .05f) {
          frameX = 1;
       }
-   } else {
-      fallTimer = 0.f;
+      return;
+   }
 
-      if (previousPosition.x != position.x) {
-         walkTimer += GetFrameTime() * clamp(abs(velocity.x) / playerSpeed, .1f, 1.5f);
-         if (walkTimer >= .04f) {
-            int lastFrameX = frameX;
-            frameX = (frameX + 1) % 13;
+   fallTimer = 0.f;
+   if (previousPosition.x != position.x) {
+      walkTimer += GetFrameTime() * clamp(abs(velocity.x) / playerSpeed, .1f, 1.5f);
+      if (walkTimer >= .04f) {
+         int lastFrameX = frameX;
+         frameX = (frameX + 1) % 13;
 
-            if (frameX < 2) {
-               frameX = 2;
-            }
-
-            if (frameX != lastFrameX && (frameX == 4 || frameX == 11)) {
-               playSound("footstep", 0.7f);
-            }
-
-            walkTimer -= .04f;
+         if (frameX < 2) {
+            frameX = 2;
          }
-      } else {
-         frameX = 0;
+
+         if (frameX != lastFrameX && (frameX == 4 || frameX == 11)) {
+            playSound("footstep", 0.7f);
+         }
+
+         walkTimer -= .04f;
       }
+   } else {
+      frameX = 0;
    }
 }
 
