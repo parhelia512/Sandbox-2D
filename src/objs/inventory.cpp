@@ -106,7 +106,7 @@ void Inventory::update() {
                return;
             }
 
-            // TODO: add trash sound
+            playSound("trash");
             wasTrashed = false;
             anyTrashed = true;
             trashedItem = std::move(item);

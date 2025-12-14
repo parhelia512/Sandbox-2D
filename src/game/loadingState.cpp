@@ -37,9 +37,14 @@ void LoadingState::update() {
       load = Load::soundSetup;
    } else if (load == Load::soundSetup) {
       text = "Setting Up Sounds... ";
-      saveSound("click", {"click", "click2", "click3"});
-      saveSound("hover", {"hover", "hover2"});
-      saveSound("jump", {"jump1", "jump2", "jump3"});
+
+      // All saved sounds go here
+      saveSound("click", {"click1", "click2", "click3"});
+      saveSound("hover", {"hover1", "hover2"});
+      saveSound("trash", {"trash1", "trash2", "trash3"});
+      saveSound("jump", {"jump1", "jump2", "jump3", "jump4"});
+      saveSound("footstep", {"footstep1", "footstep2", "footstep3", "footstep4"});
+
       load = Load::music;
    } else if (load == Load::music) {
       text = "Loading Music... ";

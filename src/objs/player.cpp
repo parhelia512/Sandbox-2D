@@ -221,10 +221,15 @@ void Player::updateAnimation() {
       if (previousPosition.x != position.x) {
          walkTimer += GetFrameTime() * clamp(abs(velocity.x) / playerSpeed, .1f, 1.5f);
          if (walkTimer >= .04f) {
+            int lastFrameX = frameX;
             frameX = (frameX + 1) % 13;
+
             if (frameX < 2) {
                frameX = 2;
-               playSound("footsteps", .7f);
+            }
+
+            if (frameX != lastFrameX && (frameX == 4 || frameX == 11)) {
+               playSound("footstep", 0.7f);
             }
 
             walkTimer -= .04f;
