@@ -37,6 +37,7 @@ GameState::GameState(const std::string &worldName)
 }
 
 GameState::~GameState() {
+   inventory.discardItem();
    saveWorldData(worldName, player.position.x, player.position.y, camera.zoom, map, inventory);
 }
 

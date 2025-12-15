@@ -10,9 +10,7 @@ struct Inventory {
    bool open = false;
 
    bool anySelected = false;
-   Item *selectedItem = nullptr;
-
-   bool anyTrashed = false, wasTrashed = false;
+   SelectedItem selectedItem;
    Item trashedItem;
 
    // Update functions
@@ -27,20 +25,25 @@ struct Inventory {
 
    void handleDiscarding();
    void discardItem();
+   void trashItem(const Item &item);
 
    // Frame functions
 
    Vector2 getFramePosition(float x, float y, bool isSelected);
    Vector2 getFrameSize(bool isSelected);
-   bool mouseClicked(const Vector2 &position, const Vector2 &size);
+   bool mouseOnFrame(const Vector2 &position, const Vector2 &size);
 
    Texture& getFrameTexture(bool isSelected, bool isFavorite);
    Texture& getTrashTexture();
 
+   // Item functions
+   
+   bool placeItem(const Item &item);
+
    // Render functions
    
    void render();
-   void renderItem(Item &item, const Vector2 &position);
+   void renderItem(Item &item, const Vector2 &position, bool isSelected);
 };
 
 #endif

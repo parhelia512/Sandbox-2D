@@ -8,4 +8,18 @@ struct Item {
    int count = 0;
 };
 
+struct SelectedItem {
+   Item item;
+   Item *address;
+   bool fullSelect = true;
+   bool fromTrash = false;
+
+   inline void reset() {
+      item = Item{};
+      address = nullptr;
+      fullSelect = true;
+      fromTrash = false;
+   }
+};
+
 #endif

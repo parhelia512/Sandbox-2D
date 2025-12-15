@@ -40,33 +40,31 @@ void Inventory::update() {
          Vector2 position = getFramePosition(x, y, isSelected);
          Vector2 size = getFrameSize(isSelected);
 
-         if (!mouseClicked(position, size)) {
+         if (!mouseOnFrame(position, size)) {
             continue;
          }
 
          // Handle favoriting items
-         if (IsKeyDown(KEY_LEFT_ALT) && open && item.id != 0) {
+         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsKeyDown(KEY_LEFT_ALT) && open && item.id != 0) {
             playSound("click");
             item.favorite = !item.favorite;
             return;
          }
 
          // Handle trashing items
-         if (IsKeyDown(KEY_LEFT_CONTROL) && open && item.id != 0) {
+         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsKeyDown(KEY_LEFT_CONTROL) && open && item.id != 0) {
             if (item.favorite) {
                return;
             }
 
             playSound("trash");
-            wasTrashed = false;
-            anyTrashed = true;
-            trashedItem = std::move(item);
+            trashItem(item);
             item = Item{};
             return;
          }
 
          // When pressing on frames while the inventory is closed, select the item
-         if (y == 0) {
+         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && y == 0) {
             if (!open) {
                playSound("click");
             }
@@ -75,29 +73,62 @@ void Inventory::update() {
          }
 
          // Handle swapping/discarding items
-         if (open && anySelected) {
+         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && open && anySelected) {
             playSound("click");
 
-            if (&item == selectedItem) {
+            if (&item == selectedItem.address || (selectedItem.fromTrash && item.favorite)) {
                discardItem();
                return;
             }
 
-            if (wasTrashed) {
-               anyTrashed = (item.id != 0);
+            if (selectedItem.fullSelect) {
+               if (item.id == selectedItem.item.id) {
+                  item.count += selectedItem.item.count;
+                  item.favorite = (item.favorite || selectedItem.item.favorite);
+                  *selectedItem.address = Item{};
+               } else {
+                  std::swap(item, *selectedItem.address);
+               }
+            } else {
+               if (item.id == 0) {
+                  item = selectedItem.item;
+               } else if (item.id != selectedItem.item.id) {
+                  discardItem();
+                  return;
+               } else {
+                  item.count += selectedItem.item.count;
+               }
             }
-            std::swap(item, *selectedItem);
-            wasTrashed = false;
             anySelected = false;
-            selectedItem = nullptr;
+            selectedItem.reset();
             return;
          }
 
          // Handle dragging items around
-         if (open && !anySelected && item.id != 0) {
+         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && open && !anySelected && item.id != 0) {
             playSound("click");
             anySelected = true;
-            selectedItem = &item;
+            selectedItem = {item, &item, true, false};
+            return;
+         }
+
+         if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && open && item.id != 0) {
+            if (!anySelected) {
+               selectedItem = {item, &item, false, false};
+               selectedItem.item.count = 1;
+            } else if (item.id != selectedItem.item.id) {
+               return;
+            } else {
+               selectedItem.item.count += 1;
+            }
+
+            item.count -= 1;
+            if (item.count <= 0) {
+               item = Item{};
+            }
+
+            playSound("click");
+            anySelected = true;
             return;
          }
       }
@@ -108,37 +139,63 @@ void Inventory::update() {
       Vector2 trashPosition = getFramePosition(inventoryWidth - 1, inventoryHeight, false);
       Vector2 trashSize = getFrameSize(false);
 
-      if (!mouseClicked(trashPosition, trashSize)) {
+      if (!mouseOnFrame(trashPosition, trashSize)) {
          handleDiscarding();
          return;
       }
 
+      // Handle shift-clicking
+      if (IsKeyDown(KEY_LEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && trashedItem.id != 0) {
+         if (placeItem(trashedItem)) {
+            trashedItem = Item{};
+         }
+         playSound("click");
+         return;
+      }
+
       // Trash the item
-      if (anySelected) {
-         if (selectedItem->favorite) {
+      if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && anySelected) {
+         if (selectedItem.item.favorite) {
             discardItem();
             return;
          }
 
-         playSound("click");
-         anyTrashed = true;
-         trashedItem = *selectedItem;
-
-         if (!wasTrashed) {
-            *selectedItem = Item{};
+         if (selectedItem.fullSelect) {
+            *selectedItem.address = Item{};
          }
-         selectedItem = nullptr;
+
+         playSound("trash");
+         trashItem(selectedItem.item);
+         selectedItem.reset();
          anySelected = false;
          return;
       }
 
       // Un-trash the item
-      if (!anySelected && anyTrashed) {
+      if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !anySelected && trashedItem.id != 0) {
          playSound("click");
          anySelected = true;
-         wasTrashed = true;
-         selectedItem = &trashedItem;
-         anyTrashed = false;
+         selectedItem = {trashedItem, &trashedItem, true, true};
+         return;
+      }
+
+      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && trashedItem.id != 0) {
+         if (!anySelected) {
+            selectedItem = {trashedItem, &trashedItem, false, false};
+            selectedItem.item.count = 1;
+         } else if (trashedItem.id != selectedItem.item.id) {
+            return;
+         } else {
+            selectedItem.item.count += 1;
+         }
+
+         trashedItem.count -= 1;
+         if (trashedItem.count <= 0) {
+            trashedItem = Item{};
+         }
+
+         playSound("click");
+         anySelected = true;
          return;
       }
    }
@@ -182,14 +239,27 @@ void Inventory::handleDiscarding() {
 }
 
 void Inventory::discardItem() {
-   if (wasTrashed) {
-      trashedItem = *selectedItem;
-      anyTrashed = true;
+   if (selectedItem.address == &trashedItem) {
+      if (selectedItem.fullSelect || trashedItem.id == 0) {
+         trashedItem = selectedItem.item;
+      } else {
+         trashedItem.count += selectedItem.item.count;
+      }
+   } else if (!selectedItem.fullSelect) {
+      // TODO: check for fails
+      placeItem(selectedItem.item);
    }
 
-   wasTrashed = false;
    anySelected = false;
-   selectedItem = nullptr;
+   selectedItem.reset();
+}
+
+void Inventory::trashItem(const Item &item) {
+   if (item.id == trashedItem.id) {
+      trashedItem.count += item.count;
+   } else {
+      trashedItem = item;
+   }
 }
 
 // Frame functions
@@ -207,11 +277,7 @@ Vector2 Inventory::getFrameSize(bool isSelected) {
    return (isSelected ? selectedItemFrameSize : itemframeSize);
 }
 
-bool Inventory::mouseClicked(const Vector2 &position, const Vector2 &size) {
-   if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-      return false;
-   }
-
+bool Inventory::mouseOnFrame(const Vector2 &position, const Vector2 &size) {
    Rectangle bounds {position.x, position.y, size.x, size.y};
    return CheckCollisionPointRec(GetMousePosition(), bounds);
 }
@@ -229,7 +295,34 @@ Texture& Inventory::getFrameTexture(bool isSelected, bool isFavorite) {
 }
 
 Texture& Inventory::getTrashTexture() {
-   return getTexture(anyTrashed ? "small_frame" : "small_frame_trash");
+   return getTexture(trashedItem.id != 0 ? "small_frame" : "small_frame_trash");
+}
+
+// Item functions
+
+bool Inventory::placeItem(const Item &item) {
+   Item *firstAvailableSpot = nullptr;
+   
+   // Check for equal items
+   for (int y = 0; y < inventoryHeight; ++y) {
+      for (int x = 0; x < inventoryWidth; ++x) {
+         Item &it = items[y][x];
+
+         if (it.id == item.id) {
+            it.count += item.count;
+            return true;
+         } else if (!firstAvailableSpot && it.id == 0) {
+            firstAvailableSpot = &it;
+         }
+      }
+   }
+
+   // Place at the first available spot
+   if (firstAvailableSpot) {
+      *firstAvailableSpot = item;
+      return true;
+   }
+   return false;
 }
 
 // Render functions
@@ -245,8 +338,8 @@ void Inventory::render() {
          Vector2 size = getFrameSize(isSelected);
 
          drawTextureNoOrigin(getFrameTexture(isSelected, isFavorite), position, size);
-         if (item.id != 0 && (!anySelected || &item != selectedItem)) {
-            renderItem(item, position);
+         if (item.id != 0) {
+            renderItem(item, position, false);
          }
 
          if (y == 0) {
@@ -262,19 +355,19 @@ void Inventory::render() {
       Vector2 size = getFrameSize(false);
 
       drawTextureNoOrigin(getTrashTexture(), position, size);
-      if (anyTrashed) {
-         renderItem(trashedItem, position);
+      if (trashedItem.id != 0) {
+         renderItem(trashedItem, position, false);
       }
    }
 
    // Render selected item
    if (anySelected) {
-      renderItem(*selectedItem, GetMousePosition());
+      renderItem(selectedItem.item, GetMousePosition(), true);
    }
 }
 
-void Inventory::renderItem(Item &item, const Vector2 &position) {
-   Color drawColor = (anySelected &&& item == selectedItem ? Fade(WHITE, 0.75f) : WHITE);
+void Inventory::renderItem(Item &item, const Vector2 &position, bool isSelected) {
+   Color drawColor = (isSelected ? Fade(WHITE, 0.75f) : WHITE);
 
    if (!item.isFurniture) {
       drawTextureNoOrigin(getTexture(Block::getName(item.id)), Vector2Add(position, itemframeItemOffset), itemframeItemSize, drawColor);
@@ -291,7 +384,7 @@ void Inventory::renderItem(Item &item, const Vector2 &position) {
       DrawTexturePro(texture.texture, {0, 0, (float)texture.sizeX, (float)texture.sizeY}, {newPos.x, newPos.y, fSize.x, fSize.y}, Vector2Scale(fSize, 0.5f), 0, drawColor);
    }
 
-   if (item.count > 1) {
+   if (item.count != 1) {
       Vector2 textPosition = Vector2Subtract(Vector2Add(position, itemframeSize), itemframeIndexOffset);
       drawText(textPosition, std::to_string(item.count).c_str(), 25, drawColor);
    }
