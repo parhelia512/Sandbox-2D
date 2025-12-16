@@ -1,7 +1,6 @@
 #include "mngr/resource.hpp"
 #include "objs/player.hpp"
 #include "mngr/sound.hpp"
-#include "util/debug.hpp"
 #include "util/math.hpp"
 #include <raymath.h>
 
@@ -19,11 +18,7 @@ void Player::updatePlayer(Map &map) {
    while (updateTimer >= playerUpdateSpeed) {
       updateTimer -= playerUpdateSpeed;
 
-      if (isDebugModeActive()) {
-         updateDebugMovement();
-      } else {
-         updateMovement();
-      }
+      updateMovement();
       updateCollisions(map);
    }
 
@@ -80,7 +75,7 @@ void Player::updateMovement() {
    }
 }
 
-void Player::updateDebugMovement() {
+[[maybe_unused]] void Player::updateDebugMovement() {
    float directionX = IsKeyDown(moveRightKey) - IsKeyDown(moveLeftKey);
    float directionY = IsKeyDown(moveDownKey) - (IsKeyDown(moveUpKey) || IsKeyDown(jumpKey));
    Vector2 normalized = Vector2Normalize({directionX, directionY});
@@ -213,7 +208,7 @@ void Player::updateCollisions(Map &map) {
 }
 
 void Player::updateAnimation() {
-   if (!onGround || isDebugModeActive()) {
+   if (!onGround) {
       fallTimer += GetFrameTime();
       if (fallTimer >= .05f) {
          frameX = 1;

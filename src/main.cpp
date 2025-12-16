@@ -1,6 +1,5 @@
 #include "game/loadingState.hpp"
 #include "mngr/sound.hpp"
-#include "util/debug.hpp"
 #include "util/render.hpp"
 #include <raylib.h>
 #include <cstdlib>
@@ -33,7 +32,6 @@ int main() {
       }
 
       updateMusic();
-      updateDebugMode();
       current->updateStateLogic();
 
       BeginDrawing();

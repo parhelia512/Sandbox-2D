@@ -3,7 +3,6 @@
 #include "mngr/resource.hpp"
 #include "mngr/sound.hpp"
 #include "util/config.hpp"
-#include "util/debug.hpp"
 #include "util/fileio.hpp"
 #include "util/math.hpp"
 #include "util/parallax.hpp"
@@ -85,9 +84,7 @@ void GameState::updateControls() {
 
    float wheel = IsKeyReleased(zoomInKey) - IsKeyReleased(zoomOutKey);
    if (wheel != 0.f) {
-      float minZoom = (isDebugModeActive() ? minCameraZoomDebug : minCameraZoom);
-      float maxZoom = (isDebugModeActive() ? maxCameraZoomDebug : maxCameraZoom);
-      camera.zoom = clamp(std::exp(std::log(camera.zoom) + wheel * 0.2f), minZoom, maxZoom);
+      camera.zoom = clamp(std::exp(std::log(camera.zoom) + wheel * 0.2f), minCameraZoom, maxCameraZoom);
    }
    player.updatePlayer(map);
 }
