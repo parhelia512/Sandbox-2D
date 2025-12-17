@@ -2,6 +2,7 @@
 #include "mngr/resource.hpp"
 #include "mngr/sound.hpp"
 #include "objs/map.hpp"
+#include "util/input.hpp"
 #include "util/render.hpp"
 #include <raymath.h>
 
@@ -43,16 +44,19 @@ void Inventory::update() {
          if (!mouseOnFrame(position, size)) {
             continue;
          }
+         setMouseOnUI(true);
+         bool mousePressed = isMousePressedUI(MOUSE_BUTTON_LEFT);
+         bool shouldReset = true;
 
          // Handle favoriting items
-         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsKeyDown(KEY_LEFT_ALT) && open && item.id != 0) {
+         if (mousePressed && IsKeyDown(KEY_LEFT_ALT) && open && item.id != 0) {
             playSound("click");
             item.favorite = !item.favorite;
             return;
          }
 
          // Handle trashing items
-         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsKeyDown(KEY_LEFT_CONTROL) && open && item.id != 0) {
+         if (mousePressed && IsKeyDown(KEY_LEFT_CONTROL) && open && item.id != 0) {
             if (item.favorite) {
                return;
             }
@@ -64,16 +68,17 @@ void Inventory::update() {
          }
 
          // When pressing on frames while the inventory is closed, select the item
-         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && y == 0) {
+         if (mousePressed && y == 0) {
             if (!open) {
                playSound("click");
             }
             selectedX = x;
             selectedY = 0;
+            shouldReset = false;
          }
 
          // Handle swapping/discarding items
-         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && open && anySelected) {
+         if (mousePressed && open && anySelected) {
             playSound("click");
 
             if (&item == selectedItem.address || (selectedItem.fromTrash && item.favorite)) {
@@ -105,14 +110,18 @@ void Inventory::update() {
          }
 
          // Handle dragging items around
-         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && open && !anySelected && item.id != 0) {
+         if (mousePressed && open && !anySelected && item.id != 0) {
             playSound("click");
             anySelected = true;
             selectedItem = {item, &item, true, false};
             return;
          }
 
-         if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && open && item.id != 0) {
+         if (shouldReset) {
+            resetMouseUIInput(MOUSE_BUTTON_LEFT);
+         }
+
+         if (open && item.id != 0 && isMousePressedUI(MOUSE_BUTTON_RIGHT)) {
             if (!anySelected) {
                selectedItem = {item, &item, false, false};
                selectedItem.item.count = 1;
@@ -143,9 +152,11 @@ void Inventory::update() {
          handleDiscarding();
          return;
       }
+      setMouseOnUI(true);
+      bool mousePressed = isMousePressedUI(MOUSE_BUTTON_LEFT);
 
       // Handle shift-clicking
-      if (IsKeyDown(KEY_LEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && trashedItem.id != 0) {
+      if (IsKeyDown(KEY_LEFT_SHIFT) && mousePressed && trashedItem.id != 0) {
          if (placeItem(trashedItem)) {
             trashedItem = Item{};
          }
@@ -154,7 +165,7 @@ void Inventory::update() {
       }
 
       // Trash the item
-      if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && anySelected) {
+      if (mousePressed && anySelected) {
          if (selectedItem.item.favorite) {
             discardItem();
             return;
@@ -172,14 +183,15 @@ void Inventory::update() {
       }
 
       // Un-trash the item
-      if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !anySelected && trashedItem.id != 0) {
+      if (mousePressed && !anySelected && trashedItem.id != 0) {
          playSound("click");
          anySelected = true;
          selectedItem = {trashedItem, &trashedItem, true, true};
          return;
       }
 
-      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && trashedItem.id != 0) {
+      resetMouseUIInput(MOUSE_BUTTON_LEFT);
+      if (trashedItem.id != 0 && isMousePressedUI(MOUSE_BUTTON_RIGHT)) {
          if (!anySelected) {
             selectedItem = {trashedItem, &trashedItem, false, false};
             selectedItem.item.count = 1;
@@ -228,7 +240,7 @@ void Inventory::switchOnMouseWheel() {
 }
 
 void Inventory::handleDiscarding() {
-   bool pressedOutside = (anySelected && open && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
+   bool pressedOutside = (anySelected && open && isMousePressedOutsideUI(MOUSE_BUTTON_LEFT));
    if (pressedOutside) {
       playSound("click");
    }

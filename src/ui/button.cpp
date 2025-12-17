@@ -1,6 +1,7 @@
 #include "mngr/sound.hpp"
 #include "ui/button.hpp"
 #include "util/config.hpp"
+#include "util/input.hpp"
 #include "util/render.hpp"
 #include <raymath.h>
 
@@ -8,7 +9,11 @@ void Button::update(float offsetY) {
    bool was_hovering = hovering;
    hovering = CheckCollisionPointRec({GetMouseX() + rectangle.width / 2.f, GetMouseY() + rectangle.height / 2.f + offsetY}, rectangle);
    down = hovering && IsMouseButtonDown(MOUSE_LEFT_BUTTON);
-   clicked = hovering && IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
+   clicked = hovering && isMousePressedUI(MOUSE_LEFT_BUTTON);
+
+   if (hovering) {
+      setMouseOnUI(true);
+   }
 
    if (down) {
       scale = std::max(scale * 1.f - GetFrameTime(), buttonScaleMin);

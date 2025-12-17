@@ -1,12 +1,17 @@
 #include "ui/checkbox.hpp"
+#include "util/input.hpp"
 #include "util/render.hpp"
 #include "mngr/resource.hpp"
 #include "mngr/sound.hpp"
 
 void CheckBox::update() {
-   if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), rectangle)) {
-      checked = !checked;
-      playSound("click");
+   if (CheckCollisionPointRec(GetMousePosition(), rectangle)) {
+      setMouseOnUI(true);
+
+      if (isMousePressedUI(MOUSE_BUTTON_LEFT)) {
+         checked = !checked;
+         playSound("click");
+      }
    }
 }
 

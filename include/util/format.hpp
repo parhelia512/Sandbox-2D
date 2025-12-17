@@ -1,5 +1,5 @@
-#ifndef UTIL_ASSERT_HPP
-#define UTIL_ASSERT_HPP
+#ifndef UTIL_FORMAT_HPP
+#define UTIL_FORMAT_HPP
 
 #include <iostream>
 #include <sstream>

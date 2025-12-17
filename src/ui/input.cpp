@@ -3,6 +3,7 @@
 #include "ui/input.hpp"
 #include "util/config.hpp"
 #include "util/format.hpp"
+#include "util/input.hpp"
 #include "util/position.hpp"
 #include "util/render.hpp"
 #include <raymath.h>
@@ -11,9 +12,14 @@
 void Input::update() {
    bool wasTyping = typing;
    hovering = CheckCollisionPointRec(GetMousePosition(), rectangle);
+   if (hovering) {
+      setMouseOnUI(true);
+   }
 
-   if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
-      typing = (hovering && !typing);
+   if (hovering && !typing && isMousePressedUI(MOUSE_BUTTON_LEFT)) {
+      typing = true;
+   } else if (typing && (hovering ? isMousePressedUI(MOUSE_BUTTON_LEFT) : IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
+      typing = false;
    }
 
    if ((IsKeyReleased(KEY_ENTER))) {

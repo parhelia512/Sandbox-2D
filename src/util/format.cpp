@@ -4,7 +4,7 @@
 void wrapText(std::string &string, float maxWidth, float fontSize, float spacing) {
    Font &font = getFont("andy");
 
-   auto wrap = [=]() -> bool {
+   auto wrap = [&font, &string, &maxWidth, &fontSize, &spacing]() -> bool {
       return MeasureTextEx(font, string.c_str(), fontSize, spacing).x > maxWidth;
    };
 

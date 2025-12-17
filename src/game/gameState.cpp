@@ -4,6 +4,7 @@
 #include "mngr/sound.hpp"
 #include "util/config.hpp"
 #include "util/fileio.hpp"
+#include "util/input.hpp"
 #include "util/math.hpp"
 #include "util/parallax.hpp"
 #include "util/position.hpp"
@@ -76,7 +77,6 @@ void GameState::updatePauseScreen() {
 
 void GameState::updateControls() {
    camera.target = lerp(camera.target, player.getCenter(), cameraFollowSpeed);
-   inventory.update();
 
    if (paused) {
       return;
@@ -87,6 +87,7 @@ void GameState::updateControls() {
       camera.zoom = clamp(std::exp(std::log(camera.zoom) + wheel * 0.2f), minCameraZoom, maxCameraZoom);
    }
    player.updatePlayer(map);
+   inventory.update();
 }
 
 /************************************/
@@ -128,16 +129,16 @@ void GameState::updatePhysics() {
    if (map.isPositionValid(mousePos.x, mousePos.y)) {
       Furniture::Type ftype = getFurnitureType();
       canDraw = (drawWall || ftype != Furniture::none || !CheckCollisionRecs(player.getBounds(), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}));
-
-      if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+      printf("%b %b %b\n", isMouseDownOutsideUI(MOUSE_BUTTON_LEFT), isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT), isMousePressedOutsideUI(MOUSE_BUTTON_MIDDLE));
+      if (isMouseDownOutsideUI(MOUSE_BUTTON_LEFT)) {
          map.deleteBlock(mousePos.x, mousePos.y, drawWall);
-      } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && canDraw && !map.blocks[mousePos.y][mousePos.x].furniture) {
+      } else if (isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT) && canDraw && !map.blocks[mousePos.y][mousePos.x].furniture) {
          if (ftype != Furniture::none) {
             Furniture::generate(mousePos.x, mousePos.y, map, ftype);
          } else {
             map.setBlock(mousePos.x, mousePos.y, blockMap[index], drawWall);
          }
-      } else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) && (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type != Block::air) {
+      } else if (isMousePressedOutsideUI(MOUSE_BUTTON_MIDDLE) && (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type != Block::air) {
          index = (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].id - 1;
       }
    }
