@@ -45,6 +45,7 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
    for (int y = 0; y < inventoryHeight; ++y) {
       for (int x = 0; x < inventoryWidth; ++x) {
          const Item &item = inventory.items[y][x];
+         file << (int)item.type << ' ';
          file << (int)item.id << ' ';
          file << item.isFurniture << ' ';
          file << item.favorite << ' ';
@@ -109,6 +110,10 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
    for (int y = 0; y < inventoryHeight; ++y) {
       for (int x = 0; x < inventoryWidth; ++x) {
          Item &item = inventory.items[y][x];
+
+         int type = 0;
+         file >> type;
+         item.type = (Item::Type)type;
 
          int newId = 0;
          file >> newId;

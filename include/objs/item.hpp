@@ -2,6 +2,9 @@
 #define OBJS_ITEM_HPP
 
 struct Item {
+   enum Type { item, equipment, potion };
+
+   Type type = Type::item;
    unsigned char id = 0;
    bool isFurniture = false;
    bool favorite = false;
@@ -10,7 +13,7 @@ struct Item {
 
 struct SelectedItem {
    Item item;
-   Item *address;
+   Item *address = nullptr;
    bool fullSelect = true;
    bool fromTrash = false;
 

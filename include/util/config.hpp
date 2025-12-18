@@ -134,6 +134,10 @@ constexpr float foxTime    = 0.1f;
 
 // UI constants
 
+constexpr int itemStackSize = 9999;
+constexpr int equipmentStackSize = 1;
+constexpr int potionStackSize = 99;
+
 constexpr float fadeTime = 0.4f;
 
 constexpr float buttonWidth    = 210.0f;

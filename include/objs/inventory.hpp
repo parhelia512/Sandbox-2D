@@ -25,7 +25,6 @@ struct Inventory {
 
    void handleDiscarding();
    void discardItem();
-   void trashItem(const Item &item);
 
    // Frame functions
 
@@ -34,11 +33,13 @@ struct Inventory {
    bool mouseOnFrame(const Vector2 &position, const Vector2 &size);
 
    Texture& getFrameTexture(bool isSelected, bool isFavorite);
-   Texture& getTrashTexture();
+   Texture& getTrashTexture(bool trashOccupied);
 
    // Item functions
    
-   bool placeItem(const Item &item);
+   bool placeItem(Item &item);
+   int getItemStackSize(const Item &item);
+   int addItemCount(Item &item1, Item &item2);
 
    // Render functions
    

@@ -3,6 +3,7 @@
 #include "mngr/sound.hpp"
 #include "objs/map.hpp"
 #include "util/input.hpp"
+#include "util/math.hpp"
 #include "util/render.hpp"
 #include <raymath.h>
 
@@ -62,7 +63,7 @@ void Inventory::update() {
             }
 
             playSound("trash");
-            trashItem(item);
+            trashedItem = item;
             item = Item{};
             return;
          }
@@ -88,9 +89,8 @@ void Inventory::update() {
 
             if (selectedItem.fullSelect) {
                if (item.id == selectedItem.item.id) {
-                  item.count += selectedItem.item.count;
+                  addItemCount(item, *selectedItem.address);
                   item.favorite = (item.favorite || selectedItem.item.favorite);
-                  *selectedItem.address = Item{};
                } else {
                   std::swap(item, *selectedItem.address);
                }
@@ -100,8 +100,8 @@ void Inventory::update() {
                } else if (item.id != selectedItem.item.id) {
                   discardItem();
                   return;
-               } else {
-                  item.count += selectedItem.item.count;
+               } else if (addItemCount(item, selectedItem.item) > 0) {
+                  placeItem(selectedItem.item);
                }
             }
             anySelected = false;
@@ -125,7 +125,7 @@ void Inventory::update() {
             if (!anySelected) {
                selectedItem = {item, &item, false, false};
                selectedItem.item.count = 1;
-            } else if (item.id != selectedItem.item.id) {
+            } else if (item.id != selectedItem.item.id || getItemStackSize(selectedItem.item) <= selectedItem.item.count) {
                return;
             } else {
                selectedItem.item.count += 1;
@@ -176,7 +176,7 @@ void Inventory::update() {
          }
 
          playSound("trash");
-         trashItem(selectedItem.item);
+         trashedItem = selectedItem.item;
          selectedItem.reset();
          anySelected = false;
          return;
@@ -195,7 +195,7 @@ void Inventory::update() {
          if (!anySelected) {
             selectedItem = {trashedItem, &trashedItem, false, false};
             selectedItem.item.count = 1;
-         } else if (trashedItem.id != selectedItem.item.id) {
+         } else if (trashedItem.id != selectedItem.item.id || getItemStackSize(selectedItem.item) <= selectedItem.item.count) {
             return;
          } else {
             selectedItem.item.count += 1;
@@ -254,24 +254,15 @@ void Inventory::discardItem() {
    if (selectedItem.address == &trashedItem) {
       if (selectedItem.fullSelect || trashedItem.id == 0) {
          trashedItem = selectedItem.item;
-      } else {
-         trashedItem.count += selectedItem.item.count;
+      } else if (addItemCount(trashedItem, selectedItem.item)) {
+         placeItem(selectedItem.item);
       }
    } else if (!selectedItem.fullSelect) {
-      // TODO: check for fails
       placeItem(selectedItem.item);
    }
 
    anySelected = false;
    selectedItem.reset();
-}
-
-void Inventory::trashItem(const Item &item) {
-   if (item.id == trashedItem.id) {
-      trashedItem.count += item.count;
-   } else {
-      trashedItem = item;
-   }
 }
 
 // Frame functions
@@ -306,13 +297,13 @@ Texture& Inventory::getFrameTexture(bool isSelected, bool isFavorite) {
    }
 }
 
-Texture& Inventory::getTrashTexture() {
-   return getTexture(trashedItem.id != 0 ? "small_frame" : "small_frame_trash");
+Texture& Inventory::getTrashTexture(bool trashOccupied) {
+   return getTexture(trashOccupied ? "small_frame" : "small_frame_trash");
 }
 
 // Item functions
 
-bool Inventory::placeItem(const Item &item) {
+bool Inventory::placeItem(Item &item) {
    Item *firstAvailableSpot = nullptr;
    
    // Check for equal items
@@ -320,8 +311,7 @@ bool Inventory::placeItem(const Item &item) {
       for (int x = 0; x < inventoryWidth; ++x) {
          Item &it = items[y][x];
 
-         if (it.id == item.id) {
-            it.count += item.count;
+         if (it.id == item.id && addItemCount(it, item) <= 0) {
             return true;
          } else if (!firstAvailableSpot && it.id == 0) {
             firstAvailableSpot = &it;
@@ -337,6 +327,31 @@ bool Inventory::placeItem(const Item &item) {
    return false;
 }
 
+int Inventory::getItemStackSize(const Item &item) {
+   if (item.type == Item::item) {
+      return itemStackSize;
+   } else if (item.type == Item::equipment) {
+      return equipmentStackSize;
+   } else {
+      return potionStackSize;
+   }
+}
+
+int Inventory::addItemCount(Item &item1, Item &item2) {
+   int maximum = getItemStackSize(item1);
+   int total = item1.count + item2.count;
+   int last = item1.count;
+
+   item1.count = min(total, maximum);
+   int leftover = total - maximum;
+
+   item2.count -= item1.count - last;
+   if (item2.count <= 0) {
+      item2 = Item{};
+   }
+   return leftover;
+}
+
 // Render functions
 
 void Inventory::render() {
@@ -350,7 +365,7 @@ void Inventory::render() {
          Vector2 size = getFrameSize(isSelected);
 
          drawTextureNoOrigin(getFrameTexture(isSelected, isFavorite), position, size);
-         if (item.id != 0) {
+         if (item.id != 0 && (!anySelected || !selectedItem.fullSelect || selectedItem.address != &item)) {
             renderItem(item, position, false);
          }
 
@@ -363,11 +378,12 @@ void Inventory::render() {
 
    // Render trash frame if inventory is open
    if (open) {
+      bool trashOccupied = (trashedItem.id != 0 && (!anySelected || !selectedItem.fullSelect || selectedItem.address != &trashedItem));
       Vector2 position = getFramePosition(inventoryWidth - 1, inventoryHeight, false);
       Vector2 size = getFrameSize(false);
 
-      drawTextureNoOrigin(getTrashTexture(), position, size);
-      if (trashedItem.id != 0) {
+      drawTextureNoOrigin(getTrashTexture(trashOccupied), position, size);
+      if (trashOccupied) {
          renderItem(trashedItem, position, false);
       }
    }

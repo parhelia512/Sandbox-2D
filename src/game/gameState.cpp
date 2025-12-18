@@ -129,7 +129,7 @@ void GameState::updatePhysics() {
    if (map.isPositionValid(mousePos.x, mousePos.y)) {
       Furniture::Type ftype = getFurnitureType();
       canDraw = (drawWall || ftype != Furniture::none || !CheckCollisionRecs(player.getBounds(), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}));
-      printf("%b %b %b\n", isMouseDownOutsideUI(MOUSE_BUTTON_LEFT), isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT), isMousePressedOutsideUI(MOUSE_BUTTON_MIDDLE));
+
       if (isMouseDownOutsideUI(MOUSE_BUTTON_LEFT)) {
          map.deleteBlock(mousePos.x, mousePos.y, drawWall);
       } else if (isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT) && canDraw && !map.blocks[mousePos.y][mousePos.x].furniture) {
