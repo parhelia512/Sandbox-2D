@@ -47,7 +47,7 @@ struct Inventory {
 
    // Item functions
    
-   void dropItem(Item &item);
+   void dropSelectedItem();
    bool placeItem(Item &item);
    int getItemStackSize(const Item &item);
    int addItemCount(Item &item1, Item &item2);

@@ -108,8 +108,9 @@ void Inventory::update() {
                } else if (item.id != selectedItem.item.id) {
                   discardItem();
                   return;
-               } else if (addItemCount(item, selectedItem.item) > 0) {
-                  placeItem(selectedItem.item);
+               } else if (addItemCount(item, selectedItem.item) > 0 && !placeItem(selectedItem.item)) {
+                  dropSelectedItem();
+                  return;
                }
             }
             anySelected = false;
@@ -255,13 +256,7 @@ void Inventory::handleDiscarding() {
       playSound("click");
 
       if (!selectedItem.item.favorite) {
-         dropItem(selectedItem.item);
-
-         if (selectedItem.fullSelect) {
-            *selectedItem.address = Item{};
-         }
-         selectedItem.reset();
-         anySelected = false;
+         dropSelectedItem();
          return;
       }
    }
@@ -275,11 +270,13 @@ void Inventory::discardItem() {
    if (selectedItem.address == &trashedItem) {
       if (selectedItem.fullSelect || trashedItem.id == 0) {
          trashedItem = selectedItem.item;
-      } else if (addItemCount(trashedItem, selectedItem.item)) {
-         placeItem(selectedItem.item);
+      } else if (addItemCount(trashedItem, selectedItem.item) && !placeItem(selectedItem.item)) {
+         dropSelectedItem();
+         return;
       }
-   } else if (!selectedItem.fullSelect) {
-      placeItem(selectedItem.item);
+   } else if (!selectedItem.fullSelect && !placeItem(selectedItem.item)) {
+      dropSelectedItem();
+      return;
    }
 
    anySelected = false;
@@ -324,13 +321,19 @@ Texture& Inventory::getTrashTexture(bool trashOccupied) {
 
 // Item functions
 
-void Inventory::dropItem(Item &item) {
+void Inventory::dropSelectedItem() {
    Vector2 playerCenter = player.getCenter();
    playerCenter.x += (player.flipX ? 3 : -3);
    playerCenter.x = clamp<int>(playerCenter.x, 0, map.sizeX - 1);
-   
-   DroppedItem droppedItem (item, playerCenter.x, playerCenter.y);
+
+   DroppedItem droppedItem (selectedItem.item, playerCenter.x, playerCenter.y);
    droppedItems.push_back(droppedItem);
+
+   if (selectedItem.fullSelect) {
+      *selectedItem.address = Item{};
+   }
+   selectedItem.reset();
+   anySelected = false;
 }
 
 bool Inventory::placeItem(Item &item) {
