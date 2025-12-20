@@ -77,20 +77,18 @@ void GameState::updatePauseScreen() {
 }
 
 void GameState::updateControls() {
+   if (!paused) {
+      float wheel = IsKeyReleased(zoomInKey) - IsKeyReleased(zoomOutKey);
+      if (wheel != 0.f) {
+         camera.zoom = clamp(std::exp(std::log(camera.zoom) + wheel * 0.2f), minCameraZoom, maxCameraZoom);
+      }
+
+      player.updatePlayer(map);
+      inventory.update();
+   }
+
    camera.target = lerp(camera.target, player.getCenter(), cameraFollowSpeed);
    calculateCameraBounds();
-
-   if (paused) {
-      return;
-   }
-
-   float wheel = IsKeyReleased(zoomInKey) - IsKeyReleased(zoomOutKey);
-   if (wheel != 0.f) {
-      camera.zoom = clamp(std::exp(std::log(camera.zoom) + wheel * 0.2f), minCameraZoom, maxCameraZoom);
-   }
-
-   player.updatePlayer(map);
-   inventory.update();
 }
 
 /************************************/

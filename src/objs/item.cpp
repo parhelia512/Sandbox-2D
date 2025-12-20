@@ -24,7 +24,7 @@ void DroppedItem::update() {
 }
 
 void DroppedItem::render(float offsetY) {
-   Vector2 position = {tileX + 0.5f, tileY + 0.5f - offsetY};
+   Vector2 position = {tileX + 0.5f, (tileY + 0.5f) - offsetY};
    Vector2 size = droppedItemSize;
 
    if (!isFurniture) {
@@ -38,5 +38,10 @@ void DroppedItem::render(float offsetY) {
          size.y *= texture.sizeY / texture.sizeX;
       }
       DrawTexturePro(texture.texture, {0, 0, (float)texture.sizeX, (float)texture.sizeY}, {position.x, position.y, size.x, size.y}, {0, 0}, 0, WHITE);
+   }
+
+   if (count != 1) {
+      position.y -= 0.7f;
+      drawText(position, std::to_string(count).c_str(), 0.75f, WHITE, 0.1f);
    }
 }
