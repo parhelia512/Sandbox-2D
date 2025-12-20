@@ -327,11 +327,11 @@ void Furniture::preview(Map &map) {
    }
 }
 
-void Furniture::render(int minX, int minY, int maxX, int maxY) {
-   for (int y = posY; y < maxY && y - posY < sizeY; ++y) {
-      for (int x = posX; x < maxX && x - posX < sizeX; ++x) {
+void Furniture::render(const Rectangle &cameraBounds) {
+   for (int y = posY; y <= cameraBounds.height && y - posY < sizeY; ++y) {
+      for (int x = posX; x <= cameraBounds.width && x - posX < sizeX; ++x) {
          FurniturePiece &piece = pieces[y - posY][x - posX];
-         if (y < minY || x < minX || piece.nil) {
+         if (y < cameraBounds.y || x < cameraBounds.x || piece.nil) {
             continue;
          }
          DrawTexturePro(getTexture(furnitureTextureNames[texId]), {(float)piece.tx, (float)piece.ty, textureSize, textureSize}, {(float)x, (float)y, 1.f, 1.f}, {0, 0}, 0, WHITE);

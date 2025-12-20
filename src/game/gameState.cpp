@@ -91,8 +91,8 @@ void GameState::updateControls() {
 
    cameraBounds.x = max(0, int(cameraBounds.x));
    cameraBounds.y = max(0, int(cameraBounds.y));
-   cameraBounds.width = min(map.sizeX, int((cameraBounds.x + cameraBounds.width)) + 2); // No fucking idea why it
-   cameraBounds.height = min(map.sizeY, int(cameraBounds.y + cameraBounds.height) + 2); // needs to be two
+   cameraBounds.width = min(map.sizeX - 1, int(cameraBounds.x + cameraBounds.width) + 1);
+   cameraBounds.height = min(map.sizeY - 1, int(cameraBounds.y + cameraBounds.height) + 1);
 
    player.updatePlayer(map);
    inventory.update();
@@ -171,18 +171,8 @@ void GameState::updatePhysics() {
       return;
    }
 
-   Rectangle bounds = getCameraBounds(camera);
-   Vector2 boundsMin {
-      (float)max(0, int(bounds.x)),
-      (float)max(0, int(bounds.y)),
-   };
-   Vector2 boundsMax {
-      (float)min(map.sizeX - 1, int((bounds.x + bounds.width))),
-      (float)min(map.sizeY - 1, int((bounds.y + bounds.height))),
-   };
-
-   for (int y = boundsMax.y; y >= boundsMin.y; --y) {
-      for (int x = boundsMax.x; x >= boundsMin.x; --x) {
+   for (int y = cameraBounds.height; y >= cameraBounds.y; --y) {
+      for (int x = cameraBounds.width; x >= cameraBounds.x; --x) {
          Block &block = map[y][x];
 
          if (block.type == Block::water || block.type == Block::lava) {
@@ -305,6 +295,12 @@ void GameState::render() {
    float delta = (paused ? 0 : player.delta.x / GetFrameTime() / 60.0f); // To avoid delta time clash
    drawBackground(foregroundTexture, backgroundTexture, delta * parallaxBgSpeed, delta * parallaxFgSpeed, (paused ? 0 : gameSunSpeed));
 
+   static bool t = true;
+   if (IsKeyPressed(KEY_U)) {
+      t = !t;
+   }
+   if (t) camera.zoom /= 2.f;
+
    BeginMode2D(camera);
    map.render(cameraBounds);
 
@@ -335,8 +331,8 @@ void GameState::render() {
       float offset = std::sin(updateTimer * droppedItemFloatSpeed) * droppedItemFloatHeight;
 
       for (auto &droppedItem : droppedItems) {
-         if (droppedItem.tileX >= cameraBounds.x && droppedItem.tileX < cameraBounds.width - 2 // Renders items it shouldn't, right and bottom
-          && droppedItem.tileY >= cameraBounds.y && droppedItem.tileY < cameraBounds.height - 2) { // are not working as intended, TODO
+         if (droppedItem.tileX >= cameraBounds.x && droppedItem.tileX <= cameraBounds.width
+          && droppedItem.tileY >= cameraBounds.y && droppedItem.tileY <= cameraBounds.height) {
             droppedItem.render(offset);
          }
       }
@@ -344,6 +340,7 @@ void GameState::render() {
 
    player.render();
    EndMode2D();
+   if (t) camera.zoom *= 2.f;
 
    // Draw the UI
    inventory.render();

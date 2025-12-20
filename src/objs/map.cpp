@@ -126,15 +126,15 @@ std::vector<Block>& Map::operator[](size_t index) {
 // Render functions
 
 void Map::render(const Rectangle &cameraBounds) {
-   for (int y = cameraBounds.y; y < cameraBounds.height; ++y) {
-      for (int x = cameraBounds.x; x < cameraBounds.width; ++x) {
+   for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
+      for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
          Block &wall = walls[y][x];
          if (wall.type == Block::air || !isTransparent(x, y)) {
             continue;
          }
 
          int oldX = x;
-         while (x < cameraBounds.width && walls[y][x].id == wall.id && isTransparent(x, y)) {
+         while (x <= cameraBounds.width && walls[y][x].id == wall.id && isTransparent(x, y)) {
             x += 1;
          }
 
@@ -143,15 +143,15 @@ void Map::render(const Rectangle &cameraBounds) {
       }
    }
 
-   for (int y = cameraBounds.y; y < cameraBounds.height; ++y) {
-      for (int x = cameraBounds.x; x < cameraBounds.width; ++x) {
+   for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
+      for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
          Block &block = blocks[y][x];
          if (block.type == Block::air) {
             continue;
          }
 
          int oldX = x;
-         while (x < cameraBounds.width && blocks[y][x].id == block.id) {
+         while (x <= cameraBounds.width && blocks[y][x].id == block.id) {
             x += 1;
          }
 
@@ -161,6 +161,6 @@ void Map::render(const Rectangle &cameraBounds) {
    }
 
    for (Furniture &obj: furniture) {
-      obj.render(cameraBounds.x, cameraBounds.y, cameraBounds.width, cameraBounds.height);
+      obj.render(cameraBounds);
    }
 }

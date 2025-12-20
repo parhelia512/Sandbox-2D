@@ -48,7 +48,7 @@ struct Furniture {
    // Render functions
 
    void preview(Map &map);
-   void render(int minX, int minY, int maxX, int maxY);
+   void render(const Rectangle &cameraBounds);
 
    // Id functions
 
