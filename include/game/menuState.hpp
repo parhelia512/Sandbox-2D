@@ -40,8 +40,13 @@ private:
    enum class Phase { title, levelSelection, levelCreation, generatingLevel };
 
    Button playButton, optionsButton, quitButton;
-   Button backButton, newButton, createButton;
+   Button backButton, renameButton, deleteButton, favoriteButton, playWorldButton, newButton;
+   Button backButtonCreation, createButton;
+
    std::vector<Button> worldButtons;
+   bool anySelected = false;
+   Button *selectedButton = nullptr; 
+
    Scrollframe worldFrame;
    Input worldName;
    CheckBox shouldWorldBeFlat;

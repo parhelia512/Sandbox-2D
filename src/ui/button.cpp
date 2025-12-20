@@ -8,8 +8,10 @@
 void Button::update(float offsetY) {
    bool was_hovering = hovering;
    hovering = CheckCollisionPointRec({GetMouseX() + rectangle.width / 2.f, GetMouseY() + rectangle.height / 2.f + offsetY}, rectangle);
-   down = hovering && IsMouseButtonDown(MOUSE_LEFT_BUTTON);
-   clicked = hovering && isMousePressedUI(MOUSE_LEFT_BUTTON);
+   if (!disabled) {
+      down = hovering && IsMouseButtonDown(MOUSE_LEFT_BUTTON);
+      clicked = hovering && isMousePressedUI(MOUSE_LEFT_BUTTON);
+   }
 
    if (hovering) {
       setMouseOnUI(true);
@@ -34,9 +36,9 @@ void Button::update(float offsetY) {
 
 void Button::render(float offsetY) {
    if (texture) {
-      drawTexture(*texture, {rectangle.x, rectangle.y - offsetY}, Vector2Scale({rectangle.width, rectangle.height}, scale));
+      drawTexture(*texture, {rectangle.x, rectangle.y - offsetY}, Vector2Scale({rectangle.width, rectangle.height}, scale), 0, (disabled ? buttonDisabledColor : WHITE));
    }
-   drawText({rectangle.x, rectangle.y - offsetY}, text.c_str(), 35 * scale);
+   drawText({rectangle.x, rectangle.y - offsetY}, text.c_str(), 35 * scale, (disabled ? buttonDisabledColor : WHITE));
 }
 
 Rectangle Button::normalizeRect() {

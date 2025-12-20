@@ -9,6 +9,7 @@ struct Button {
    Rectangle rectangle;
    std::string text;
    bool hovering = false, down = false, clicked = false;
+   bool favorite = false, disabled = false;
    float scale = 1;
 
    void update(float offsetY = 0.f);

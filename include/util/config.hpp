@@ -145,11 +145,13 @@ constexpr Vector2 droppedItemSize      = {0.8f, 0.8f};
 
 constexpr float fadeTime = 0.4f;
 
-constexpr float buttonWidth    = 210.0f;
-constexpr float buttonHeight   = 70.0f;
-constexpr float buttonPaddingY = buttonHeight + 20.0f;
-constexpr float buttonScaleMin = 0.98f;
-constexpr float buttonScaleMax = 1.02f;
+constexpr float buttonWidth         = 210.0f;
+constexpr float buttonHeight        = 70.0f;
+constexpr float buttonPaddingX      = buttonWidth + 20.0f;
+constexpr float buttonPaddingY      = buttonHeight + 20.0f;
+constexpr float buttonScaleMin      = 0.98f;
+constexpr float buttonScaleMax      = 1.02f;
+constexpr Color buttonDisabledColor = {170, 170, 150, 255};
 
 constexpr float inputTextWrapPadding = 10.f;
 constexpr float inputTextFadeSpeed   = 0.3f;
@@ -171,7 +173,7 @@ constexpr Vector2 worldNameSize            = {420.0f, 140.0f};
 constexpr int maxWorldNameSize             = 48;
 constexpr Vector2 worldFramePosition       = {280.0f, 200.0f};
 constexpr Vector2 worldFrameSizeOffset     = {600.0f, 360.0f};
-constexpr float worldCreationButtonOffsetX = 120.0f;
+constexpr float worldButtonOffsetX         = 120.0f;
 
 constexpr Vector2 itemframeSize           = {60.0f, 60.0f};
 constexpr Vector2 itemframePadding        = {itemframeSize.x + 5.0f, itemframeSize.y + 5.0f};

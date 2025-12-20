@@ -22,24 +22,44 @@ MenuState::MenuState()
    quitButton.rectangle = {optionsButton.rectangle.x, optionsButton.rectangle.y + buttonPaddingY, buttonWidth, buttonHeight};
    quitButton.text = "Quit";
 
+   playButton.texture = optionsButton.texture = quitButton.texture = &getTexture("button");
+
    // Init world selection screen
    worldFrame.rectangle = {worldFramePosition.x, worldFramePosition.y, GetScreenWidth() - worldFrameSizeOffset.x, GetScreenHeight() - worldFrameSizeOffset.y};
    worldFrame.scrollHeight = worldFrame.rectangle.height;
-   backButton.rectangle = {GetScreenWidth() / 2.f - worldCreationButtonOffsetX, worldFrame.rectangle.y + worldFrame.rectangle.height + buttonPaddingY, buttonWidth, buttonHeight};
+
+   deleteButton.rectangle = {GetScreenWidth() / 2.f - worldButtonOffsetX, worldFrame.rectangle.y + worldFrame.rectangle.height + buttonPaddingY, buttonWidth, buttonHeight};
+   deleteButton.text = "Delete World";
+   deleteButton.disabled = true;
+   renameButton.rectangle = {deleteButton.rectangle.x - buttonPaddingX, deleteButton.rectangle.y, buttonWidth, buttonHeight};
+   renameButton.text = "Rename World";
+   renameButton.disabled = true;
+   backButton.rectangle = {renameButton.rectangle.x - buttonPaddingX, renameButton.rectangle.y, buttonWidth, buttonHeight};
    backButton.text = "Back";
-   newButton.rectangle = {GetScreenWidth() / 2.f + worldCreationButtonOffsetX, worldFrame.rectangle.y + worldFrame.rectangle.height + buttonPaddingY, buttonWidth, buttonHeight};
+
+   favoriteButton.rectangle = {GetScreenWidth() / 2.f + worldButtonOffsetX, worldFrame.rectangle.y + worldFrame.rectangle.height + buttonPaddingY, buttonWidth, buttonHeight};
+   favoriteButton.text = "Favorite";
+   favoriteButton.disabled = true;
+   playWorldButton.rectangle = {favoriteButton.rectangle.x + buttonPaddingX, favoriteButton.rectangle.y, buttonWidth, buttonHeight};
+   playWorldButton.text = "Play World";
+   playWorldButton.disabled = true;
+   newButton.rectangle = {playWorldButton.rectangle.x + buttonPaddingX, playWorldButton.rectangle.y, buttonWidth, buttonHeight};
    newButton.text = "New";
 
+   backButton.texture = renameButton.texture = deleteButton.texture = favoriteButton.texture = playWorldButton.texture = newButton.texture = &getTexture("button");
    loadWorlds();
 
    // Init world creation screen
-   createButton.rectangle = newButton.rectangle;
+   backButtonCreation.rectangle = deleteButton.rectangle;
+   backButtonCreation.text = "Back";
+   createButton.rectangle = favoriteButton.rectangle;
    createButton.text = "Create";
+
    worldName.rectangle = {GetScreenWidth() / 2.f - worldNameSize.x / 2.f, GetScreenHeight() / 2.f - worldNameSize.y / 2.f, worldNameSize.x, worldNameSize.y};
    worldName.maxChars = maxWorldNameSize;
    shouldWorldBeFlat.rectangle = {GetScreenWidth() / 2.f - 35.f, worldName.rectangle.y + 200.f, 70.f, 70.f};
 
-   playButton.texture = optionsButton.texture = quitButton.texture = backButton.texture = newButton.texture = createButton.texture = &getTexture("button");
+   backButtonCreation.texture = createButton.texture = &getTexture("button");
    resetBackground();
 }
 
@@ -78,15 +98,32 @@ void MenuState::updateLevelSelection() {
    worldFrame.update();
 
    float offsetY = worldFrame.getOffsetY();
+   bool anyClicked = false;
+   
    for (Button &button: worldButtons) {
-      if (worldFrame.inFrame(button.normalizeRect())) {
-         button.update(offsetY);
-
-         if (button.clicked) {
-            selectedWorld = button.text;
-            fadingOut = playing = true;
-         }
+      if (!worldFrame.inFrame(button.normalizeRect())) {
+         continue;
       }
+
+      button.update(offsetY);
+      if (!button.clicked) {
+         continue;
+      }
+
+      if (selectedButton) {
+         selectedButton->texture = &getTexture("button_long");
+      }
+
+      if (selectedButton == &button) {
+         selectedWorld = button.text;
+         fadingOut = playing = true;
+         return;
+      }
+
+      selectedButton = &button;
+      selectedButton->texture = &getTexture("button_long_selected");
+      anySelected = true;
+      anyClicked = true;
    }
 
    if (backButton.clicked) {
@@ -97,15 +134,52 @@ void MenuState::updateLevelSelection() {
       phase = Phase::levelCreation;
       worldName.text = getRandomWorldName();
    }
+
+   // Update world-specific buttons
+   deleteButton.disabled = !anySelected;
+   renameButton.disabled = !anySelected;
+   favoriteButton.disabled = !anySelected;
+   playWorldButton.disabled = !anySelected;
+
+   deleteButton.update();
+   renameButton.update();
+   favoriteButton.update();
+   playWorldButton.update();
+
+   if (deleteButton.clicked) {
+      
+   }
+
+   if (renameButton.clicked) {
+
+   }
+
+   if (favoriteButton.clicked) {
+      
+   }
+
+   if (playWorldButton.clicked) {
+      selectedWorld = selectedButton->text;
+      fadingOut = playing = true;
+      return;
+   }
+
+   if (!anyClicked && !deleteButton.clicked && !renameButton.clicked && !favoriteButton.clicked && !playWorldButton.clicked && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+      if (selectedButton) {
+         selectedButton->texture = &getTexture("button_long");
+      }
+      selectedButton = nullptr;
+      anySelected = false;
+   }
 }
 
 void MenuState::updateLevelCreation() {
-   backButton.update();
+   backButtonCreation.update();
    createButton.update();
    worldName.update();
    shouldWorldBeFlat.update();
 
-   if (backButton.clicked) {
+   if (backButtonCreation.clicked) {
       phase = Phase::levelSelection;
    }
 
@@ -145,6 +219,10 @@ void MenuState::renderTitle() {
 void MenuState::renderLevelSelection() {
    drawText(getScreenCenter({0.f, titleOffsetX2}), "SELECT WORLD", 180);
    backButton.render();
+   renameButton.render();
+   deleteButton.render();
+   favoriteButton.render();
+   playWorldButton.render();
    newButton.render();
    worldFrame.render();
 
@@ -158,7 +236,7 @@ void MenuState::renderLevelSelection() {
 
 void MenuState::renderLevelCreation() {
    drawText(getScreenCenter({0.f, titleOffsetX2}), "CREATE WORLD", 180);
-   backButton.render();
+   backButtonCreation.render();
    createButton.render();
    worldName.render();
    shouldWorldBeFlat.render();
@@ -194,6 +272,10 @@ void MenuState::loadWorlds() {
       worldButtons.push_back(button);
       worldFrame.scrollHeight = std::max(worldFrame.rectangle.height, button.rectangle.y + button.rectangle.height / 2.f);
    }
+
+   std::sort(worldButtons.begin(), worldButtons.end(), [](Button &first, Button&) -> bool {
+      return first.favorite;
+   });
 }
 
 std::string MenuState::getRandomWorldName() {
