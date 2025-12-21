@@ -1,5 +1,6 @@
 #include "game/loadingState.hpp"
 #include "mngr/sound.hpp"
+#include "ui/popup.hpp"
 #include "util/input.hpp"
 #include "util/render.hpp"
 #include <raylib.h>
@@ -18,7 +19,7 @@ int main() {
    InitAudioDevice();
    SetExitKey(KEY_NULL);
    State *current = new LoadingState();
-
+   
    // Run the game
 
    while (!WindowShouldClose()) {
@@ -34,11 +35,17 @@ int main() {
 
       resetInput();
       updateMusic();
-      current->updateStateLogic();
+
+      updatePopups();
+      if (!anyPopups()) {
+         current->updateStateLogic();
+      }
 
       BeginDrawing();
          ClearBackground(BLACK);
          current->render();
+
+         renderPopups();
          drawRect(Fade(BLACK, current->alpha));
       EndDrawing();
    }

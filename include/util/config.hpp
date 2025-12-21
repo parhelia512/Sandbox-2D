@@ -163,6 +163,8 @@ constexpr int inputTextFadeValue     = 255 - inputTextFadeMin;
 constexpr float scrollBarWidth = 56.667f;
 constexpr float scrollSpeed    = 15.f;
 
+constexpr Vector2 popupSize = {500.0f, 375.0f};
+
 // UI positioning constants
 
 constexpr float splashWrapOffset         = 50.0f;

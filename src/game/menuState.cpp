@@ -2,6 +2,7 @@
 #include "game/menuState.hpp"
 #include "mngr/resource.hpp"
 #include "objs/generation.hpp"
+#include "ui/popup.hpp"
 #include "util/config.hpp"
 #include "util/fileio.hpp"
 #include "util/parallax.hpp"
@@ -84,7 +85,7 @@ void MenuState::updateTitle() {
    }
 
    if (optionsButton.clicked) {
-      // Do nothing for now
+      insertPopup("Options are a WIP", "Options are not implemented as of now, but they are planned to be soon. Stay tuned for future updates.", false);
    }
 
    if (quitButton.clicked) {
