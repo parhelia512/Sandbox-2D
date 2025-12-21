@@ -149,6 +149,50 @@ void MenuState::updateLevelSelection() {
       worldName.text = getRandomWorldName();
    }
 
+   // Quick world navigation
+
+   bool shouldGoDown = IsKeyPressed(KEY_DOWN);
+   bool shouldGoUp = IsKeyPressed(KEY_UP);
+
+   if (IsKeyDown(KEY_UP) && upKeyTimer >= worldSelectionKeyDelay) {
+      upKeyTimer = 0.0f;
+      shouldGoUp = true;
+   } else if (IsKeyDown(KEY_UP)) {
+      upKeyTimer += GetFrameTime();
+   } else {
+      upKeyTimer = 0.0f; // Reset the key if it's not down
+   }
+
+   if (IsKeyDown(KEY_DOWN) && downKeyTimer >= worldSelectionKeyDelay) {
+      downKeyTimer = 0.0f;
+      shouldGoDown = true;
+   } else if (IsKeyDown(KEY_DOWN)) {
+      downKeyTimer += GetFrameTime();
+   } else {
+      downKeyTimer = 0.0f;
+   }
+
+   if (!worldButtons.empty() && (shouldGoUp || shouldGoDown)) {
+      if (!anySelected) {
+         anySelected = true;
+         selectedButton = &(shouldGoUp ? worldButtons.back() : worldButtons.front());
+      } else {
+         size_t currentIndex = 0, i = 0;
+         for (Button &button: worldButtons) {
+            if (&button == selectedButton) {
+               currentIndex = i;
+               break;
+            }
+            i += 1;
+         }
+
+         currentIndex = (shouldGoUp ? (currentIndex - 1 + worldButtons.size()) : (currentIndex + 1)) % worldButtons.size();
+         selectedButton->texture = &getTexture("button_long");
+         selectedButton = &worldButtons.at(currentIndex);
+      }
+      selectedButton->texture = &getTexture("button_long_selected");
+   }
+
    // Update world-specific buttons
    if (anySelected) {
       favoriteButton.text = (selectedButton->favorite ? "Unfavorite" : "Favorite");
@@ -213,7 +257,7 @@ void MenuState::updateLevelSelection() {
       }
    }
 
-   if (playWorldButton.clicked) {
+   if (playWorldButton.clicked || (anySelected && IsKeyPressed(KEY_ENTER))) {
       selectedWorld = selectedButton->text;
       fadingOut = playing = true;
       return;

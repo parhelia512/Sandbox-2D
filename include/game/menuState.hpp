@@ -53,6 +53,7 @@ private:
    std::vector<std::string> favoriteWorlds;
    std::vector<Button> worldButtons;
    bool anySelected = false, deleteClicked = false, wasFavoriteBeforeRenaming = false;
+   float upKeyTimer = 0.0f, downKeyTimer = 0.0f;
    Button *selectedButton = nullptr; 
 
    Scrollframe worldFrame;
