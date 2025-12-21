@@ -173,11 +173,12 @@ constexpr Vector2 loadingIconSize        = {70.0f, 70.0f};
 constexpr Vector2 loadingTextOffset      = {0.0f, -175.0f};
 constexpr Vector2 splashTextOffset       = {0.0f, 100.0f};
 
-constexpr Vector2 worldNameSize            = {420.0f, 140.0f};
-constexpr int maxWorldNameSize             = 48;
-constexpr Vector2 worldFramePosition       = {280.0f, 200.0f};
-constexpr Vector2 worldFrameSizeOffset     = {600.0f, 360.0f};
-constexpr float worldButtonOffsetX         = 120.0f;
+constexpr Vector2 worldNameSize        = {420.0f, 140.0f};
+constexpr int maxWorldNameSize         = 48;
+constexpr int minWorldNameSize         = 3;
+constexpr Vector2 worldFramePosition   = {280.0f, 200.0f};
+constexpr Vector2 worldFrameSizeOffset = {600.0f, 360.0f};
+constexpr float worldButtonOffsetX     = 120.0f;
 
 constexpr Vector2 itemframeSize           = {60.0f, 60.0f};
 constexpr Vector2 itemframePadding        = {itemframeSize.x + 5.0f, itemframeSize.y + 5.0f};

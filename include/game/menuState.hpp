@@ -20,6 +20,7 @@ struct MenuState: public State {
    void updateTitle();
    void updateLevelSelection();
    void updateLevelCreation();
+   void updateLevelRenaming();
    void updateGeneratingLevel();
 
    // Render
@@ -28,6 +29,7 @@ struct MenuState: public State {
    void renderTitle();
    void renderLevelSelection();
    void renderLevelCreation();
+   void renderLevelRenaming();
    void renderGeneratingLevel();
 
    // Other functions
@@ -41,19 +43,20 @@ struct MenuState: public State {
    void sortWorldsByFavorites();
 
 private:
-   enum class Phase { title, levelSelection, levelCreation, generatingLevel };
+   enum class Phase { title, levelSelection, levelCreation, levelRenaming, generatingLevel };
 
    Button playButton, optionsButton, quitButton;
    Button backButton, renameButton, deleteButton, favoriteButton, playWorldButton, newButton;
    Button backButtonCreation, createButton;
+   Button backButtonRenaming, renameButtonRenaming;
 
    std::vector<std::string> favoriteWorlds;
    std::vector<Button> worldButtons;
-   bool anySelected = false, deleteClicked = false;
+   bool anySelected = false, deleteClicked = false, wasFavoriteBeforeRenaming = false;
    Button *selectedButton = nullptr; 
 
    Scrollframe worldFrame;
-   Input worldName;
+   Input worldName, renameInput;
    CheckBox shouldWorldBeFlat;
 
    Texture &backgroundTexture, &foregroundTexture;

@@ -1,6 +1,7 @@
 #include "game/gameState.hpp"
 #include "game/menuState.hpp"
 #include "mngr/resource.hpp"
+#include "mngr/sound.hpp"
 #include "objs/generation.hpp"
 #include "ui/popup.hpp"
 #include "util/config.hpp"
@@ -62,6 +63,12 @@ MenuState::MenuState()
    shouldWorldBeFlat.rectangle = {GetScreenWidth() / 2.f - 35.f, worldName.rectangle.y + 200.f, 70.f, 70.f};
 
    backButtonCreation.texture = createButton.texture = &getTexture("button");
+
+   // Init world renaming screen
+   backButtonRenaming = backButtonCreation;
+   renameButtonRenaming = createButton;
+   renameButtonRenaming.text = "Rename";
+   renameInput = worldName;
    resetBackground();
 }
 
@@ -72,9 +79,12 @@ void MenuState::update() {
    case Phase::title:           updateTitle();           break;
    case Phase::levelSelection:  updateLevelSelection();  break;
    case Phase::levelCreation:   updateLevelCreation();   break;
+   case Phase::levelRenaming:   updateLevelRenaming();   break;
    case Phase::generatingLevel: updateGeneratingLevel(); break;
    }
 }
+
+// Update title
 
 void MenuState::updateTitle() {
    playButton.update();
@@ -93,6 +103,8 @@ void MenuState::updateTitle() {
       fadingOut = true;
    }
 }
+
+// Update level selection screen
 
 void MenuState::updateLevelSelection() {
    backButton.update();
@@ -174,7 +186,9 @@ void MenuState::updateLevelSelection() {
    deleteClicked = false;
 
    if (renameButton.clicked) {
-
+      phase = Phase::levelRenaming;
+      wasFavoriteBeforeRenaming = selectedButton->favorite;
+      selectedWorld = selectedButton->text;
    }
 
    if (favoriteButton.clicked) {
@@ -205,7 +219,8 @@ void MenuState::updateLevelSelection() {
       return;
    }
 
-   if (!anyClicked && !deleteButton.clicked && !renameButton.clicked && !favoriteButton.clicked && !playWorldButton.clicked && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+   // Ignore renameButton to make it reset after clicking. Required to avoid a graphical glitch
+   if (!anyClicked && !deleteButton.clicked /* && !renameButton.clicked */ && !favoriteButton.clicked && !playWorldButton.clicked && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
       if (selectedButton) {
          selectedButton->texture = &getTexture("button_long");
       }
@@ -213,6 +228,8 @@ void MenuState::updateLevelSelection() {
       anySelected = false;
    }
 }
+
+// Update level creation screen
 
 void MenuState::updateLevelCreation() {
    backButtonCreation.update();
@@ -224,10 +241,68 @@ void MenuState::updateLevelCreation() {
       phase = Phase::levelSelection;
    }
 
-   if (createButton.clicked) {
+   if (createButton.clicked || (IsKeyPressed(KEY_ENTER) && !worldName.typing)) {
+      if (!createButton.clicked) {
+         playSound("click");
+      }
+
+      // Input characters are capped at maxWorldNameSize already
+      if (worldName.text.size() < minWorldNameSize) {
+         insertPopup("Invalid World Name", format("World name must contain from {} to {} characters, but it has {} instead.", minWorldNameSize, maxWorldNameSize, worldName.text.size()), false);
+         return;
+      }
+
       phase = Phase::generatingLevel;
    }
 }
+
+// Update level renaming screen
+
+void MenuState::updateLevelRenaming() {
+   backButtonRenaming.update();
+   renameButtonRenaming.update();
+   renameInput.update();
+
+   if (backButtonRenaming.clicked) {
+      phase = Phase::levelSelection;
+   }
+
+   if (renameButtonRenaming.clicked || (IsKeyPressed(KEY_ENTER) && !renameInput.typing)) {
+      if (!renameButtonRenaming.clicked) {
+         playSound("click");
+      }
+
+      if (renameInput.text.size() < minWorldNameSize) {
+         insertPopup("Invalid World Name", format("World name must contain from {} to {} characters, but it has {} instead.", minWorldNameSize, maxWorldNameSize, renameInput.text.size()), false);
+         return;
+      }
+
+      std::string newName = format("data/worlds/{}.txt", renameInput.text);
+      if (std::filesystem::exists(newName) && std::filesystem::is_regular_file(newName)) {
+         insertPopup("Invalid World Name", format("World with the name '{}' already exists.", renameInput.text), false);
+         return;
+      }
+
+      // try catch blocks suck, so no error handling here
+      std::filesystem::rename(format("data/worlds/{}.txt", selectedWorld), newName);
+
+      // Make sure renaming worlds doesn't change favorites
+      if (wasFavoriteBeforeRenaming) {
+         favoriteWorlds.erase(std::remove_if(favoriteWorlds.begin(), favoriteWorlds.end(), [this](std::string &s) -> bool {
+            return s == renameInput.text;
+         }));
+
+         favoriteWorlds.push_back(renameInput.text);
+         saveLinesToFile("data/favorites.txt", favoriteWorlds);
+      }
+
+      loadWorlds();
+      renameInput.text.clear();
+      phase = Phase::levelSelection;
+   }
+}
+
+// Update level generation screen
 
 void MenuState::updateGeneratingLevel() {
    MapGenerator generator (worldName.text, defaultMapSizeX, defaultMapSizeY, shouldWorldBeFlat.checked);
@@ -246,9 +321,12 @@ void MenuState::render() {
    case Phase::title:           renderTitle();           break;
    case Phase::levelSelection:  renderLevelSelection();  break;
    case Phase::levelCreation:   renderLevelCreation();   break;
+   case Phase::levelRenaming:   renderLevelRenaming();   break;
    case Phase::generatingLevel: renderGeneratingLevel(); break;
    }
 }
+
+// Render title
 
 void MenuState::renderTitle() {
    drawText(getScreenCenter({0.f, titleOffsetX}), "SANDBOX 2D", 180);
@@ -256,6 +334,8 @@ void MenuState::renderTitle() {
    optionsButton.render();
    quitButton.render();
 }
+
+// Render level selection screen
 
 void MenuState::renderLevelSelection() {
    drawText(getScreenCenter({0.f, titleOffsetX2}), "SELECT WORLD", 180);
@@ -282,6 +362,8 @@ void MenuState::renderLevelSelection() {
    }
 }
 
+// Render level creation screen
+
 void MenuState::renderLevelCreation() {
    drawText(getScreenCenter({0.f, titleOffsetX2}), "CREATE WORLD", 180);
    backButtonCreation.render();
@@ -291,6 +373,21 @@ void MenuState::renderLevelCreation() {
    drawText({worldName.rectangle.x - 125.f, worldName.rectangle.y + worldName.rectangle.height / 2.f}, "World Name:", 50);
    drawText({worldName.rectangle.x - 125.f, shouldWorldBeFlat.rectangle.y + shouldWorldBeFlat.rectangle.height / 2.f}, "Flat World:", 50);
 }
+
+// Render level renaming screen
+
+void MenuState::renderLevelRenaming() {
+   drawText(getScreenCenter({0.0f, titleOffsetX2}), "RENAME WORLD", 180);
+   backButtonRenaming.render();
+   renameButtonRenaming.render();
+   renameInput.render();
+
+   drawText({renameInput.rectangle.x - 175.0f, renameInput.rectangle.y + renameInput.rectangle.height / 2.0f}, "New World Name:", 50);
+   drawText({renameInput.rectangle.x - 175.0f, renameInput.rectangle.y + 235.0f}, "Old World Name:", 50);
+   drawText({renameInput.rectangle.x + renameInput.rectangle.width / 2.0f, renameInput.rectangle.y + 235.0f}, selectedWorld.c_str(), 50);
+}
+
+// Render level generation screen
 
 void MenuState::renderGeneratingLevel() {
    drawText(getScreenCenter(), (std::string("Generating World '") + worldName.text + "'...").c_str(), 50);

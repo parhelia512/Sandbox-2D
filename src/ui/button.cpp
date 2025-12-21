@@ -11,6 +11,8 @@ void Button::update(float offsetY) {
    if (!disabled) {
       down = hovering && IsMouseButtonDown(MOUSE_LEFT_BUTTON);
       clicked = hovering && isMousePressedUI(MOUSE_LEFT_BUTTON);
+   } else {
+      down = clicked = false;
    }
 
    if (hovering) {
