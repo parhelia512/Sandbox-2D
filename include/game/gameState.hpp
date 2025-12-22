@@ -9,6 +9,8 @@
 // Game state
 
 struct GameState: public State {
+   // Constructors
+
    GameState(const std::string &worldName);
    ~GameState();
 
@@ -19,27 +21,38 @@ struct GameState: public State {
    void updateControls();
    void updatePhysics();
 
-   // Other functions
+   // Render
 
    void render() const override;
+   void renderGame() const;
+   void renderUI() const;
+
+   // Change states
+
    State* change() override;
+
+   // Helpler functions
 
    void calculateCameraBounds();
 
-private:
+   // Members
+
+   const Texture &backgroundTexture, &foregroundTexture;
+
    Map map;
-   Camera2D camera;
    Player player;
-   Inventory inventory;
 
+   Camera2D camera;
    Rectangle cameraBounds;
-   std::vector<DroppedItem> droppedItems;
 
-   Texture &backgroundTexture, &foregroundTexture;
-   std::string worldName;
-   float physicsTimer = 0.0f, updateTimer = 0.0f;
-
+   Inventory inventory;
    Button continueButton, menuButton, pauseButton;
+
+   std::vector<DroppedItem> droppedItems;
+   std::string worldName;
+
+   float physicsTimer = 0.0f;
+   float updateTimer = 0.0f;
    bool paused = false;
 };
 

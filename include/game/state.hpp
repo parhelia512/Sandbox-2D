@@ -4,13 +4,6 @@
 // Polymorphic state
 
 struct State {
-   bool quitState = false;
-   bool fadingIn = true, fadingOut = false;
-   float fadeTimer = 0.f;
-   float alpha = 0.f;
-
-   // Constructors
-
    State() = default;
    virtual ~State() = default;
 
@@ -25,6 +18,15 @@ struct State {
    void updateStateLogic();
    void updateFadingIn();
    void updateFadingOut();
+
+   // Members
+
+   bool quitState = false;
+   bool fadingIn = true;
+   bool fadingOut = false;
+
+   float fadeTimer = 0.f;
+   float alpha = 0.f;
 };
 
 #endif

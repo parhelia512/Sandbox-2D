@@ -13,7 +13,6 @@
 ### Other
 - Clean (if necessarry):
 - - gameState
-- - state
 - - furniture
 - - generation
 - - inventory

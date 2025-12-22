@@ -2,8 +2,6 @@
 #include "util/config.hpp"
 #include <raylib.h>
 
-// Update functions
-
 void State::updateStateLogic() {
    if (fadingIn) {
       updateFadingIn();
@@ -19,7 +17,8 @@ void State::updateFadingIn() {
    alpha = 1.f - fadeTimer / fadeTime;
 
    if (fadeTimer >= fadeTime) {
-      fadeTimer = alpha = 0.f;
+      fadeTimer = 0.f;
+      alpha = 0.f;
       fadingIn = false;
    }
 }

@@ -2,7 +2,6 @@
 #include "game/menuState.hpp"
 #include "mngr/resource.hpp"
 #include "mngr/sound.hpp"
-#include "util/config.hpp"
 #include "util/fileio.hpp"
 #include "util/input.hpp"
 #include "util/math.hpp"
@@ -10,29 +9,31 @@
 #include "util/position.hpp"
 #include "util/random.hpp"
 #include "util/render.hpp"
-#include <algorithm>
-#include <cmath>
 #include <raymath.h>
+#include <algorithm>
 
 // Constructors
 
 GameState::GameState(const std::string &worldName)
-   : inventory(map, player, droppedItems), backgroundTexture(getRandomBackground()), foregroundTexture(getRandomForeground()), worldName(worldName) {
+: backgroundTexture(getRandomBackground()), foregroundTexture(getRandomForeground()), inventory(map, player, droppedItems), worldName(worldName) {
+   const Vector2 center = getScreenCenter();
+   
+   // Init world and camera
    resetBackground();
    loadWorldData(worldName, player, camera.zoom, map, inventory, droppedItems);
 
    camera.zoom = clamp(camera.zoom, minCameraZoom, maxCameraZoom);
    camera.target = player.getCenter();
-   camera.offset = getScreenCenter();
+   camera.offset = center;
    camera.rotation = 0.0f;
    calculateCameraBounds();
 
    // Init UI
-   continueButton.rectangle = {GetScreenWidth() / 2.f, GetScreenHeight() / 2.f, buttonWidth, buttonHeight};
+   continueButton.rectangle = {center.x, center.y, buttonWidth, buttonHeight};
    continueButton.text = "Continue";
    menuButton.rectangle = {continueButton.rectangle.x, continueButton.rectangle.y + buttonPaddingY, buttonWidth, buttonHeight};
    menuButton.text = "Save & Quit";
-   pauseButton.rectangle = {GetScreenWidth() - buttonWidth / 2.f, GetScreenHeight() - buttonHeight / 2.f, buttonWidth, buttonHeight};
+   pauseButton.rectangle = {GetScreenWidth() - buttonWidth / 2.f + 10.0f, GetScreenHeight() - buttonHeight / 2.f, buttonWidth, buttonHeight};
    pauseButton.text = "Pause";
    continueButton.texture = menuButton.texture = &getTexture("button");
 }
@@ -42,7 +43,7 @@ GameState::~GameState() {
    saveWorldData(worldName, player.position.x, player.position.y, camera.zoom, map, &inventory, &droppedItems);
 }
 
-// Update functions
+// Update
 
 void GameState::update() {
    updatePauseScreen();
@@ -50,37 +51,37 @@ void GameState::update() {
    updatePhysics();
 }
 
+// Update pause screen
+
 void GameState::updatePauseScreen() {
    pauseButton.update();
-   if (pauseButton.clicked) {
-      paused = !paused;
-   }
-   
-   if (IsKeyReleased(pauseKey)) {
-      playSound("click");
+   if (pauseButton.clicked || handleKeyPressWithSound(pauseKey)) {
       paused = !paused;
    }
 
    if (!paused) {
       return;
    }
-   
+
    continueButton.update();
    menuButton.update();
 
    if (continueButton.clicked) {
       paused = false;
    }
+
    if (menuButton.clicked) {
       fadingOut = true;
    }
 }
 
+// Update controls
+
 void GameState::updateControls() {
    if (!paused) {
-      float wheel = IsKeyReleased(zoomInKey) - IsKeyReleased(zoomOutKey);
-      if (wheel != 0.f) {
-         camera.zoom = clamp(std::exp(std::log(camera.zoom) + wheel * 0.2f), minCameraZoom, maxCameraZoom);
+      const float zoomFactor = IsKeyReleased(zoomInKey) - IsKeyReleased(zoomOutKey);
+      if (zoomFactor != 0.f) {
+         camera.zoom = clamp(std::exp(std::log(camera.zoom) + zoomFactor * 0.2f), minCameraZoom, maxCameraZoom);
       }
 
       player.updatePlayer(map);
@@ -90,6 +91,8 @@ void GameState::updateControls() {
    camera.target = lerp(camera.target, player.getCenter(), cameraFollowSpeed);
    calculateCameraBounds();
 }
+
+// Update physics
 
 /************************************/
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
@@ -113,6 +116,7 @@ void GameState::updatePhysics() {
    }
    
    /************************************/
+   // Move this to a different function later on!
    Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
 
    if (IsKeyPressed(tempSwitchForward)) {
@@ -147,19 +151,20 @@ void GameState::updatePhysics() {
 
    // Update every frame (DT-dependant)
    if (!droppedItems.empty()) {
-      Rectangle playerBounds = player.getBounds();
+      const Rectangle playerBounds = player.getBounds();
       
       for (auto &droppedItem: droppedItems) {
          droppedItem.update(cameraBounds);
 
-         if (droppedItem.inBounds && CheckCollisionRecs(playerBounds, droppedItem.getBounds())) {
-            Item item {droppedItem.type, droppedItem.id, droppedItem.isFurniture, false, droppedItem.count};
-            int count = item.count;
+         if (!droppedItem.inBounds || !CheckCollisionRecs(playerBounds, droppedItem.getBounds())) {
+            continue;
+         }
+         Item item {droppedItem.type, droppedItem.id, droppedItem.isFurniture, false, droppedItem.count};
+         const int count = item.count;
 
-            droppedItem.count = (inventory.placeItem(item) ? 0 : item.count);
-            if (count != item.count) {
-               playSound("pickup");
-            }
+         droppedItem.count = (inventory.placeItem(item) ? 0 : item.count);
+         if (count != item.count) {
+            playSound("pickup");
          }
       }
 
@@ -293,14 +298,21 @@ void GameState::updatePhysics() {
    }), map.furniture.end());
 }
 
-// Other functions
+// Render
 
 void GameState::render() const {
-   // Draw parallax background
-   float delta = (paused ? 0 : player.delta.x / GetFrameTime() / 60.0f); // To avoid delta time clash
+   const float delta = (paused ? 0 : player.delta.x / GetFrameTime() / 60.0f); // To avoid delta time clash
    drawBackground(foregroundTexture, backgroundTexture, delta * parallaxBgSpeed, delta * parallaxFgSpeed, (paused ? 0 : gameSunSpeed));
 
    BeginMode2D(camera);
+   renderGame();
+   EndMode2D();
+   renderUI();
+}
+
+// Render game
+
+void GameState::renderGame() const {
    map.render(cameraBounds);
 
    /************************************/
@@ -330,9 +342,11 @@ void GameState::render() const {
    }
 
    player.render();
-   EndMode2D();
+}
 
-   // Draw the UI
+// Render UI
+
+void GameState::renderUI() const {
    inventory.render();
 
    if (paused) {
@@ -342,9 +356,13 @@ void GameState::render() const {
    pauseButton.render();
 }
 
+// Change states
+
 State* GameState::change() {
    return new MenuState();
 }
+
+// Helper functions
 
 void GameState::calculateCameraBounds() {
    cameraBounds = getCameraBounds(camera);
