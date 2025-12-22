@@ -7,26 +7,27 @@
 // Loading state
 
 struct LoadingState: public State {
+   enum class Load { fonts, textures, sounds, music, count };
+
+   // Constructors
+
    LoadingState();
    ~LoadingState() = default;
 
-   // Update functions
+   // Functions
 
    void update() override;
-
-   // Other functions
-
    void render() const override;
    State* change() override;
 
-private:
-   enum class Load { fonts, textures, sounds, soundSetup, music, count };
+   // Members
 
-   std::string splash;
-   std::string text = "Loading Fonts... ";
-   Load load = Load::fonts;
-   float waitTimer = 0.f;
-   float rotation = 0.f;
+   std::string splashText;
+   std::string loadingText = "Loading Fonts... ";
+   Load loadPhase = Load::fonts;
+
+   float finalWaitTimer = 0.f;
+   float iconRotation = 0.f;
 };
 
 #endif

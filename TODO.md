@@ -5,6 +5,7 @@
 
 ### UI
 - add world searching
+- make wrapping handle spaces in new lines
 
 ### Generation
 - fix tree tops generating in solid blocks
@@ -12,7 +13,6 @@
 ### Other
 - Clean (if necessarry):
 - - gameState
-- - loadingState
 - - state
 - - furniture
 - - generation

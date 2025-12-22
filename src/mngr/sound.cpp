@@ -28,6 +28,15 @@ void saveSound(const std::string &name, const std::vector<std::string> &soundLis
    savedSounds[name] = soundList;
 }
 
+void loadSavedSounds() {
+   saveSound("click", {"click1", "click2", "click3"});
+   saveSound("hover", {"hover1", "hover2"});
+   saveSound("trash", {"trash1", "trash2", "trash3"});
+   saveSound("jump", {"jump1", "jump2", "jump3", "jump4"});
+   saveSound("footstep", {"footstep1", "footstep2", "footstep3", "footstep4"});
+   saveSound("pickup", {"pickup1", "pickup2", "pickup3", "pickup4"});
+}
+
 void loadSounds() {
    std::filesystem::create_directories("assets/sounds/");
    for (const auto &file: std::filesystem::recursive_directory_iterator("assets/sounds/")) {
