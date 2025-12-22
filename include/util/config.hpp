@@ -37,6 +37,8 @@ constexpr float maxCameraZoom     = 200.0f;
 
 constexpr float physicsUpdateTime = 0.1f;
 constexpr int lavaUpdateSpeed     = 6;
+constexpr int cactusGrowSpeedMin  = 50;
+constexpr int cactusGrowSpeedMax  = 255;
 constexpr int grassGrowSpeedMin   = 100;
 constexpr int grassGrowSpeedMax   = 255;
 
