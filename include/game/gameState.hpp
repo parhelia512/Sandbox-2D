@@ -5,6 +5,7 @@
 #include "objs/inventory.hpp"
 #include "objs/player.hpp"
 #include "ui/button.hpp"
+#include <functional>
 
 // Game state
 
@@ -20,6 +21,13 @@ struct GameState: public State {
    void updatePauseScreen();
    void updateControls();
    void updatePhysics();
+
+   void updateBlockMovingAround(int &x, int y, int offsetY, const std::function<bool(const Map&, int, int)> &isPassable);
+   void updateWaterPhysics(int &x, int y);
+   void updateLavaPhysics(int &x, int y);
+   void updateSandPhysics(int x, int y);
+   void updateGrassPhysics(int x, int y);
+   void updateDirtPhysics(int x, int y);
 
    // Render
 

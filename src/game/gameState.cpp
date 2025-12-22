@@ -181,109 +181,18 @@ void GameState::updatePhysics() {
       return;
    }
 
+   // Loop backwards to avoid updating most of the moving blocks twice
    for (int y = cameraBounds.height; y >= cameraBounds.y; --y) {
       for (int x = cameraBounds.width; x >= cameraBounds.x; --x) {
          Block &block = map[y][x];
 
-         if (block.type == Block::water || block.type == Block::lava) {
-            if (block.type == Block::lava) {
-               // Turn into obsidian if water is in a 1 tile radius
-               for (int yy = y - 1; yy <= y + 1 && yy >= 0 && yy < map.sizeY; ++yy) {
-                  for (int xx = x - 1; xx <= x + 1 && xx >= 0 && xx < map.sizeX; ++xx) {
-                     if (map.isu(xx, yy, Block::water)) {
-                        if (map.blocks[y][x].furniture) {
-                           map.deleteBlock(x, y);
-                        } else {
-                           map.setBlock(x, y, "obsidian");
-                        }
-                        map.deleteBlock(xx, yy);
-                     }
-                  }
-               }
-
-               if (block.type != Block::lava) {
-                  continue;
-               }
-
-               // Update lava slower than water
-               ++map[y][x].value;
-               if (map[y][x].value >= lavaUpdateSpeed) {
-                  map[y][x].value = 0;
-               } else {
-                  continue;
-               }
-            }
-
-            if (map.is(x, y + 1, Block::air)) {
-               map.moveBlock(x, y, x, y + 1);
-            } else if (map.is(x - 1, y, Block::air) && map.is(x + 1, y, Block::air)) {
-               if (chance(50)) {
-                  goto moveWaterLeft;
-               } else {
-                  goto moveWaterRight;
-               }
-            } else if (map.is(x - 1, y, Block::air)) {
-            moveWaterLeft:
-               map.moveBlock(x, y, x - 1, y);
-               --x; // Prevent the water tile from updating twice
-            } else if (map.is(x + 1, y, Block::air)) {
-            moveWaterRight:
-               map.moveBlock(x, y, x + 1, y);
-            }
-         }
-
-         // Update sand
-         if (block.type == Block::sand) {
-            if (map.empty(x, y + 1) || map.is(x, y + 1, Block::water)) {
-               map.moveBlock(x, y, x, y + 1);
-            } else if ((map.empty(x - 1, y + 1) || map.is(x - 1, y + 1, Block::water)) && (map.empty(x + 1, y + 1) || map.is(x + 1, y + 1, Block::water))) {
-               if (chance(50)) {
-                  goto moveSandRight;
-               } else {
-                  goto moveSandLeft;
-               }
-            } else if (map.empty(x - 1, y + 1) || map.is(x - 1, y + 1, Block::water)) {
-            moveSandLeft:
-               map.moveBlock(x, y, x - 1, y + 1);
-            } else if (map.empty(x + 1, y + 1) || map.is(x + 1, y + 1, Block::water)) {
-            moveSandRight:
-               map.moveBlock(x, y, x + 1, y + 1);
-            }
-
-            if (map[y][x].value2 == 0) {
-               map[y][x].value2 = random(cactusGrowSpeedMin, cactusGrowSpeedMax);
-            }
-
-            map[y][x].value += chance(1);
-            if (map[y][x].value >= map[y][x].value2 && map[y][x].value2 != 0 && map.empty(x, y - 1) && map.empty(x, y - 2)) {
-               map[y][x].value = map[y][x].value2 = 0;
-               Furniture::generate(x, y - 1, map, Furniture::cactus_seed);
-            }
-         }
-
-         // Update grass and dirt
-         if (block.type == Block::dirt && (map.is(x, y - 1, Block::air) || map.is(x, y - 1, Block::water) || map.is(x, y - 1, Block::platform))) {
-            if (map[y][x].value2 == 0) {
-               map[y][x].value2 = random(grassGrowSpeedMin, grassGrowSpeedMax);
-            }
-
-            ++map[y][x].value;
-            if (map[y][x].value >= map[y][x].value2) {
-               map[y][x].value = map[y][x].value2 = 0;
-               map.setBlock(x, y, (block.id == Block::getId("dirt") ? "grass" : "jungle_grass"));
-            }
-         }
-
-         if (block.type == Block::grass && !map.is(x, y - 1, Block::air) && !map.is(x, y - 1, Block::water) && !map.is(x, y - 1, Block::platform)) {
-            if (map[y][x].value2 == 0) {
-               map[y][x].value2 = random(grassGrowSpeedMin, grassGrowSpeedMax);
-            }
-
-            ++map[y][x].value;
-            if (map[y][x].value >= map[y][x].value2) {
-               map[y][x].value = map[y][x].value2 = 0;
-               map.setBlock(x, y, (block.id == Block::getId("grass") ? "dirt" : "mud"));
-            }
+         switch (block.type) {
+         case Block::water: updateWaterPhysics(x, y); break;
+         case Block::lava:  updateLavaPhysics(x, y);  break;
+         case Block::sand:  updateSandPhysics(x, y);  break;
+         case Block::grass: updateGrassPhysics(x, y); break;
+         case Block::dirt:  updateDirtPhysics(x, y);  break;
+         default: break;
          }
       }
    }
@@ -296,6 +205,108 @@ void GameState::updatePhysics() {
    map.furniture.erase(std::remove_if(map.furniture.begin(), map.furniture.end(), [](Furniture &f) -> bool {
       return f.deleted;
    }), map.furniture.end());
+}
+
+// Block physic update functions
+
+void GameState::updateBlockMovingAround(int &x, int y, int offsetY, const std::function<bool(const Map&, int, int)> &isPassable) {
+   if (isPassable(map, x, y + 1)) {
+      map.moveBlock(x, y, x, y + 1);
+      return;
+   }
+
+   bool leftEmpty  = isPassable(map, x - 1, y + offsetY);
+   bool rightEmpty = isPassable(map, x + 1, y + offsetY);
+   if (rightEmpty && leftEmpty && chance(50)) {
+      rightEmpty = false;
+   }
+
+   if (rightEmpty) {
+      map.moveBlock(x, y, x + 1, y + offsetY);
+   } else if (leftEmpty) {
+      map.moveBlock(x, y, x - 1, y + offsetY);
+      x -= 1; // Prevent the same water tile to update twice
+   }
+}
+
+void GameState::updateWaterPhysics(int &x, int y) {
+   updateBlockMovingAround(x, y, 0, [](const Map &map, int x, int y) -> bool {
+      return map.is(x, y, Block::air); // Don't use empty, because water can go trough furniture
+   });
+}
+
+void GameState::updateLavaPhysics(int &x, int y) {
+   for (int yy = y - 1; yy <= y + 1 && yy >= 0 && yy < map.sizeY; ++yy) {
+      for (int xx = x - 1; xx <= x + 1 && xx >= 0 && xx < map.sizeX; ++xx) {
+         if (!map.isu(xx, yy, Block::water)) {
+            continue;
+         }
+
+         if (map.blocks[y][x].furniture) {
+            map.deleteBlock(x, y);
+         } else {
+            map.setBlock(x, y, "obsidian");
+         }
+         map.deleteBlock(xx, yy);
+      }
+   }
+
+   Block &block = map[y][x];
+   if (block.type != Block::lava) {
+      return;
+   }
+
+   block.value += 1;
+   if (block.value < lavaUpdateSpeed) {
+      return;
+   }
+
+   block.value = 0;
+   updateBlockMovingAround(x, y, 0, [](const Map &map, int x, int y) -> bool {
+      return map.is(x, y, Block::air);
+   });
+}
+
+void GameState::updateSandPhysics(int x, int y) {
+   updateBlockMovingAround(x, y, 1, [](const Map &map, int x, int y) -> bool {
+      return map.empty(x, y) || map.isu(x, y, Block::water);
+   });
+}
+
+void GameState::updateGrassPhysics(int x, int y) {
+   if (map.is(x, y - 1, Block::air) || map.is(x, y - 1, Block::water) || map.is(x, y - 1, Block::platform)) {
+      return;
+   }
+
+   Block &block = map[y][x];
+   if (block.value2 == 0) {
+      block.value2 = random(grassGrowSpeedMin, grassGrowSpeedMax);
+   }
+
+   block.value += 1;
+   if (block.value >= block.value2) {
+      block.value = 0;
+      block.value2 = 0;
+      map.setBlock(x, y, (block.id == Block::getId("grass") ? "dirt" : "mud"));
+   }
+}
+
+void GameState::updateDirtPhysics(int x, int y) {
+   if (!map.is(x, y - 1, Block::air) && !map.is(x, y - 1, Block::water) && !map.is(x, y - 1, Block::platform)) {
+      return;
+   }
+
+   Block &block = map[y][x];
+   if (block.value2 == 0) {
+      block.value2 = random(grassGrowSpeedMin, grassGrowSpeedMax);
+   }
+
+   block.value += 1;
+   if (block.value >= block.value2) {
+      block.value = 0;
+      block.value2 = 0;
+      map.setBlock(x, y, (block.id == Block::getId("dirt") ? "grass" : "jungle_grass"));
+   }
 }
 
 // Render
