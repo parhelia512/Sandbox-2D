@@ -2,7 +2,6 @@
 #include "game/menuState.hpp"
 #include "mngr/resource.hpp"
 #include "mngr/sound.hpp"
-#include "ui/uiconstants.hpp"
 #include "util/fileio.hpp"
 #include "util/input.hpp"
 #include "util/math.hpp"
@@ -326,7 +325,7 @@ void GameState::updateDirtPhysics(int x, int y) {
 
 void GameState::render() const {
    const float delta = (paused ? 0 : player.delta.x / GetFrameTime() / 60.0f); // To avoid delta time clash
-   drawBackground(foregroundTexture, backgroundTexture, delta * parallaxBgSpeed, delta * parallaxFgSpeed, (paused ? 0 : gameSunSpeed));
+   drawBackground(foregroundTexture, backgroundTexture, delta, delta, (paused ? 0 : gameSunSpeed));
 
    BeginMode2D(camera);
    renderGame();

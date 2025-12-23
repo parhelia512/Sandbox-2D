@@ -6,6 +6,10 @@
 #include <vector>
 struct Map;
 
+// Constants
+
+constexpr inline float previewAlpha = 0.75f;
+
 // Furniture
 
 struct FurnitureTexture {

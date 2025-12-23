@@ -3,7 +3,6 @@
 #include "mngr/resource.hpp"
 #include "objs/generation.hpp"
 #include "ui/popup.hpp"
-#include "ui/uiconstants.hpp"
 #include "util/fileio.hpp"
 #include "util/format.hpp"
 #include "util/input.hpp"
@@ -52,7 +51,7 @@ MenuState::MenuState()
    worldFrame.rectangle = {worldFramePosition.x, worldFramePosition.y, GetScreenWidth() - worldFrameSizeOffset.x, GetScreenHeight() - worldFrameSizeOffset.y};
    worldFrame.scrollHeight = worldFrame.rectangle.height;
 
-   deleteButton.rectangle = {center.x - buttonOffsetX, worldFrame.rectangle.y + worldFrame.rectangle.height + buttonPaddingY, buttonWidth, buttonHeight};
+   deleteButton.rectangle = {center.x - 120.0f, worldFrame.rectangle.y + worldFrame.rectangle.height + buttonPaddingY, buttonWidth, buttonHeight};
    deleteButton.text = "Delete World";
    deleteButton.disabled = true;
    renameButton.rectangle = {deleteButton.rectangle.x - buttonPaddingX, deleteButton.rectangle.y, buttonWidth, buttonHeight};
@@ -61,7 +60,7 @@ MenuState::MenuState()
    backButton.rectangle = {renameButton.rectangle.x - buttonPaddingX, renameButton.rectangle.y, buttonWidth, buttonHeight};
    backButton.text = "Back";
 
-   favoriteButton.rectangle = {center.x + buttonOffsetX, worldFrame.rectangle.y + worldFrame.rectangle.height + buttonPaddingY, buttonWidth, buttonHeight};
+   favoriteButton.rectangle = {center.x + 120.0f, worldFrame.rectangle.y + worldFrame.rectangle.height + buttonPaddingY, buttonWidth, buttonHeight};
    favoriteButton.text = "Favorite";
    favoriteButton.disabled = true;
    playWorldButton.rectangle = {favoriteButton.rectangle.x + buttonPaddingX, favoriteButton.rectangle.y, buttonWidth, buttonHeight};
@@ -339,7 +338,7 @@ void MenuState::updateGeneratingLevel() {
 // Render
 
 void MenuState::render() const {
-   drawBackground(foregroundTexture, backgroundTexture, parallaxBgSpeed, parallaxFgSpeed, menuSunSpeed);
+   drawBackground(foregroundTexture, backgroundTexture, 1.0f, 1.0f, menuSunSpeed);
 
    switch (phase) {
    case Phase::title:           renderTitle();           break;
@@ -469,7 +468,7 @@ void MenuState::sortWorldButtonsByFavorites() {
 
    size_t index = 0;
    for (Button &button: worldButtons) {
-      button.rectangle = {360.f - scrollBarWidth / 2.f, 210.f + 110.f * index, worldFrame.rectangle.width - 120.f - scrollBarWidth / 2.f, 100.f};
+      button.rectangle = {360.f - Scrollframe::scrollBarWidth / 2.f, 210.f + 110.f * index, worldFrame.rectangle.width - 120.f - Scrollframe::scrollBarWidth / 2.f, 100.f};
       button.rectangle.x += button.rectangle.width / 2.f;
       button.rectangle.y += button.rectangle.height / 2.f;
 

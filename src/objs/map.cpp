@@ -1,6 +1,5 @@
 #include "mngr/resource.hpp"
 #include "objs/map.hpp"
-#include "ui/uiconstants.hpp"
 #include "util/render.hpp"
 #include <array>
 #include <unordered_map>
@@ -8,6 +7,7 @@
 // Constants
 
 constexpr unsigned char blockCount = 20;
+
 static inline const std::unordered_map<std::string, unsigned char> blockIds {
    {"air", 0}, {"grass", 1}, {"dirt", 2}, {"clay", 3}, {"stone", 4},
    {"sand", 5}, {"sandstone", 6}, {"water", 7}, {"bricks", 8}, {"glass", 9},

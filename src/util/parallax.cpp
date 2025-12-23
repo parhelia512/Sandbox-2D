@@ -1,6 +1,5 @@
 #include "util/parallax.hpp"
 #include "mngr/resource.hpp"
-#include "ui/uiconstants.hpp"
 #include "util/position.hpp"
 #include "util/random.hpp"
 #include "util/render.hpp"
@@ -9,6 +8,9 @@
 #include <vector>
 
 // Constants
+
+constexpr inline float parallaxBgSpeed = 75.0f;
+constexpr inline float parallaxFgSpeed = 100.0f;
 
 constexpr int starCountMin    = 10;
 constexpr int starCountMax    = 50;
@@ -75,8 +77,8 @@ static bool isNight = false;
 // Background functions
 
 void resetBackground() {
-   fgProgress = bgProgress = currentTime = 0;
-   moonPhase = -1;
+   fgProgress = bgProgress = currentTime = lastTime = 0;
+   moonPhase = lastMoonPhase = -1;
    isNight = false;
 }
 
@@ -88,8 +90,8 @@ void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bg
    int prevMoonPhase = moonPhase;
 
    // Update parallax backgrounds
-   bgProgress -= bgSpeed * GetFrameTime();
-   fgProgress -= fgSpeed * GetFrameTime();
+   bgProgress -= bgSpeed * GetFrameTime() * parallaxBgSpeed;
+   fgProgress -= fgSpeed * GetFrameTime() * parallaxFgSpeed;
    
    if (bgProgress <= -screenSize.x) {
       bgProgress = 0.f;
@@ -135,7 +137,7 @@ void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bg
    Texture &starTexture = getTexture("stars");
    for (int i = 0; i < starCount; ++i) {
       Star &star = stars[i];
-      DrawTexturePro(starTexture, {(float)star.frameX * textureSize, 0.0f, (float)textureSize, (float)starTexture.height}, {star.position.x, star.position.y, star.size.x, star.size.y}, {0, 0}, 0, Fade(WHITE, 0.5f - t));
+      DrawTexturePro(starTexture, {(float)star.frameX * starTexture.height, 0.0f, (float)starTexture.height, (float)starTexture.height}, {star.position.x, star.position.y, star.size.x, star.size.y}, {0, 0}, 0, Fade(WHITE, 0.5f - t));
    }
 
    // Draw either moon or sun based on the time
@@ -143,7 +145,7 @@ void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bg
       Texture &texture = getTexture("moon");
       Vector2 position = {origin.x, screenSize.y};
 
-      DrawTexturePro(texture, {(float)moonPhase * textureSize * 2.0f, 0.0f, (float)textureSize * 2.0f, (float)texture.height}, {position.x, position.y, moonSize.x, moonSize.y}, origin, currentTime - 180.0f, WHITE);
+      DrawTexturePro(texture, {(float)moonPhase * texture.height, 0.0f, (float)texture.height, (float)texture.height}, {position.x, position.y, moonSize.x, moonSize.y}, origin, currentTime - 180.0f, WHITE);
    } else {
       Texture &texture = getTexture("sun");
       Vector2 position = {origin.x, screenSize.y};

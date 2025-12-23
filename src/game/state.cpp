@@ -1,6 +1,11 @@
 #include "game/state.hpp"
-#include "ui/uiconstants.hpp"
 #include <raylib.h>
+
+// Constants
+
+constexpr inline float fadeTime = 0.4f;
+
+// Update functions
 
 void State::updateStateLogic() {
    if (fadingIn) {

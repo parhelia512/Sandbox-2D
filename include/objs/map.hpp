@@ -4,6 +4,10 @@
 #include "objs/furniture.hpp"
 #include <string>
 
+// Constants
+
+constexpr inline Color wallTint    = {120, 120, 120, 255};
+
 // Block
 
 struct Block {

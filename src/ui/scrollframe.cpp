@@ -1,6 +1,5 @@
 #include "mngr/resource.hpp"
 #include "ui/scrollframe.hpp"
-#include "ui/uiconstants.hpp"
 #include "util/input.hpp"
 #include "util/math.hpp"
 #include "util/render.hpp"

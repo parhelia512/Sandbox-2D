@@ -50,8 +50,8 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
    file << map.sizeX << ' ';
    file << map.sizeY << ' ';
    file << zoom << ' ';
-   file << getLastTimeOfDay() << ' ';
-   file << getLastMoonPhase() << ' ';
+   file << (!inventory ? 0 : getLastTimeOfDay()) << ' ';
+   file << (!inventory ? 0 : getLastMoonPhase()) << ' ';
 
    if (inventory) {
       file << inventory->selectedX << ' ';

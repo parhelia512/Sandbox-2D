@@ -4,6 +4,15 @@
 #include <raylib.h>
 #include <string>
 
+// Constants
+
+constexpr inline float buttonWidth    = 210.0f;
+constexpr inline float buttonHeight   = 70.0f;
+constexpr inline float buttonPaddingX = buttonWidth + 20.0f;
+constexpr inline float buttonPaddingY = buttonHeight + 20.0f;
+
+// Button
+
 struct Button {
    Texture2D *texture = nullptr;
    Rectangle rectangle;

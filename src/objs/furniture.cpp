@@ -1,7 +1,6 @@
 #include "objs/furniture.hpp"
 #include "mngr/resource.hpp"
 #include "objs/map.hpp"
-#include "ui/uiconstants.hpp"
 #include "util/random.hpp"
 #include <array>
 #include <unordered_map>
@@ -25,6 +24,7 @@ constexpr int treeBranchChance   = 15;
 constexpr int cactusBranchChance = 50;
 constexpr int cactusFlowerChance = 10;
 
+constexpr int textureSize    = 8;
 constexpr int furnitureCount = 10;
 
 static inline const std::unordered_map<std::string, int> furnitureTextureIds {
