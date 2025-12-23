@@ -5,9 +5,11 @@
 #include <string>
 
 struct Input {
+   Texture *texture = nullptr;
    Rectangle rectangle;
+
    std::string text, fallback;
-   bool hovering = false, typing = false;
+   bool hovering = false, typing = false, changed = false;
    int maxChars = 255, counter = 0;
 
    void update();

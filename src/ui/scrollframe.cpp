@@ -8,11 +8,14 @@
 // Update
 
 void Scrollframe::update() {
+   scrollbarHeight = rectangle.height * (rectangle.height / scrollHeight);
+
    float scrollFactor = GetMouseWheelMove();
 
    if (CheckCollisionPointRec(GetMousePosition(), rectangle) && scrollFactor != 0.f) {
       progress = clamp(progress + scrollFactor * 15.0f * GetFrameTime() * (rectangle.height / scrollHeight), 0.f, 1.f);
-   } else if (CheckCollisionPointRec(GetMousePosition(), {rectangle.x + rectangle.width - scrollBarWidth, scrollbarY, scrollBarWidth, scrollbarHeight})) {
+      scrollbarY = rectangle.y + (rectangle.height - scrollbarHeight) * progress;
+   } else if (CheckCollisionPointRec(GetMousePosition(), {rectangle.x + rectangle.width - scrollBarWidth, rectangle.y, scrollBarWidth, rectangle.height})) {
       setMouseOnUI(true);
       moving = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
    }
@@ -22,12 +25,9 @@ void Scrollframe::update() {
    }
    
    if (moving) {
-      float local = GetMouseY() - rectangle.y;
-      progress = clamp(local / rectangle.height, 0.f, 1.f);
+      scrollbarY = clamp<float>(GetMouseY(), rectangle.y, rectangle.y + rectangle.height - scrollbarHeight);
+      progress = (scrollbarY - rectangle.y) / (rectangle.height - scrollbarHeight);
    }
-
-   scrollbarHeight = rectangle.height * (rectangle.height / scrollHeight);
-   scrollbarY = rectangle.y + (rectangle.height - scrollbarHeight) * progress;
 }
 
 // Render
@@ -46,4 +46,8 @@ bool Scrollframe::inFrame(const Rectangle &rect) const {
 
 float Scrollframe::getOffsetY() const {
    return (scrollHeight - rectangle.height) * progress;
+}
+
+float Scrollframe::getProgress(float positionY) const {
+   return clamp((positionY - rectangle.y) / scrollHeight, 0.0f, 1.0f);
 }

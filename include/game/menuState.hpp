@@ -64,7 +64,7 @@ struct MenuState: public State {
    Button *selectedButton = nullptr; 
 
    Scrollframe worldFrame;
-   Input worldName, renameInput;
+   Input worldName, worldSearchBar, renameInput;
    CheckBox shouldWorldBeFlat;
 
    std::vector<std::string> favoriteWorlds;

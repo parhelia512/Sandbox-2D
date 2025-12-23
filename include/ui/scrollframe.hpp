@@ -20,6 +20,7 @@ struct Scrollframe {
    bool inFrame(const Rectangle &rect) const;
    float getOffsetY() const;
    float getScrollBarWidth() const;
+   float getProgress(float positionY) const;
 };
 
 #endif
