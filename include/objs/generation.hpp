@@ -35,6 +35,10 @@ struct MapGenerator {
 
    void generateFlatWorld();
 
+   // Find a perfect spawn location for the player
+
+   Vector2 findPlayerSpawnLocation();
+
    // Getter functions
 
    Biome getBiome(int x);

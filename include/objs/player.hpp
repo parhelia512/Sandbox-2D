@@ -41,6 +41,8 @@ struct Player {
    float updateTimer = 0.f;
    float fallTimer = 0.f;
    float walkTimer = 0.f;
+   float jumpTimer = 0.f;
+
    int walkFrame = 6;
    bool flipX = false;
    int frameX = 0;

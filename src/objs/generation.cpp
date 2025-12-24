@@ -62,7 +62,9 @@ void MapGenerator::generate() {
       generateWater();
       generateTrees();
    }
-   saveWorldData(name, map.sizeX / 2.f, 0.f, 50.f, map, nullptr, nullptr);
+
+   const Vector2 spawnLocation = findPlayerSpawnLocation();
+   saveWorldData(name, spawnLocation.x, spawnLocation.y, 50.f, map, nullptr, nullptr);
 }
 
 void MapGenerator::generateTerrain() {
@@ -196,6 +198,39 @@ void MapGenerator::generateFlatWorld() {
          }
       }
    }
+}
+
+// Find a perfect spawn location for the player
+
+Vector2 MapGenerator::findPlayerSpawnLocation() {
+   float y = startY * map.sizeY + 1;
+   int offset = 0;
+
+   for (int x = map.sizeX / 2; x < map.sizeX && x >= 0; x = map.sizeX / 2 + offset) {
+      while (y < map.sizeY - 1 && map.isu(x, y + 1, Block::air)) { y++; }
+      while (y > 0 && !map.isu(x, y, Block::air)) { y--; }
+
+      bool valid = true;
+      for (int yy = 0; yy < 3; ++yy) {
+         for (int xx = 0; xx < 2; ++xx) {
+            if (!map.is(x + xx, y - yy, Block::air)) {
+               valid = false;
+               goto breakOut;
+            }
+         }
+      }
+   breakOut:
+
+      if (map.is(x, y + 1, Block::water) || map.is(x + 1, y + 1, Block::water)) {
+         valid = false;
+      } 
+
+      if (valid) {
+         return {(float)x, y - 2}; // To avoid spawning the player in ground
+      }
+      offset = -offset + (offset > 0 ? -1 : 1); // Search for the closest spawn point to center
+   }
+   return {map.sizeX / 2.0f, 0.0f}; // Just drop the player down from the sky if no spawn points were found
 }
 
 // Getter functions

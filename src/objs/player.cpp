@@ -21,6 +21,7 @@ constexpr float playerSmoothing   = 0.166f;
 
 constexpr float coyoteTime = 0.1f;
 constexpr float foxTime    = 0.1f;
+constexpr float jumpTime   = 0.25f;
 
 // Constructors
 
@@ -76,10 +77,12 @@ void Player::updateMovement() {
       coyoteTimer -= playerUpdateSpeed;
    }
 
-   if ((IsKeyDown(KEY_SPACE) && coyoteTimer > 0) || (onGround && foxTimer > 0)) {
+   jumpTimer -= playerUpdateSpeed;
+   if (((IsKeyDown(KEY_SPACE) && coyoteTimer > 0) || (onGround && foxTimer > 0)) && jumpTimer <= 0) {
       playSound("jump");
       velocity.y = jumpSpeed;
       coyoteTimer = 0.f;
+      jumpTimer = jumpTime;
    }
 
    // Do everything else
@@ -156,7 +159,7 @@ void Player::updateCollisions(Map &map) {
 
    for (int y = max(0, (int)position.y - 1); y < maxY; ++y) {
       for (int x = max(0, (int)position.x); x < maxX; ++x) {
-         if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || map.isu(x, y, Block::lava) || (map.isu(x, y, Block::platform) && !IsKeyDown(KEY_A))) {
+         if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || map.isu(x, y, Block::lava) || (map.isu(x, y, Block::platform) && !IsKeyDown(KEY_W))) {
             continue;
          }
 
