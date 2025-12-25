@@ -1,8 +1,8 @@
 #include "ui/popup.hpp"
 #include "mngr/resource.hpp"
-#include "mngr/sound.hpp"
 #include "ui/button.hpp"
 #include "util/format.hpp"
+#include "util/input.hpp"
 #include "util/position.hpp"
 #include "util/render.hpp"
 #include <vector>
@@ -23,6 +23,37 @@ static bool fadedIn = false, fadedOut = true;
 static Button confirmationButton;
 static Button denialButton;
 static Button okayButton;
+
+// Helper functions
+
+void fadeOut() {
+   if (fadedOut) {
+      return;
+   }
+   fadedIn = false;
+   fadeTimer += GetFrameTime();
+   alpha = (1.0f - fadeTimer / fadeTime) / 2.0f;
+
+   if (fadeTimer >= fadeTime) {
+      alpha = fadeTimer = 0.0f;
+      fadedOut = true;
+   }
+}
+
+void fadeIn() {
+   if (!fadedIn) {
+      return;
+   }
+   fadedOut = false;
+   fadeTimer += GetFrameTime();
+   alpha = (fadeTimer / fadeTime) / 2.0f;
+
+   if (fadeTimer >= fadeTime) {
+      alpha = 0.5f;
+      fadeTimer = 0.0f;
+      fadedIn = true;
+   }
+}
 
 // Init functions
 
@@ -60,64 +91,30 @@ bool anyPopups() {
 
 void updatePopups() {
    if (popups.empty()) {
-      // Fade out
-      if (!fadedOut) {
-         fadedIn = false;
-         fadeTimer += GetFrameTime();
-         alpha = (1.0f - fadeTimer / fadeTime) / 2.0f;
-
-         if (fadeTimer >= fadeTime) {
-            alpha = fadeTimer = 0.0f;
-            fadedOut = true;
-         }
-      }
+      fadeOut();
       return;
    }
 
-   // Fade in
-   if (!fadedIn) {
-      fadedOut = false;
-      fadeTimer += GetFrameTime();
-      alpha = (fadeTimer / fadeTime) / 2.0f;
-
-      if (fadeTimer >= fadeTime) {
-         alpha = 0.5f;
-         fadeTimer = 0.0f;
-         fadedIn = true;
-      }
-   }
-
+   fadeIn();
    Popup &popup = popups.back();
 
    if (popup.confirmation) {
       confirmationButton.update();
       denialButton.update();
    
-      if (confirmationButton.clicked || IsKeyPressed(KEY_ENTER)) {
-         if (!confirmationButton.clicked) {
-            playSound("click");
-         }
-
+      if (confirmationButton.clicked || handleKeyPressWithSound(KEY_ENTER)) {
          wasLastPopupConfirmed = true;
          popups.pop_back();
       }
 
-      if (denialButton.clicked || IsKeyPressed(KEY_ESCAPE)) {
-         if (!denialButton.clicked) {
-            playSound("click");
-         }
-
+      if (denialButton.clicked || handleKeyPressWithSound(KEY_ESCAPE)) {
          wasLastPopupConfirmed = false;
          popups.pop_back();
       }
    } else {
       okayButton.update();
 
-      if (okayButton.clicked || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE)) {
-         if (!okayButton.clicked) {
-            playSound("click");
-         }
-         
+      if (okayButton.clicked || handleKeyPressWithSound(KEY_ENTER) || handleKeyPressWithSound(KEY_ESCAPE)) {
          popups.pop_back();
       }
    }

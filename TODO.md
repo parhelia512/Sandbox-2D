@@ -41,11 +41,3 @@
 
 ### Other
 - Fix all of the input issues (maybe create input manager?)
-
-- Clean (if necessarry):
-- - furniture
-- - generation
-- - inventory
-- - item
-- - map
-- - popup
