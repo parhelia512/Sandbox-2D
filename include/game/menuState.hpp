@@ -20,12 +20,14 @@ struct MenuState: public State {
 
    // Update
 
-   void update() override;
-   void updateTitle();
-   void updateLevelSelection();
-   void updateLevelCreation();
-   void updateLevelRenaming();
-   void updateGeneratingLevel();
+   void update(float dt) override;
+   void fixedUpdate() override;
+
+   void updateTitle          (float dt);
+   void updateLevelSelection (float dt);
+   void updateLevelCreation  (float dt);
+   void updateLevelRenaming  (float dt);
+   void updateGeneratingLevel(float dt);
 
    // Render
 
@@ -50,7 +52,7 @@ struct MenuState: public State {
 
    // Helper functions
 
-   bool isKeyRepeating(int key, float &repeatTimer, float &delayTimer);
+   bool isKeyRepeating(int key, float &repeatTimer, float &delayTimer, float dt);
    size_t getSelectedButtonIndex() const;
 
    // Members

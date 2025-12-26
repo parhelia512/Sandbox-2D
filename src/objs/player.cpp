@@ -1,7 +1,9 @@
+#include "game/state.hpp"
 #include "mngr/resource.hpp"
 #include "objs/player.hpp"
 #include "mngr/sound.hpp"
 #include "util/math.hpp"
+#include "util/position.hpp"
 #include <raymath.h>
 
 // Constants
@@ -9,13 +11,13 @@
 constexpr Vector2 playerSize    = {1.8f, 2.7f};
 constexpr float playerFrameSize = 16;
 
-constexpr float playerSpeed   = 21.84f;
-constexpr float airMultiplier =  0.60f;
-constexpr float jumpSpeed     = 57.00f;
-constexpr float gravity       = 99.00f;
-constexpr float maxGravity    = 80.00f;
-constexpr float acceleration  =  5.00f;
-constexpr float deceleration  = 10.00f;
+constexpr float playerSpeed   = 0.364f;
+constexpr float airMultiplier = 0.600f;
+constexpr float jumpSpeed     = 0.950f;
+constexpr float gravity       = 0.028f;
+constexpr float maxGravity    = 1.333f;
+constexpr float acceleration  = 0.083f;
+constexpr float deceleration  = 0.167f;
 
 constexpr float coyoteTime = 0.1f;
 constexpr float foxTime    = 0.1f;
@@ -40,11 +42,9 @@ void Player::updatePlayer(Map &map) {
 }
 
 void Player::updateMovement() {
-   const float dt = GetFrameTime();
-   
    // Handle gravity
    if (!onGround) {
-      velocity.y += gravity * waterMultiplier * dt;
+      velocity.y += gravity * waterMultiplier;
       if (velocity.y >= maxGravity) {
          velocity.y = maxGravity * waterMultiplier;
       }
@@ -57,25 +57,25 @@ void Player::updateMovement() {
 
    if (directionX != 0) {
       float speedX = (onGround ? playerSpeed : playerSpeed * airMultiplier);
-      velocity.x = lerp(velocity.x, directionX * speedX, acceleration * iceMultiplier * dt);
+      velocity.x = lerp(velocity.x, directionX * speedX, acceleration * iceMultiplier);
    } else {
-      velocity.x = lerp(velocity.x, 0.f, deceleration * iceMultiplier * dt);
+      velocity.x = lerp(velocity.x, 0.f, deceleration * iceMultiplier);
    }
 
    // Handle jumping
    if (!onGround && IsKeyDown(KEY_SPACE)) {
       foxTimer = foxTime;
    } else {
-      foxTimer -= dt;
+      foxTimer -= fixedUpdateDT;
    }
 
    if (onGround) {
       coyoteTimer = coyoteTime;
    } else {
-      coyoteTimer -= dt;
+      coyoteTimer -= fixedUpdateDT;
    }
 
-   jumpTimer -= dt;
+   jumpTimer -= fixedUpdateDT;
    if (((IsKeyDown(KEY_SPACE) && coyoteTimer > 0) || (onGround && foxTimer > 0)) && jumpTimer <= 0) {
       playSound("jump");
       velocity.y = -jumpSpeed;
@@ -94,7 +94,7 @@ void Player::updateMovement() {
 // Update collisions
 
 void Player::updateCollisions(Map &map) {
-   position.y += velocity.y * GetFrameTime();
+   position.y += velocity.y;
 
    bool collisionY = false, canGoUpSlopes = true;
    int waterTileCount = 0, lavaTileCount = 0, iceTileCount = 0;
@@ -145,7 +145,7 @@ void Player::updateCollisions(Map &map) {
       position.y = feetCollisionY - playerSize.y;
    }
 
-   position.x += velocity.x * GetFrameTime();
+   position.x += velocity.x;
 
    Rectangle torso {position.x, position.y - 1.f, playerSize.x, playerSize.y};
    Rectangle feet {position.x, position.y + (playerSize.y - 1.f), playerSize.x, 1.f};
@@ -210,7 +210,7 @@ void Player::updateCollisions(Map &map) {
 
 void Player::updateAnimation() {
    if (!onGround) {
-      fallTimer += GetFrameTime();
+      fallTimer += fixedUpdateDT;
       if (fallTimer >= .05f) {
          frameX = 1;
       }
@@ -223,7 +223,7 @@ void Player::updateAnimation() {
       return;
    }
 
-   walkTimer += GetFrameTime() * clamp(abs(velocity.x) / playerSpeed, 0.1f, 1.5f);
+   walkTimer += clamp(abs(velocity.x) / playerSpeed, 0.1f, 1.5f) * fixedUpdateDT;
    if (walkTimer >= .04f) {
       int lastFrameX = frameX;
       frameX = (frameX + 1) % 13;
@@ -242,9 +242,10 @@ void Player::updateAnimation() {
 
 // Render functions
 
-void Player::render() const {
+void Player::render(float accumulator) const {
    Texture2D &texture = getTexture("player");
-   DrawTexturePro(texture, {frameX * playerFrameSize, 0.f, (flipX ? -playerFrameSize : playerFrameSize), (float)texture.height}, {position.x, position.y, playerSize.x, playerSize.y}, {0, 0}, 0, WHITE);
+   const Vector2 drawPos = lerp(previousPosition, position, accumulator / fixedUpdateDT);
+   DrawTexturePro(texture, {frameX * playerFrameSize, 0.f, (flipX ? -playerFrameSize : playerFrameSize), (float)texture.height}, {drawPos.x, drawPos.y, playerSize.x, playerSize.y}, {0, 0}, 0, WHITE);
 }
 
 // Getter functions

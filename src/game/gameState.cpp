@@ -18,10 +18,10 @@ constexpr float cameraFollowSpeed = 0.416f;
 constexpr float minCameraZoom     = 12.5f;
 constexpr float maxCameraZoom     = 200.0f;
 
-constexpr float physicsUpdateTime = 0.1f;
-constexpr int lavaUpdateSpeed     = 6;
-constexpr int grassGrowSpeedMin   = 100;
-constexpr int grassGrowSpeedMax   = 255;
+constexpr int physicsTicks      = 10;
+constexpr int lavaUpdateSpeed   = 6;
+constexpr int grassGrowSpeedMin = 100;
+constexpr int grassGrowSpeedMax = 255;
 
 // Constructors
 
@@ -56,10 +56,50 @@ GameState::~GameState() {
 
 // Update
 
-void GameState::update() {
+void GameState::update(float) {
    updatePauseScreen();
    updateControls();
    updatePhysics();
+}
+
+void GameState::fixedUpdate() {
+   camera.target = lerp(camera.target, player.getCenter(), cameraFollowSpeed);
+
+   if (paused) {
+      return;
+   }
+   player.updatePlayer(map);
+
+   // Update physics
+   physicsCounter = (physicsCounter + 1) % physicsTicks;
+   if (physicsCounter != 0) {
+      return;
+   }
+
+   // Loop backwards to avoid updating most of the moving blocks twice
+   for (int y = cameraBounds.height; y >= cameraBounds.y; --y) {
+      for (int x = cameraBounds.width; x >= cameraBounds.x; --x) {
+         Block &block = map[y][x];
+
+         switch (block.type) {
+         case Block::water: updateWaterPhysics(x, y); break;
+         case Block::lava:  updateLavaPhysics(x, y);  break;
+         case Block::sand:  updateSandPhysics(x, y);  break;
+         case Block::grass: updateGrassPhysics(x, y); break;
+         case Block::dirt:  updateDirtPhysics(x, y);  break;
+         default: break;
+         }
+      }
+   }
+   
+   for (Furniture &obj: map.furniture) {
+      obj.update(map);
+   }
+
+   // Remove deleted furniture
+   map.furniture.erase(std::remove_if(map.furniture.begin(), map.furniture.end(), [](Furniture &f) -> bool {
+      return f.deleted;
+   }), map.furniture.end());
 }
 
 // Update pause screen
@@ -94,12 +134,8 @@ void GameState::updateControls() {
       if (zoomFactor != 0.f) {
          camera.zoom = clamp(std::exp(std::log(camera.zoom) + zoomFactor * 0.2f), minCameraZoom, maxCameraZoom);
       }
-
-      player.updatePlayer(map);
       inventory.update();
    }
-
-   camera.target = lerp(camera.target, player.getCenter(), cameraFollowSpeed);
    calculateCameraBounds();
 }
 
@@ -183,39 +219,6 @@ void GameState::updatePhysics() {
          return i.flagForDeletion || i.count <= 0;
       }), droppedItems.end());
    }
-
-   // Update in specific intervals (DT-independant)
-   physicsTimer += GetFrameTime();
-   if (physicsTimer >= physicsUpdateTime) {
-      physicsTimer -= physicsUpdateTime;
-   } else {
-      return;
-   }
-
-   // Loop backwards to avoid updating most of the moving blocks twice
-   for (int y = cameraBounds.height; y >= cameraBounds.y; --y) {
-      for (int x = cameraBounds.width; x >= cameraBounds.x; --x) {
-         Block &block = map[y][x];
-
-         switch (block.type) {
-         case Block::water: updateWaterPhysics(x, y); break;
-         case Block::lava:  updateLavaPhysics(x, y);  break;
-         case Block::sand:  updateSandPhysics(x, y);  break;
-         case Block::grass: updateGrassPhysics(x, y); break;
-         case Block::dirt:  updateDirtPhysics(x, y);  break;
-         default: break;
-         }
-      }
-   }
-   
-   for (Furniture &obj: map.furniture) {
-      obj.update(map);
-   }
-
-   // Remove deleted furniture
-   map.furniture.erase(std::remove_if(map.furniture.begin(), map.furniture.end(), [](Furniture &f) -> bool {
-      return f.deleted;
-   }), map.furniture.end());
 }
 
 // Block physic update functions
@@ -362,7 +365,7 @@ void GameState::renderGame() const {
    }
    /************************************/
 
-   player.render();
+   player.render(accumulator);
 }
 
 // Render UI

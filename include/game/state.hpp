@@ -1,6 +1,10 @@
 #ifndef GAME_STATE_HPP
 #define GAME_STATE_HPP
 
+// Constants
+
+constexpr float fixedUpdateDT = 1.0f / 60.f;
+
 // Polymorphic state
 
 struct State {
@@ -9,7 +13,8 @@ struct State {
 
    // Virtual functions
 
-   virtual void update() = 0;
+   virtual void update(float dt) = 0;
+   virtual void fixedUpdate() = 0;
    virtual void render() const = 0;
    virtual State* change() = 0;
 
@@ -25,8 +30,9 @@ struct State {
    bool fadingIn = true;
    bool fadingOut = false;
 
-   float fadeTimer = 0.f;
-   float alpha = 0.f;
+   float fadeTimer = 0.0f;
+   float alpha = 0.0f;
+   float accumulator = 0.0f;
 };
 
 #endif

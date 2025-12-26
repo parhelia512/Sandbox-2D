@@ -16,7 +16,9 @@ struct LoadingState: public State {
 
    // Functions
 
-   void update() override;
+   void update(float dt) override;
+   void fixedUpdate() override;
+
    void render() const override;
    State* change() override;
 

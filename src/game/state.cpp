@@ -3,18 +3,32 @@
 
 // Constants
 
-constexpr inline float fadeTime = 0.4f;
+constexpr float maxDT    = 0.25f;
+constexpr float fadeTime = 0.4f;
 
 // Update functions
 
 void State::updateStateLogic() {
    if (fadingIn) {
       updateFadingIn();
+      return;
    } else if (fadingOut) {
       updateFadingOut();
-   } else {
-      update();
+      return;
    }
+
+   float frameTime = GetFrameTime();
+   if (frameTime > maxDT) {
+      frameTime = maxDT;
+   }
+
+   accumulator += frameTime;
+   while (accumulator >= fixedUpdateDT) {
+      fixedUpdate();
+      accumulator -= fixedUpdateDT;
+   }
+
+   update(frameTime);
 }
 
 void State::updateFadingIn() {

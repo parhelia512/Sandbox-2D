@@ -17,7 +17,7 @@ struct Player {
 
    // Render
 
-   void render() const;
+   void render(float accumulator) const;
 
    // Getter functions
 

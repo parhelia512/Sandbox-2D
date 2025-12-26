@@ -17,8 +17,8 @@ LoadingState::LoadingState() {
    wrapText(splashText, GetScreenWidth() - 50.0f, 40, 1.f);
 }
 
-void LoadingState::update() {
-   iconRotation += GetFrameTime() * 360.0f;
+void LoadingState::update(float dt) {
+   iconRotation += dt * 360.0f;
 
    // Sometimes brute-forcing is better than over-engineering an automatic way to do everything
    if (loadPhase == Load::fonts) {
@@ -44,6 +44,10 @@ void LoadingState::update() {
       finalWaitTimer += GetFrameTime();
       fadingOut = (finalWaitTimer >= 1.f);
    }
+}
+
+void LoadingState::fixedUpdate() {
+   // Loading state does not require any physics
 }
 
 void LoadingState::render() const {
