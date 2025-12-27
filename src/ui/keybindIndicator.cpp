@@ -8,7 +8,7 @@
 // Constants
 
 constexpr float fontSize  = 25.0f;
-constexpr Color textColor = {24, 20, 37, 255};
+constexpr Color textColor = {58, 68, 102, 255};
 
 constexpr Vector2 offset      = {10.0f, -10.0f};
 constexpr Vector2 keybindSize = {30.0f, 30.0f};

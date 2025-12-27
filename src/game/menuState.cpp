@@ -421,7 +421,7 @@ void MenuState::renderLevelSelection() const {
    playWorldButton.render();
    newButton.render();
    worldFrame.render();
-   worldSearchBar.render(dt);
+   worldSearchBar.render();
 
    const float offsetY = worldFrame.getOffsetY();
    for (const Button &button: worldButtons) {
@@ -445,7 +445,7 @@ void MenuState::renderLevelCreation() const {
    drawText(getScreenCenter({0.f, -400.0f}), "CREATE WORLD", 180);
    backButtonCreation.render();
    createButtonCreation.render();
-   worldName.render(dt);
+   worldName.render();
    shouldWorldBeFlat.render();
    drawText({worldName.rectangle.x - worldName.rectangle.width / 2.0f - 125.0f, worldName.rectangle.y}, "World Name:", 50);
    drawText({worldName.rectangle.x - worldName.rectangle.width / 2.0f - 125.0f, shouldWorldBeFlat.rectangle.y + shouldWorldBeFlat.rectangle.height / 2.f}, "Flat World:", 50);
@@ -457,7 +457,7 @@ void MenuState::renderLevelRenaming() const {
    drawText(getScreenCenter({0.0f, -400.0f}), "RENAME WORLD", 180);
    backButtonRenaming.render();
    renameButtonRenaming.render();
-   renameInput.render(dt);
+   renameInput.render();
 
    drawText({renameInput.rectangle.x - renameInput.rectangle.width / 2.0f - 175.0f, renameInput.rectangle.y}, "New World Name:", 50);
    drawText({renameInput.rectangle.x - renameInput.rectangle.width / 2.0f - 175.0f, renameInput.rectangle.y + 150.0f}, "Old World Name:", 50);

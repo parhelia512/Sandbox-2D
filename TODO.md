@@ -44,3 +44,6 @@
 - Add keybind settings
 - Add misc. settings
 - Maybe add localization settings?
+
+### UI
+- Redraw UI sprites

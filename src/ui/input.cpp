@@ -10,7 +10,7 @@
 // Constants
 
 constexpr float textWrapPadding = 10.0f;
-constexpr float fadeSpeed       = 18.0f;
+constexpr float fadeSpeed       = 0.3f;
 constexpr int   fadeMin         = 200;
 constexpr int   fadeRange       = 255 - fadeMin;
 
@@ -78,10 +78,10 @@ void Input::update() {
 
 // Render function
 
-void Input::render(float dt) const {
+void Input::render() const {
    unsigned char value = 255;
    if (typing) {
-      value = std::sin(counter * fadeSpeed * dt) * fadeRange + fadeMin;
+      value = std::sin(counter * fadeSpeed) * fadeRange + fadeMin;
    }
 
    if (text.empty()) {
