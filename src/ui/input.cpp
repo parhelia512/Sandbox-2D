@@ -1,6 +1,7 @@
 #include "mngr/input.hpp"
 #include "mngr/sound.hpp"
 #include "ui/input.hpp"
+#include "ui/keybindIndicator.hpp"
 #include "util/format.hpp"
 #include "util/render.hpp"
 #include <raymath.h>
@@ -94,6 +95,7 @@ void Input::render(float dt) const {
       drawTexture(*texture, {rectangle.x, rectangle.y}, {rectangle.width, rectangle.height});
    }
    drawText({rectangle.x, rectangle.y}, wrapped.c_str(), 35, Color{value, value, value, 255});
+   drawKeybindIndicator(keybind, {rectangle.x + rectangle.width / 2.0f, rectangle.y - rectangle.height / 2.0f});
 }
 
 // Normalize rect

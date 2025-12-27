@@ -23,7 +23,7 @@ struct Button {
 
    Texture2D *texture = nullptr;
    Rectangle rectangle;
-   std::string text;
+   std::string text, keybind;
 
    bool hovering = false;
    bool down     = false;

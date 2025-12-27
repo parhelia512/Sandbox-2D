@@ -33,6 +33,7 @@ MenuState::MenuState()
    playButton.text = "Play";
    optionsButton.rectangle = {playButton.rectangle.x, playButton.rectangle.y + buttonPaddingY, buttonWidth, buttonHeight};
    optionsButton.text = "Options";
+   optionsButton.keybind = "O";
    quitButton.rectangle = {optionsButton.rectangle.x, optionsButton.rectangle.y + buttonPaddingY, buttonWidth, buttonHeight};
    quitButton.text = "Quit";
 
@@ -50,21 +51,25 @@ MenuState::MenuState()
 
    deleteButton.rectangle = {center.x - 120.0f, worldFrame.rectangle.y + worldFrame.rectangle.height + buttonPaddingY, buttonWidth, buttonHeight};
    deleteButton.text = "Delete World";
+   deleteButton.keybind = "D";
    deleteButton.disabled = true;
    renameButton.rectangle = {deleteButton.rectangle.x - buttonPaddingX, deleteButton.rectangle.y, buttonWidth, buttonHeight};
    renameButton.text = "Rename World";
+   renameButton.keybind = "R";
    renameButton.disabled = true;
    backButton.rectangle = {renameButton.rectangle.x - buttonPaddingX, renameButton.rectangle.y, buttonWidth, buttonHeight};
    backButton.text = "Back";
 
    favoriteButton.rectangle = {center.x + 120.0f, worldFrame.rectangle.y + worldFrame.rectangle.height + buttonPaddingY, buttonWidth, buttonHeight};
    favoriteButton.text = "Favorite";
+   favoriteButton.keybind = "F";
    favoriteButton.disabled = true;
    playWorldButton.rectangle = {favoriteButton.rectangle.x + buttonPaddingX, favoriteButton.rectangle.y, buttonWidth, buttonHeight};
    playWorldButton.text = "Play World";
    playWorldButton.disabled = true;
    newButton.rectangle = {playWorldButton.rectangle.x + buttonPaddingX, playWorldButton.rectangle.y, buttonWidth, buttonHeight};
    newButton.text = "New";
+   newButton.keybind = "N";
 
    backButton.texture = renameButton.texture = deleteButton.texture = favoriteButton.texture = playWorldButton.texture = newButton.texture = &getTexture("button");
    loadWorldButtons();
@@ -79,6 +84,7 @@ MenuState::MenuState()
    worldName.maxChars = maxWorldNameSize;
    worldName.fallback = "Name Your New World...";
    shouldWorldBeFlat.rectangle = {center.x - 35.f, worldName.rectangle.y + 100.f, 70.f, 70.f};
+   shouldWorldBeFlat.keybind = "F";
 
    backButtonCreation.texture = createButtonCreation.texture = worldName.texture = &getTexture("button");
 
@@ -118,11 +124,11 @@ void MenuState::updateTitle() {
       phase = Phase::levelSelection;
    }
 
-   if (optionsButton.clicked) {
+   if (optionsButton.clicked || handleKeyPressWithSound(KEY_O)) {
       insertPopup("Options are a WIP", "Options are not implemented as of now, but they are planned to be soon. Stay tuned for future updates.", false);
    }
 
-   if (quitButton.clicked) {
+   if (quitButton.clicked || handleKeyPressWithSound(KEY_ESCAPE)) {
       fadingOut = true;
    }
 }
@@ -140,7 +146,7 @@ void MenuState::updateLevelSelection() {
       phase = Phase::title;
    }
 
-   if (newButton.clicked) {
+   if (newButton.clicked || handleKeyPressWithSound(KEY_N)) {
       worldSearchBar.typing = false;
       phase = Phase::levelCreation;
       worldName.text = generateRandomWorldName();
@@ -224,7 +230,7 @@ void MenuState::updateLevelSelection() {
    favoriteButton.update(dt);
    playWorldButton.update(dt);
 
-   if (deleteButton.clicked) {
+   if (deleteButton.clicked || (!deleteButton.disabled && handleKeyPressWithSound(KEY_D))) {
       if (selectedButton->favorite) {
          insertPopup("Notice", format("World '{}' cannot be deleted as it is favorited. If you wish to proceed, please unfavorite it and try again.", selectedButton->text), false);
          return;
@@ -245,7 +251,7 @@ void MenuState::updateLevelSelection() {
    }
    deleteClicked = false;
 
-   if (renameButton.clicked) {
+   if (renameButton.clicked || (!renameButton.disabled && handleKeyPressWithSound(KEY_R))) {
       worldSearchBar.typing = false;
       
       phase = Phase::levelRenaming;
@@ -257,7 +263,7 @@ void MenuState::updateLevelSelection() {
       selectedButton = nullptr;
    }
 
-   if (favoriteButton.clicked) {
+   if (favoriteButton.clicked || (!favoriteButton.disabled && handleKeyPressWithSound(KEY_F))) {
       if (selectedButton->favorite) {
          favoriteWorlds.erase(std::remove(favoriteWorlds.begin(), favoriteWorlds.end(), selectedButton->text), favoriteWorlds.end());
       } else {
@@ -307,6 +313,10 @@ void MenuState::updateLevelCreation() {
       if (worldName.typing) {
          worldName.text.clear();
       }
+   }
+
+   if (handleKeyPressWithSound(KEY_F)) {
+      shouldWorldBeFlat.checked = !shouldWorldBeFlat.checked;
    }
 
    if (createButtonCreation.clicked || (!worldName.typing && handleKeyPressWithSound(KEY_ENTER))) {

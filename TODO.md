@@ -39,6 +39,8 @@
 - Add friendly mobs (like animals).
 - Add zombies and such.
 
-### Other
-- Add more keybinds and add them next to buttons
-- Fix sun's trajectory
+### Options
+- Add graphics settings
+- Add keybind settings
+- Add misc. settings
+- Maybe add localization settings?
