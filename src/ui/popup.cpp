@@ -102,19 +102,19 @@ void updatePopups() {
       confirmationButton.update();
       denialButton.update();
    
-      if (confirmationButton.clicked || handleKeyReleaseWithSound(KEY_ENTER)) {
+      if (confirmationButton.clicked || handleKeyPressWithSound(KEY_ENTER)) {
          wasLastPopupConfirmed = true;
          popups.pop_back();
       }
 
-      if (denialButton.clicked || handleKeyReleaseWithSound(KEY_ESCAPE)) {
+      if (denialButton.clicked || handleKeyPressWithSound(KEY_ESCAPE)) {
          wasLastPopupConfirmed = false;
          popups.pop_back();
       }
    } else {
       okayButton.update();
 
-      if (okayButton.clicked || handleKeyReleaseWithSound(KEY_ENTER) || handleKeyReleaseWithSound(KEY_ESCAPE)) {
+      if (okayButton.clicked || handleKeyPressWithSound(KEY_ENTER) || handleKeyPressWithSound(KEY_ESCAPE)) {
          popups.pop_back();
       }
    }

@@ -13,7 +13,6 @@ bool isKeyReleased(int key);
 bool isKeyRepeated(int key);
 
 bool handleKeyPressWithSound(int key);
-bool handleKeyReleaseWithSound(int key);
 
 // Get mouse functions
 
