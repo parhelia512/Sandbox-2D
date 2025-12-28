@@ -299,7 +299,12 @@ void GameState::updateLavaPhysics(int x, int y) {
          continue;
       }
 
-      if (map.blocks[y][x].furniture || block.value2 < lavaLayerThreshold) {
+      if (map.blocks[y + offset.y][x + offset.x].value2 < lavaLayerThreshold) {
+         map.deleteBlock(x + offset.x, y + offset.y);
+         continue;
+      }
+
+      if (block.furniture || block.value2 < lavaLayerThreshold) {
          map.deleteBlock(x + offset.x, y + offset.y);
       } else {
          map.setBlock(x + offset.x, y + offset.y, "obsidian");
