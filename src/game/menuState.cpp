@@ -146,7 +146,7 @@ void MenuState::updateLevelSelection() {
       phase = Phase::title;
    }
 
-   if (newButton.clicked || handleKeyPressWithSound(KEY_N)) {
+   if (newButton.clicked || (!worldSearchBar.typing && handleKeyPressWithSound(KEY_N))) {
       worldSearchBar.typing = false;
       phase = Phase::levelCreation;
       worldName.text = generateRandomWorldName();
@@ -311,7 +311,7 @@ void MenuState::updateLevelCreation() {
       }
    }
 
-   if (handleKeyPressWithSound(KEY_F)) {
+   if (!worldName.typing && handleKeyPressWithSound(KEY_F)) {
       shouldWorldBeFlat.checked = !shouldWorldBeFlat.checked;
    }
 

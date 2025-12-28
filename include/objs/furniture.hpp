@@ -26,7 +26,7 @@ struct Furniture {
    enum Type { none, tree, sapling, cactus, cactus_seed };
 
    std::vector<std::vector<FurniturePiece>> pieces;
-   Type type = Type::tree;
+   Type type = Type::none;
    unsigned char texId = 0;
 
    int value = 0, value2 = 0;

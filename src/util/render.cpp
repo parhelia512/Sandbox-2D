@@ -19,6 +19,13 @@ void drawTextureBlock(const Texture &texture, const Rectangle &rect, const Color
    DrawTexturePro(texture, source, rect, {0, 0}, 0, color);
 }
 
+void drawFluidBlock(const Texture &texture, const Rectangle &rect, const Color &color) {
+   float sourceHeight = texture.height * (rect.height / rect.width);   
+   Rectangle source {0, texture.height - sourceHeight, (float)texture.width, sourceHeight};
+
+   DrawTexturePro(texture, source, rect, {0, 0}, 0, color);
+}
+
 void drawRect(const Color &color) {
    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), color);
 }

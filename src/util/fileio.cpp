@@ -81,6 +81,8 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
    for (const std::vector<Block> &row: map.blocks) {
       for (const Block &tile: row) {
          file << (int)tile.id << ' ';
+         file << (int)tile.value << ' ';
+         file << (int)tile.value2 << ' ';
       }
       file << '\n';
    }
@@ -167,9 +169,14 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
 
    for (int y = 0; y < map.sizeY; ++y) {
       for (int x = 0; x < map.sizeX; ++x) {
-         int id = 0;
+         int id = 0, value = 0, value2 = 0;
          file >> id;
+         file >> value;
+         file >> value2;
+
          map.setBlock(x, y, (unsigned char)id);
+         map[y][x].value = value;
+         map[y][x].value2 = value2;
       }
    }
 

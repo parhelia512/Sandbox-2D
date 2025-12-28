@@ -18,7 +18,7 @@ constexpr float cameraFollowSpeed = 0.416f;
 constexpr float minCameraZoom     = 12.5f;
 constexpr float maxCameraZoom     = 200.0f;
 
-constexpr int physicsTicks      = 10;
+constexpr int physicsTicks      = 8;
 constexpr int lavaUpdateSpeed   = 6;
 constexpr int grassGrowSpeedMin = 100;
 constexpr int grassGrowSpeedMax = 255;
@@ -223,49 +223,82 @@ void GameState::updatePhysics() {
 
 // Block physic update functions
 
-void GameState::updateBlockMovingAround(int &x, int y, int offsetY, const std::function<bool(const Map&, int, int)> &isPassable) {
-   if (isPassable(map, x, y + 1)) {
-      map.moveBlock(x, y, x, y + 1);
+static constexpr unsigned char calculateFlowDown(unsigned char flow1, unsigned char flow2) {
+   unsigned char availableSpace = maxWaterLayers - flow2;
+   return min(availableSpace, flow1);
+}
+
+static void applyFlowDown(Block &block1, Block &block2) {
+   unsigned char flowDown = calculateFlowDown(block1.value2, block2.value2);
+   block1.value2 -= flowDown;
+   block2.value2 += flowDown;
+}
+
+static void applyHalfFlowDown(Block &block1, Block &block2) {
+   unsigned char flowDown = calculateFlowDown(block1.value2, block2.value2);
+   unsigned char halfFlowDown = (flowDown == 1 ? 1 : flowDown / 2);
+   
+   block1.value2 -= halfFlowDown;
+   block2.value2 += halfFlowDown;
+}
+
+void GameState::updateFluid(int x, int y) {
+   // block.value2 is the fluid layers, which cannot exceed maxWaterLayers
+   Block &block = map[y][x];
+   if (block.value2 == 0) {
+      map.deleteBlock(x, y);
       return;
    }
 
-   bool leftEmpty  = isPassable(map, x - 1, y + offsetY);
-   bool rightEmpty = isPassable(map, x + 1, y + offsetY);
-   if (rightEmpty && leftEmpty && chance(50)) {
-      rightEmpty = false;
+   // Handle water going down
+   if (map.is(x, y + 1, Block::air)) {
+      map.moveBlock(x, y, x, y + 1);
+   } else if (map.is(x, y + 1, block.type)) {
+      applyFlowDown(block, map[y + 1][x]);
    }
 
-   if (rightEmpty) {
-      map.moveBlock(x, y, x + 1, y + offsetY);
-   } else if (leftEmpty) {
-      map.moveBlock(x, y, x - 1, y + offsetY);
-      x -= 1; // Prevent the same water tile to update twice
+   // Handle water going left. If first if is true, then it will automatically go over the second.
+   if (map.is(x - 1, y, Block::air)) {
+      map.setBlock(x - 1, y, block.id);
+      map[y][x - 1].value2 = 0;
+   }
+
+   if (map.is(x - 1, y, block.type) && map[y][x - 1].value2 < block.value2 && map[y][x - 1].value2 <= maxWaterLayers) {
+      applyHalfFlowDown(block, map[y][x - 1]);
+   }
+
+   // Handle water going right, same as with the left side
+   if (map.is(x + 1, y, Block::air)) {
+      map.setBlock(x + 1, y, block.id);
+      map[y][x + 1].value2 = 0;
+   }
+
+   if (map.is(x + 1, y, block.type) && map[y][x + 1].value2 < block.value2 && map[y][x + 1].value2 <= maxWaterLayers) {
+      applyHalfFlowDown(block, map[y][x + 1]);
    }
 }
 
-void GameState::updateWaterPhysics(int &x, int y) {
-   updateBlockMovingAround(x, y, 0, [](const Map &map, int x, int y) -> bool {
-      return map.is(x, y, Block::air); // Don't use empty, because water can go trough furniture
-   });
+void GameState::updateWaterPhysics(int x, int y) {
+   updateFluid(x, y);
 }
 
-void GameState::updateLavaPhysics(int &x, int y) {
-   for (int yy = y - 1; yy <= y + 1 && yy >= 0 && yy < map.sizeY; ++yy) {
-      for (int xx = x - 1; xx <= x + 1 && xx >= 0 && xx < map.sizeX; ++xx) {
-         if (!map.isu(xx, yy, Block::water)) {
-            continue;
-         }
-
-         if (map.blocks[y][x].furniture) {
-            map.deleteBlock(x, y);
-         } else {
-            map.setBlock(x, y, "obsidian");
-         }
-         map.deleteBlock(xx, yy);
-      }
-   }
-
+void GameState::updateLavaPhysics(int x, int y) {
    Block &block = map[y][x];
+
+   // What even is C++ syntax?
+   for (const Vector2 &offset: {Vector2{1, 0}, Vector2{0, 1}, Vector2{-1, 0}, Vector2{0, -1}}) {
+      if (!map.isu(x + offset.x, y + offset.y, Block::water)) {
+         continue;
+      }
+
+      if (map.blocks[y][x].furniture || block.value2 < lavaLayerThreshold) {
+         map.deleteBlock(x + offset.x, y + offset.y);
+      } else {
+         map.setBlock(x + offset.x, y + offset.y, "obsidian");
+      }
+      map.deleteBlock(x, y);
+   }
+
    if (block.type != Block::lava) {
       return;
    }
@@ -276,15 +309,31 @@ void GameState::updateLavaPhysics(int &x, int y) {
    }
 
    block.value = 0;
-   updateBlockMovingAround(x, y, 0, [](const Map &map, int x, int y) -> bool {
-      return map.is(x, y, Block::air);
-   });
+   updateFluid(x, y);
 }
 
 void GameState::updateSandPhysics(int x, int y) {
-   updateBlockMovingAround(x, y, 1, [](const Map &map, int x, int y) -> bool {
+   constexpr auto isPassable = [](const Map &map, int x, int y) -> bool {
       return map.empty(x, y) || map.isu(x, y, Block::water);
-   });
+   };
+
+   if (isPassable(map, x, y + 1)) {
+      map.moveBlock(x, y, x, y + 1);
+      return;
+   }
+
+   bool leftEmpty  = isPassable(map, x - 1, y + 1);
+   bool rightEmpty = isPassable(map, x + 1, y + 1);
+   if (rightEmpty && leftEmpty && chance(50)) {
+      rightEmpty = false;
+   }
+
+   if (rightEmpty) {
+      map.moveBlock(x, y, x + 1, y + 1);
+   } else if (leftEmpty) {
+      map.moveBlock(x, y, x - 1, y + 1);
+      x -= 1; // Prevent the same water tile to update twice
+   }
 }
 
 void GameState::updateGrassPhysics(int x, int y) {

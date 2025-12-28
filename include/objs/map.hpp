@@ -6,7 +6,12 @@
 
 // Constants
 
-constexpr inline Color wallTint    = {120, 120, 120, 255};
+constexpr inline Color wallTint = {120, 120, 120, 255};
+
+constexpr inline unsigned char maxWaterLayers     = 32;
+constexpr inline unsigned char minWaterLayers     = maxWaterLayers / 8;
+constexpr inline unsigned char lavaLayerThreshold = maxWaterLayers / 4;
+constexpr inline unsigned char playerThreshold    = maxWaterLayers / 2;
 
 // Block
 

@@ -34,6 +34,10 @@
 - Add solid light blocks.
 - Add torches.
 
+### Water
+- Add some shaders to the water?
+- Make a new water texture!
+
 ### Entities
 - Add entities.
 - Add different entity behaviour.

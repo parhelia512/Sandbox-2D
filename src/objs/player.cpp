@@ -119,8 +119,8 @@ void Player::updateCollisions(Map &map) {
       for (int x = max(0, (int)position.x); x < maxX; ++x) {
          if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || map.isu(x, y, Block::lava) || (IsKeyDown(KEY_S) && map.isu(x, y, Block::platform))) {
             // Only check water and lava tile count in the first iteration
-            waterTileCount += map.isu(x, y, Block::water);
-            lavaTileCount += map.isu(x, y, Block::lava);
+            waterTileCount += (map.isu(x, y, Block::water) && map[y][x].value2 > playerThreshold);
+            lavaTileCount += (map.isu(x, y, Block::lava) && map[y][x].value2 > playerThreshold);
             continue;
          }
 

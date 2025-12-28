@@ -56,6 +56,10 @@ void Map::setBlock(int x, int y, const std::string &name, bool isWall) {
    if (block.id != 0) {
       block.texture = &getTexture(name);
    }
+
+   if (block.type == Block::water || block.type == Block::lava) {
+      block.value2 = maxWaterLayers;
+   }
 }
 
 void Map::setBlock(int x, int y, unsigned char id, bool isWall) {
@@ -151,6 +155,18 @@ void Map::render(const Rectangle &cameraBounds) const {
             continue;
          }
 
+         // Render fluids
+         if (block.type == Block::water || block.type == Block::lava) {
+            if (block.value2 <= minWaterLayers) {
+               continue;
+            }
+
+            float height = (float)block.value2 / (float)maxWaterLayers;
+            drawFluidBlock(*block.texture, {(float)x, (float)y + (1 - height), 1, height});
+            continue;
+         }
+
+         // Render regular blocks
          int oldX = x;
          while (x <= cameraBounds.width && blocks[y][x].id == block.id) {
             x += 1;
