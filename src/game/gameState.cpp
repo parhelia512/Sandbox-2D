@@ -20,7 +20,7 @@ constexpr float minCameraZoom     = 12.5f;
 constexpr float maxCameraZoom     = 200.0f;
 
 constexpr int physicsTicks      = 8;
-constexpr int lavaUpdateSpeed   = 6;
+constexpr int lavaUpdateSpeed   = 3; // Lava updates 3x slower than water
 constexpr int grassGrowSpeedMin = 100;
 constexpr int grassGrowSpeedMax = 255;
 
@@ -77,14 +77,21 @@ void GameState::fixedUpdate() {
       return;
    }
 
+   lavaCounter = (lavaCounter + 1) % lavaUpdateSpeed;
+   bool updateLava = (lavaCounter == 0);
+
    // Loop backwards to avoid updating most of the moving blocks twice
    for (int y = cameraBounds.height; y >= cameraBounds.y; --y) {
       for (int x = cameraBounds.width; x >= cameraBounds.x; --x) {
          Block &block = map[y][x];
 
          switch (block.type) {
+         case Block::lava:
+            if (updateLava) {
+               updateLavaPhysics(x, y);
+            }
+            break;
          case Block::water: updateWaterPhysics(x, y); break;
-         case Block::lava:  updateLavaPhysics(x, y);  break;
          case Block::sand:  updateSandPhysics(x, y);  break;
          case Block::grass: updateGrassPhysics(x, y); break;
          case Block::dirt:  updateDirtPhysics(x, y);  break;
@@ -300,17 +307,9 @@ void GameState::updateLavaPhysics(int x, int y) {
       map.deleteBlock(x, y);
    }
 
-   if (block.type != Block::lava) {
-      return;
+   if (block.type == Block::lava) {
+      updateFluid(x, y);
    }
-
-   block.value += 1;
-   if (block.value < lavaUpdateSpeed) {
-      return;
-   }
-
-   block.value = 0;
-   updateFluid(x, y);
 }
 
 void GameState::updateSandPhysics(int x, int y) {
@@ -388,7 +387,9 @@ void GameState::render() const {
 // Render game
 
 void GameState::renderGame() const {
+   player.render(accumulator);
    map.render(cameraBounds);
+
    for (const DroppedItem &droppedItem : droppedItems) {
       droppedItem.render();
    }
@@ -414,8 +415,6 @@ void GameState::renderGame() const {
       }
    }
    /************************************/
-
-   player.render(accumulator);
 }
 
 // Render UI

@@ -128,9 +128,31 @@ std::vector<Block>& Map::operator[](size_t index) {
    return blocks[index];
 }
 
+// Shader functions
+
+void Map::setupWaterShader() const {
+   Shader &waterShader = getShader("water");
+
+   int timeLocation      = GetShaderLocation(waterShader, "time");
+   int amplitudeLocation = GetShaderLocation(waterShader, "amplitude");
+   int speedLocation     = GetShaderLocation(waterShader, "speed");
+
+   float time = GetTime();
+   float amplitude = 0.15f;
+   float speed = 2.0f;
+
+   SetShaderValue(waterShader, timeLocation, &time, SHADER_UNIFORM_FLOAT);
+   SetShaderValue(waterShader, amplitudeLocation, &amplitude, SHADER_UNIFORM_FLOAT);
+   SetShaderValue(waterShader, speedLocation, &speed, SHADER_UNIFORM_FLOAT);
+}
+
 // Render functions
 
 void Map::render(const Rectangle &cameraBounds) const {
+   setupWaterShader();
+   Shader &waterShader = getShader("water");
+   int isTopLocation = GetShaderLocation(waterShader, "isTop");
+
    for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
       for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
          const Block &wall = walls[y][x];
@@ -162,7 +184,13 @@ void Map::render(const Rectangle &cameraBounds) const {
             }
 
             float height = (float)block.value2 / (float)maxWaterLayers;
+            int isTop = (empty(x, y - 1) || (is(x, y - 1, block.type) && blocks[y - 1][x].value2 < lavaLayerThreshold));
+            SetShaderValue(waterShader, isTopLocation, &isTop, SHADER_UNIFORM_INT);
+
+            BeginShaderMode(waterShader);
             drawFluidBlock(*block.texture, {(float)x, (float)y + (1 - height), 1, height}, Fade(WHITE, height));
+            EndShaderMode();
+
             continue;
          }
 

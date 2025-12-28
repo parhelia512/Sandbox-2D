@@ -60,8 +60,9 @@ struct GameState: public State {
    std::vector<DroppedItem> droppedItems;
    std::string worldName;
 
-   int physicsCounter = 0;
    bool paused = false;
+   int physicsCounter = 0;
+   int lavaCounter = 0;
 };
 
 #endif

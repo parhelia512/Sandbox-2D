@@ -130,6 +130,6 @@ Font& getFont(const std::string &name) {
 }
 
 Shader& getShader(const std::string &name) {
-   assert(fonts.count(name), "Shader '{}' does not exist.", name);
+   assert(shaders.count(name), "Shader '{}' does not exist.", name);
    return shaders[name];
 }
