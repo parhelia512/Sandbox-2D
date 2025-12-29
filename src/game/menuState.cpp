@@ -96,6 +96,13 @@ MenuState::MenuState()
    renameInput = worldName;
    renameInput.fallback = "Rename Your World...";
    resetBackground();
+
+   // Init world generation screen
+   generationProgressBar.progress = generationProgressBar.progressInterpolation = 0.0f;
+   generationProgressBar.texture = &getTexture("bar");
+   generationProgressBar.rectangle = {center.x, center.y, 18.0f * 50.0f, 50.0f};
+   generationProgressBar.backgroundTint = GRAY;
+   generationProgressBar.foregroundTint = WHITE;
 }
 
 // Update
@@ -381,12 +388,14 @@ void MenuState::updateLevelRenaming() {
 
 void MenuState::updateGeneratingLevel() {
    if (generatedWorld) {
-      generator = new MapGenerator(worldName.text, defaultMapSizeX, defaultMapSizeY, shouldWorldBeFlat.checked, generationInfoTextMutex, generationInfoText);
+      generatedWorld = false;
+      generationProgressBar.progressInterpolation = generationProgressBar.progress = 0.0f;
+
+      generator = new MapGenerator(worldName.text, defaultMapSizeX, defaultMapSizeY, shouldWorldBeFlat.checked, generationInfoTextMutex, generationInfoText, generationProgressBar.progress);
       std::thread thread(&MapGenerator::generate, generator);
       thread.detach();
-
-      generatedWorld = false;
    }
+   generationProgressBar.update(dt);
 
    if (generator && generator->isCompleted) {
       delete generator;
@@ -476,7 +485,8 @@ void MenuState::renderLevelRenaming() const {
 // Render level generation screen
 
 void MenuState::renderGeneratingLevel() const {
-   drawText(getScreenCenter(), generationInfoText.c_str(), 50);
+   generationProgressBar.render();
+   drawText(getScreenCenter({0.0f, -100.0f}), generationInfoText.c_str(), 50.0f);
    drawText(getScreenCenter({0.0f, 100.0f}), generationSplash.c_str(), 40.0f);
 }
 

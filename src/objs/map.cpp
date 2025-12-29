@@ -46,6 +46,13 @@ void Map::init() {
    walls  = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
 }
 
+void Map::setRow(int y, const std::string &name, bool isWall) {
+   unsigned char id = blockIds.at(name);
+   Block::Type type = blockTypes[id];
+
+   (isWall ? walls : blocks)[y] = std::vector<Block>(sizeY, Block{&getTexture(name), type, id, false, 0, (type == Block::water || type == Block::lava ? maxWaterLayers : (unsigned char)0)});
+}
+
 void Map::setBlock(int x, int y, const std::string &name, bool isWall) {
    Block &block = (isWall ? walls : blocks)[y][x];
    

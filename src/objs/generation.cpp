@@ -1,6 +1,8 @@
 #include "objs/generation.hpp"
+#include "mngr/sound.hpp"
 #include "util/fileio.hpp"
 #include "util/random.hpp"
+#include <thread>
 
 // Constants
 
@@ -36,11 +38,11 @@ static inline const std::array<BiomeData, biomeCount> biomeData {{
 
 // Constructors
 
-MapGenerator::MapGenerator(const std::string &name, int sizeX, int sizeY, bool isFlat, std::mutex &infoTextMutex, std::string &infoText)
-   : infoTextMutex(infoTextMutex), infoText(infoText), name(name), isFlat(isFlat) {
+MapGenerator::MapGenerator(const std::string &name, int sizeX, int sizeY, bool isFlat, std::mutex &infoTextMutex, std::string &infoText, float &progress)
+   : infoTextMutex(infoTextMutex), infoText(infoText), progress(progress), name(name), isFlat(isFlat) {
    map.sizeX = sizeX;
    map.sizeY = sizeY;
-   setInfo("Initializing...");
+   setInfo("Initializing...", 0.0f);
 }
 
 // Generation functions
@@ -49,7 +51,7 @@ void MapGenerator::generate() {
    // Takes too long, better to put it in a thread!
    map.init();
 
-   setInfo("Seeding Noise...");
+   setInfo("Seeding Noise...", 0.0f);
    if (!isFlat) {
       biomeTemperatureNoise.reseed(rand());
       biomeMoistureNoise.reseed(rand());
@@ -68,14 +70,18 @@ void MapGenerator::generate() {
    }
 
    const Vector2 spawnLocation = findPlayerSpawnLocation();
+
+   setInfo("Saving to File...", 0.95f);
    saveWorldData(name, spawnLocation.x, spawnLocation.y, 50.f, map, nullptr, nullptr);
 
-   setInfo("Generating completed!");
+   setInfo("Generating Completed!", 1.0f);
+   playSound("load");
+   std::this_thread::sleep_for(std::chrono::milliseconds(500));
    isCompleted = true;
 }
 
 void MapGenerator::generateTerrain() {
-   setInfo("Generating Terrain...");
+   setInfo("Generating Terrain...", 0.1f);
 
    Biome current = Biome::plains, last = Biome::plains;
    int y = startY * map.sizeY;
@@ -137,7 +143,7 @@ void MapGenerator::generateTerrain() {
 }
 
 void MapGenerator::generateWater() {
-   setInfo("Filling Water...");
+   setInfo("Filling Water...", 0.75f);
    int seaY = map.sizeY * seaLevel;
 
    for (int x = 0; x < map.sizeX; ++x) {
@@ -148,7 +154,7 @@ void MapGenerator::generateWater() {
 }
 
 void MapGenerator::generateDebri() {
-   setInfo("Generating Debris...");
+   setInfo("Generating Debris...", 0.5f);
 
    for (int x = 0; x < map.sizeX; ++x) {
       for (int y = 0; y < map.sizeY; ++y) {
@@ -169,7 +175,7 @@ void MapGenerator::generateDebri() {
 }
 
 void MapGenerator::generateTrees() {
-   setInfo("Growing Trees...");
+   setInfo("Growing Trees...", 0.85f);
 
    float y = startY * map.sizeY + 1;
    int counter = 0, counterThreshold = 0;
@@ -197,21 +203,18 @@ void MapGenerator::generateTrees() {
 // Generation functions for flat worlds
 
 void MapGenerator::generateFlatWorld() {
-   setInfo("Generating Flat Terrain...");
-   int y = startY * map.sizeY;
-   
-   for (int x = 0; x < map.sizeX; ++x) {
-      map.setBlock(x, y, "grass");
+   setInfo("Generating Flat Terrain...", 0.1f);
+   int startingPointY = startY * map.sizeY;
+   int rockStart = rockOffsetStart + startingPointY;
 
-      for (int yy = y + 1; yy < map.sizeY; ++yy) {
-         // Set both the wall and the block
-         if (yy - y < rockOffsetStart) {
-            map.setBlock(x, yy, "dirt");
-            map.setBlock(x, yy, "dirt", true);
-         } else {
-            map.setBlock(x, yy, "stone");
-            map.setBlock(x, yy, "stone", true);
-         }
+   map.setRow(startingPointY, "grass");
+   for (int y = startingPointY + 1; y < map.sizeY; ++y) {
+      if (y < rockStart) {
+         map.setRow(y, "dirt");
+         map.setRow(y, "dirt", true);
+      } else {
+         map.setRow(y, "stone");
+         map.setRow(y, "stone", true);
       }
    }
 }
@@ -219,7 +222,7 @@ void MapGenerator::generateFlatWorld() {
 // Find a perfect spawn location for the player
 
 Vector2 MapGenerator::findPlayerSpawnLocation() {
-   setInfo("Finding Player Spawn Location...");
+   setInfo("Finding Player Spawn Location...", 0.9f);
    float y = startY * map.sizeY + 1;
    int offset = 0;
 
@@ -292,7 +295,8 @@ float MapGenerator::normalizedNoise2D(siv::PerlinNoise &noise, int x, int y, flo
 
 // Other functions
 
-void MapGenerator::setInfo(const std::string &text) {
+void MapGenerator::setInfo(const std::string &text, float progress) {
    std::lock_guard<std::mutex> lock(infoTextMutex);
    infoText = text;
+   this->progress = progress;
 }

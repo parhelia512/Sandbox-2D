@@ -43,6 +43,7 @@ struct Map {
    // Set block functions
 
    void init();
+   void setRow(int y, const std::string &name, bool isWall = false);
    void setBlock(int x, int y, const std::string &name, bool isWall = false);
    void setBlock(int x, int y, unsigned char id, bool isWall = false);
    void deleteBlock(int x, int y, bool isWall = false);

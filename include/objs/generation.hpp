@@ -13,6 +13,7 @@ struct MapGenerator {
 
    std::mutex &infoTextMutex;
    std::string &infoText;
+   float &progress;
    std::string name;
    Map map;
 
@@ -27,7 +28,7 @@ struct MapGenerator {
 
    // Constructors
 
-   MapGenerator(const std::string &name, int sizeX, int sizeY, bool isFlat, std::mutex &infoTextMutex, std::string &infoText);
+   MapGenerator(const std::string &name, int sizeX, int sizeY, bool isFlat, std::mutex &infoTextMutex, std::string &infoText, float &progress);
 
    // Generation functions
 
@@ -53,7 +54,7 @@ struct MapGenerator {
 
    // Other functions
 
-   void setInfo(const std::string &text);
+   void setInfo(const std::string &text, float progress);
 };
 
 #endif

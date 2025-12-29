@@ -2,6 +2,7 @@
 #define GAME_MENUSTATE_HPP
 
 #include "game/state.hpp"
+#include "ui/bar.hpp"
 #include "ui/button.hpp"
 #include "ui/checkbox.hpp"
 #include "ui/input.hpp"
@@ -67,8 +68,9 @@ struct MenuState: public State {
    Button *selectedButton = nullptr; 
 
    Scrollframe worldFrame;
-   Input worldName, worldSearchBar, renameInput;
    CheckBox shouldWorldBeFlat;
+   Input worldName, worldSearchBar, renameInput;
+   Bar generationProgressBar;
 
    std::vector<std::string> favoriteWorlds;
    std::vector<Button> worldButtons;
