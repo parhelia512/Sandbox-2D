@@ -152,6 +152,7 @@ void Map::render(const Rectangle &cameraBounds) const {
    setupWaterShader();
    Shader &waterShader = getShader("water");
    int isTopLocation = GetShaderLocation(waterShader, "isTop");
+   int isBottomLocation = GetShaderLocation(waterShader, "isBottom");
 
    for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
       for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
@@ -184,8 +185,11 @@ void Map::render(const Rectangle &cameraBounds) const {
             }
 
             float height = (float)block.value2 / (float)maxWaterLayers;
-            int isTop = (empty(x, y - 1) || (is(x, y - 1, block.type) && blocks[y - 1][x].value2 < lavaLayerThreshold));
+            int isTop = (!is(x, y - 1, block.type) && !is(x, y - 1, Block::air));
+            int isBottom = (!is(x, y + 1, block.type));
+
             SetShaderValue(waterShader, isTopLocation, &isTop, SHADER_UNIFORM_INT);
+            SetShaderValue(waterShader, isBottomLocation, &isBottom, SHADER_UNIFORM_INT);
 
             BeginShaderMode(waterShader);
             drawFluidBlock(*block.texture, {(float)x, (float)y + (1 - height), 1, height}, Fade(WHITE, height));
