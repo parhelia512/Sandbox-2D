@@ -392,6 +392,7 @@ void GameState::render() const {
 // Render game
 
 void GameState::renderGame() const {
+   map.renderFurniture(cameraBounds);
    player.render(accumulator);
    map.render(cameraBounds);
 

@@ -74,6 +74,9 @@ struct MenuState: public State {
    std::string selectedWorld, generationSplash;
    Phase phase = Phase::title;
 
+   struct MapGenerator *generator;
+   bool generatedWorld = true;
+
    bool anySelected = false;
    bool deleteClicked = false;
    bool wasFavoriteBeforeRenaming = false;

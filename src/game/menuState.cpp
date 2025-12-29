@@ -10,6 +10,7 @@
 #include "util/position.hpp"
 #include "util/render.hpp"
 #include <filesystem>
+#include <thread>
 
 // Constants
 
@@ -379,11 +380,20 @@ void MenuState::updateLevelRenaming() {
 // Update level generation screen
 
 void MenuState::updateGeneratingLevel() {
-   MapGenerator generator (worldName.text, defaultMapSizeX, defaultMapSizeY, shouldWorldBeFlat.checked);
-   generator.generate();
+   if (generatedWorld) {
+      generator = new MapGenerator(worldName.text, defaultMapSizeX, defaultMapSizeY, shouldWorldBeFlat.checked);
+      std::thread thread(&MapGenerator::generate, generator);
+      thread.detach();
 
-   loadWorldButtons();
-   phase = Phase::levelSelection;
+      generatedWorld = false;
+   }
+
+   if (generator && generator->isCompleted) {
+      delete generator;
+      loadWorldButtons();
+      phase = Phase::levelSelection;
+      generatedWorld = true;
+   }
 }
 
 // Render

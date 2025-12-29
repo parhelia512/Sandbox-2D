@@ -208,7 +208,9 @@ void Map::render(const Rectangle &cameraBounds) const {
          x -= 1;
       }
    }
+}
 
+void Map::renderFurniture(const Rectangle &cameraBounds) const {
    for (const Furniture &obj: furniture) {
       obj.render(cameraBounds);
    }

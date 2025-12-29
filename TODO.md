@@ -46,8 +46,10 @@
 - Add misc. settings
 - Maybe add localization settings?
 
+### Other
+- Make physics update in a bigger area than the camera bounds
+
 ### World Generation Screen
 World generation is unfixable, so I'll only be fixing the generation screen.
 
-- Use threads somehow.
-- Make it look like Terraria.
+- Make it look like Terraria with a cool bar and info text.

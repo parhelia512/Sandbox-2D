@@ -40,6 +40,12 @@ MapGenerator::MapGenerator(const std::string &name, int sizeX, int sizeY, bool i
    : name(name), isFlat(isFlat) {
    map.sizeX = sizeX;
    map.sizeY = sizeY;
+}
+
+// Generation functions
+
+void MapGenerator::generate() {
+   // Takes too long, better to put it in a thread!
    map.init();
 
    if (!isFlat) {
@@ -49,11 +55,7 @@ MapGenerator::MapGenerator(const std::string &name, int sizeX, int sizeY, bool i
       sandDebriNoise.reseed(rand());
       dirtDebriNoise.reseed(rand());
    }
-}
 
-// Generation functions
-
-void MapGenerator::generate() {
    if (isFlat) {
       generateFlatWorld();
    } else {
@@ -65,6 +67,7 @@ void MapGenerator::generate() {
 
    const Vector2 spawnLocation = findPlayerSpawnLocation();
    saveWorldData(name, spawnLocation.x, spawnLocation.y, 50.f, map, nullptr, nullptr);
+   isCompleted = true;
 }
 
 void MapGenerator::generateTerrain() {

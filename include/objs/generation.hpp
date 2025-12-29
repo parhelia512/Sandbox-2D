@@ -3,6 +3,7 @@
 
 #include "objs/map.hpp"
 #include "PerlinNoise.hpp"
+#include <atomic>
 #include <string>
 
 struct MapGenerator {
@@ -10,8 +11,10 @@ struct MapGenerator {
    enum class BiomeWarmth { cold, warm, hot };
 
    std::string name;
-   bool isFlat = false;
    Map map;
+
+   std::atomic<bool> isCompleted = false;
+   bool isFlat = false;
 
    siv::PerlinNoise biomeTemperatureNoise;
    siv::PerlinNoise biomeMoistureNoise;
