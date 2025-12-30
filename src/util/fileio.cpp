@@ -10,7 +10,7 @@
 
 // Constants
 
-constexpr int fileVersion = 1;
+constexpr int fileVersion = 2;
 
 // File functions
 
@@ -82,18 +82,28 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
    }
 
    // Write the map
+   int blockCount = map.sizeX * map.sizeY;
+   std::vector<unsigned char> blocks, physicsValues, walls;
+   blocks.reserve(blockCount);
+   physicsValues.reserve(blockCount);
+   walls.reserve(blockCount);
+
    for (const std::vector<Block> &row: map.blocks) {
       for (const Block &tile: row) {
-         file.write(reinterpret_cast<const char*>(&tile.id), sizeof(tile.id));
-         file.write(reinterpret_cast<const char*>(&tile.value2), sizeof(tile.value2));
+         blocks.push_back(tile.id);
+         physicsValues.push_back(tile.value2);
       }
    }
 
    for (const std::vector<Block> &row: map.walls) {
       for (const Block &tile: row) {
-         file.write(reinterpret_cast<const char*>(&tile.id), sizeof(tile.id));
+         walls.push_back(tile.id);
       }
    }
+
+   file.write(reinterpret_cast<const char*>(blocks.data()), blocks.size() * sizeof(unsigned char));
+   file.write(reinterpret_cast<const char*>(physicsValues.data()), physicsValues.size() * sizeof(unsigned char));
+   file.write(reinterpret_cast<const char*>(walls.data()), walls.size() * sizeof(unsigned char));
 
    // Write the furniture
    size_t furnitureCount = map.furniture.size();
@@ -152,23 +162,23 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
    file.read(reinterpret_cast<char*>(&inventory.items[0]), inventoryHeight * inventoryWidth * sizeof(Item));
 
    // Read map
+   int blockCount = map.sizeX * map.sizeY;
+   std::vector<unsigned char> blocks, physicsValues, walls;
+   blocks.resize(blockCount);
+   physicsValues.resize(blockCount);
+   walls.resize(blockCount);
+
+   file.read(reinterpret_cast<char*>(blocks.data()), blocks.size() * sizeof(unsigned char));
+   file.read(reinterpret_cast<char*>(physicsValues.data()), physicsValues.size() * sizeof(unsigned char));
+   file.read(reinterpret_cast<char*>(walls.data()), walls.size() * sizeof(unsigned char));
+
    for (int y = 0; y < map.sizeY; ++y) {
-      for (int x = 0; x < map.sizeX; ++x) {
-         unsigned char id = 0;
-         unsigned char value2 = 0;
-         file.read(reinterpret_cast<char*>(&id), sizeof(id));
-         file.read(reinterpret_cast<char*>(&value2), sizeof(value2));
-         map.setBlock(x, y, (unsigned char)id);
-         map[y][x].value2 = value2;
-      }
+      int x = y * map.sizeX;
+      map.setRow(y, blocks.data() + x, physicsValues.data() + x);
    }
 
    for (int y = 0; y < map.sizeY; ++y) {
-      for (int x = 0; x < map.sizeX; ++x) {
-         unsigned char id = 0;
-         file.read(reinterpret_cast<char*>(&id), sizeof(id));
-         map.setBlock(x, y, (unsigned char)id, true);
-      }
+      map.setWallRow(y, walls.data() + y * map.sizeX);
    }
 
    // Read furniture

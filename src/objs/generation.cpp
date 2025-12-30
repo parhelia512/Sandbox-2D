@@ -31,7 +31,7 @@ static inline const std::array<BiomeData, biomeCount> biomeData {{
    {{-3, -2, -1, 0, 0},  {0, 0, 1, 2, 3}, 80, .2f,  .5f,  90, "grass",        "dirt",  MapGenerator::BiomeWarmth::warm}, // Forest
    {{-7, -5, -3, -2, 0}, {0, 2, 3, 5, 7}, 80, .05f, .45f, 1,  "stone",        "stone", MapGenerator::BiomeWarmth::cold}, // Mountains
    {{-1, -1, 0, 0, 0},   {0, 0, 1, 1, 1}, 15, .3f,  .45f, 50, "sand",         "sand",  MapGenerator::BiomeWarmth::hot},  // Desert oasis
-   {{-1, -1, 0, 0, 0},    {0, 0, 1, 1, 1}, 5, .3f,  .45f, 2,  "sand",         "sand",  MapGenerator::BiomeWarmth::hot},  // Desert
+   {{-1, -1, 0, 0, 0},   {0, 0, 1, 1, 1},  5, .3f,  .45f, 2,  "sand",         "sand",  MapGenerator::BiomeWarmth::hot},  // Desert
    {{-3, -2, -1, 0, 0},  {0, 0, 1, 2, 3}, 80, .2f,  .5f,  60, "snow",         "snow",  MapGenerator::BiomeWarmth::cold}, // Tundra
    {{-3, -2, -1, 0, 0},  {0, 0, 1, 2, 3}, 80, .2f,  .5f,  95, "jungle_grass", "mud",   MapGenerator::BiomeWarmth::hot},  // Jungle
 }};

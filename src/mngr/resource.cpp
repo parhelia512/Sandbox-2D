@@ -100,11 +100,10 @@ void loadShaders() {
          continue;
       }
 
-      // Just don't put any other files in there...
       if (file.path().extension().string() == ".fs") {
          std::filesystem::path vertexPath = format("assets/shaders/{}.vs", filename);
          loadShader(filename, (std::filesystem::exists(vertexPath) ? vertexPath : ""), file.path().string());
-      } else {
+      } else if (file.path().extension().string() == ".vs") {
          std::filesystem::path fragmentPath = format("assets/shaders/{}.fs", filename);
          loadShader(filename, file.path().string(), (std::filesystem::exists(fragmentPath) ? fragmentPath : ""));
       }

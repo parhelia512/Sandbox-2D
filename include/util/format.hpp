@@ -42,6 +42,12 @@ void assert(bool condition, const char *base, const Args&...args) {
    }
 }
 
+#ifndef NDEBUG
+#define assertDebug(condition, base, ...) assert(condition, base, __VA_ARGS__)
+#else
+#define assertDebug(...)
+#endif
+
 // Wrap function
 
 void wrapText(std::string &string, float maxWidth, float fontSize, float spacing);

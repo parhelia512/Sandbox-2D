@@ -78,6 +78,7 @@ void playSound(const std::string &name, float volume) {
 void playMusic(const std::string &name) {
    assert(music.count(name), "Music '{}' does not exist.", name);
    currentMusic = &music[name];
+   PlayMusicStream(*currentMusic);
 }
 
 // Get functions

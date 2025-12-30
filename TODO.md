@@ -44,6 +44,7 @@
 - Add graphics settings
 - Add keybind settings
 - Add misc. settings
+- Music, sound settings
 - Maybe add localization settings?
 
 ### Other

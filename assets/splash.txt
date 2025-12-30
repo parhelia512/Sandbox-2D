@@ -17,3 +17,8 @@ Favorite items in the inventory by holding down ALT and clicking!
 Trash items in the inventory by holding down CTRL and clicking!
 Generating World 'Dizzy Canyons'... Wait... what?
 TODO: fix this.
+Code is open-source on Github!
+Over 150 commits on Github!
+Make sure to star the repository on Github!
+Thanks to ZC Bernardino for creating the music!
+Hold shift while deleting worlds to batch delete!

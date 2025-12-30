@@ -229,7 +229,7 @@ void MenuState::updateLevelSelection() {
       favoriteButton.text = (selectedButton->favorite ? "Unfavorite" : "Favorite");
    }
 
-   deleteButton.disabled = !anySelected;
+   deleteButton.disabled = !anySelected && !IsKeyDown(KEY_LEFT_SHIFT);
    renameButton.disabled = !anySelected;
    favoriteButton.disabled = !anySelected;
    playWorldButton.disabled = !anySelected;
@@ -239,7 +239,25 @@ void MenuState::updateLevelSelection() {
    favoriteButton.update(dt);
    playWorldButton.update(dt);
 
+   if (IsKeyDown(KEY_LEFT_SHIFT)) {
+      deleteButton.text = "Delete All Worlds";
+   } else {
+      deleteButton.text = "Delete World";
+   }
+
    if (deleteButton.clicked || (!deleteButton.disabled && handleKeyPressWithSound(KEY_D))) {
+      // Delete all worlds instead
+      if (IsKeyDown(KEY_LEFT_SHIFT)) {
+         int deletableWorldCount = worldButtons.size() - favoriteWorlds.size();
+         if (deletableWorldCount == 0) {
+            return;
+         }
+
+         insertPopup("Confirmation Request", format("Are you sure that you want to delete all non-favorited worlds? This includes {} worlds. You won't be able to recover any of them!", deletableWorldCount), true);
+         megaDeleteClicked = true;
+         return;
+      }
+      
       if (selectedButton->favorite) {
          insertPopup("Notice", format("World '{}' cannot be deleted as it is favorited. If you wish to proceed, please unfavorite it and try again.", selectedButton->text), false);
          return;
@@ -250,11 +268,31 @@ void MenuState::updateLevelSelection() {
       return;
    }
 
+   if (megaDeleteClicked && isPopupConfirmed()) {
+      int failedCount = 0;
+      for (const Button &button: worldButtons) {
+         if (isWorldFavorite(button.text)) {
+            continue;
+         }
+         std::string fileName = format("data/worlds/{}.bin", button.text);
+
+         if (!std::filesystem::remove_all(fileName)) {
+            failedCount += 1;
+         }
+      }
+
+      if (failedCount != 0) {
+         insertPopup("Notice", format("{} worlds could not be deleted. Please check the 'data/worlds/' folder, if the files are present, check your permissions.", failedCount), false);
+      }
+      loadWorldButtons();
+   }
+   megaDeleteClicked = false;
+
    if (deleteClicked && isPopupConfirmed()) {
       std::string fileName = format("data/worlds/{}.bin", selectedButton->text);
 
       if (!std::filesystem::remove_all(fileName)) {
-         insertPopup("Notice", format("World '{}' could not be deleted. File '{}' was{}found. If file was not found, check the 'data/worlds/' folder, if it was, check your permissions.", selectedButton->text, fileName, (std::filesystem::exists(selectedButton->text) ? " " : " not ")), false);
+         insertPopup("Notice", format("World '{}' could not be deleted. Please check the 'data/worlds/' folder, if the file is present, check your permissions.", selectedButton->text, fileName, (std::filesystem::exists(selectedButton->text) ? " " : " not ")), false);
       }
       loadWorldButtons();
    }

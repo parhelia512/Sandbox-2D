@@ -9,7 +9,7 @@ Sandbox-2D is a 2D sidescrolling sandbox game where you can build, destroy and p
 - [Installation](#installation)
 - [Usage](#usage)
 - [Contributing](#contributing)
-- [License](#license)
+- [Credits](#credits)
 
 ## Features
 - Building and destroying.
@@ -79,6 +79,21 @@ git push origin [feature-name]
 ```
 5. Create a pull request.
 
-## License
+## Credits
+This project owes its success to the following people and organizations:
 
+### Contributors
+- The code was written by and sprites and sound effects were made by Acerx-AMJ.
+- Windows builds were made by Jhyde927.
+- Music was made by ZC Bernardino.
+
+### Assets
+- Thanks to Steve Matteson for creating the "Andy" font!
+- Thanks to Google for creating the "Roboto" font!
+
+### Third-party Libraries
+- [Raylib](https://www.raylib.com/), which is used in everything from rendering to playing sounds.
+- [siv::PerlinNoise](https://github.com/Reputeless/PerlinNoise), which is used to generate worlds.
+
+### License
 This project is licensed under the [MIT License](LICENSE). Feel free to copy, edit and distribute the code.

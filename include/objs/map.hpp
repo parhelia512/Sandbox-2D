@@ -16,7 +16,7 @@ constexpr inline unsigned char playerThreshold    = maxWaterLayers / 2;
 // Block
 
 struct Block {
-   enum Type { air, grass, dirt, solid, platform, transparent, sand, snow, ice, water, lava };
+   enum Type: char { air, grass, dirt, solid, platform, transparent, sand, snow, ice, water, lava };
 
    Texture *texture = nullptr;
    Type type = Type::air;
@@ -44,6 +44,9 @@ struct Map {
 
    void init();
    void setRow(int y, const std::string &name, bool isWall = false);
+   void setRow(int y, unsigned char *ids, unsigned char *physicsValues);
+   void setWallRow(int y, unsigned char *ids);
+   
    void setBlock(int x, int y, const std::string &name, bool isWall = false);
    void setBlock(int x, int y, unsigned char id, bool isWall = false);
    void deleteBlock(int x, int y, bool isWall = false);

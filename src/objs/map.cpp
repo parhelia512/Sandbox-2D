@@ -1,5 +1,6 @@
 #include "mngr/resource.hpp"
 #include "objs/map.hpp"
+#include "util/format.hpp"
 #include "util/render.hpp"
 #include <array>
 #include <unordered_map>
@@ -32,10 +33,12 @@ static inline const std::array<Block::Type, blockCount> blockTypes {{
 // Block functions
 
 unsigned char Block::getId(const std::string &name) {
+   assertDebug(blockIds.count(name), "DEBUG: Block with the name '{}' does not exist!", name);
    return blockIds.at(name);
 }
 
 std::string Block::getName(unsigned char id) {
+   assertDebug(id < blockCount, "DEBUG: Block with the id '{}' does not exist. Valid IDs are in range {} to {}.", (int)id, 0, (int)blockCount - 1);
    return blockNames.at(id);
 }
 
@@ -47,16 +50,43 @@ void Map::init() {
 }
 
 void Map::setRow(int y, const std::string &name, bool isWall) {
-   unsigned char id = blockIds.at(name);
+   unsigned char id = Block::getId(name);
    Block::Type type = blockTypes[id];
 
    (isWall ? walls : blocks)[y] = std::vector<Block>(sizeX, Block{&getTexture(name), type, id, false, 0, (type == Block::water || type == Block::lava ? maxWaterLayers : (unsigned char)0)});
 }
 
+void Map::setRow(int y, unsigned char *ids, unsigned char *physicsValues) {
+   for (int x = 0; x < sizeX; ++x) {
+      Block &block = blocks[y][x];
+      block.id = ids[x];
+      block.value = 0;
+      block.value2 = physicsValues[x];
+      block.type = blockTypes[block.id];
+
+      if (block.id != 0) {
+         block.texture = &getTexture(blockNames[block.id]);
+      }
+   }
+}
+
+void Map::setWallRow(int y, unsigned char *ids) {
+   for (int x = 0; x < sizeX; ++x) {
+      Block &block = walls[y][x];
+      block.id = ids[x];
+      block.value = block.value2 = 0;
+      block.type = blockTypes[block.id];
+
+      if (block.id != 0) {
+         block.texture = &getTexture(blockNames[block.id]);
+      }
+   }
+}
+
 void Map::setBlock(int x, int y, const std::string &name, bool isWall) {
    Block &block = (isWall ? walls : blocks)[y][x];
    
-   block.id = blockIds.at(name);
+   block.id = Block::getId(name);
    block.value = block.value2 = 0;
    block.type = blockTypes[block.id];
 
@@ -70,7 +100,7 @@ void Map::setBlock(int x, int y, const std::string &name, bool isWall) {
 }
 
 void Map::setBlock(int x, int y, unsigned char id, bool isWall) {
-   setBlock(x, y, blockNames[id], isWall);
+   setBlock(x, y, Block::getName(id), isWall);
 }
 
 void Map::deleteBlock(int x, int y, bool wall) {
