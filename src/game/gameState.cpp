@@ -80,9 +80,16 @@ void GameState::fixedUpdate() {
    lavaCounter = (lavaCounter + 1) % lavaUpdateSpeed;
    bool updateLava = (lavaCounter == 0);
 
+   Rectangle physicsBounds = cameraBounds;
+   Vector2 halfSize = {(cameraBounds.width - cameraBounds.x) / 2.0f, (cameraBounds.height - cameraBounds.y) / 2.0f};
+   physicsBounds.x = max<int>(0, cameraBounds.x - halfSize.x);
+   physicsBounds.y = max<int>(0, cameraBounds.y - halfSize.y);
+   physicsBounds.width = min<int>(map.sizeX - 1, cameraBounds.width + halfSize.x);
+   physicsBounds.height = min<int>(map.sizeY - 1, cameraBounds.height + halfSize.y);
+
    // Loop backwards to avoid updating most of the moving blocks twice
-   for (int y = cameraBounds.height; y >= cameraBounds.y; --y) {
-      for (int x = cameraBounds.width; x >= cameraBounds.x; --x) {
+   for (int y = physicsBounds.height; y >= physicsBounds.y; --y) {
+      for (int x = physicsBounds.width; x >= physicsBounds.x; --x) {
          Block &block = map[y][x];
 
          switch (block.type) {
@@ -204,7 +211,6 @@ void GameState::updatePhysics() {
    }
    /************************************/
 
-   // Update every frame (DT-dependant)
    if (!droppedItems.empty()) {
       const Rectangle playerBounds = player.getBounds();
       
@@ -392,9 +398,10 @@ void GameState::render() const {
 // Render game
 
 void GameState::renderGame() const {
+   map.renderWalls(cameraBounds);
    map.renderFurniture(cameraBounds);
    player.render(accumulator);
-   map.render(cameraBounds);
+   map.renderBlocks(cameraBounds);
 
    for (const DroppedItem &droppedItem : droppedItems) {
       droppedItem.render();

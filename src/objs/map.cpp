@@ -167,20 +167,7 @@ std::vector<Block>& Map::operator[](size_t index) {
 
 // Render functions
 
-void Map::render(const Rectangle &cameraBounds) const {
-   Shader &waterShader = getShader("water");
-
-   int timeLocation = GetShaderLocation(waterShader, "time");
-   float time = GetTime();
-   SetShaderValue(waterShader, timeLocation, &time, SHADER_UNIFORM_FLOAT);
-
-   struct Liquid {
-      const Block *pointer;
-      int x, y;
-   };
-   std::vector<Liquid> liquidTiles;
-   liquidTiles.reserve(64);
-
+void Map::renderWalls(const Rectangle &cameraBounds) const {
    for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
       for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
          const Block &wall = walls[y][x];
@@ -197,6 +184,21 @@ void Map::render(const Rectangle &cameraBounds) const {
          x -= 1;
       }
    }
+}
+
+void Map::renderBlocks(const Rectangle &cameraBounds) const {
+   Shader &waterShader = getShader("water");
+
+   int timeLocation = GetShaderLocation(waterShader, "time");
+   float time = GetTime();
+   SetShaderValue(waterShader, timeLocation, &time, SHADER_UNIFORM_FLOAT);
+
+   struct Liquid {
+      const Block *pointer;
+      int x, y;
+   };
+   std::vector<Liquid> liquidTiles;
+   liquidTiles.reserve(64);
 
    for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
       for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {

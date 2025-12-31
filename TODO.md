@@ -48,5 +48,4 @@
 - Maybe add localization settings?
 
 ### Other
-- Make physics update in a bigger area than the camera bounds
 - World generation.

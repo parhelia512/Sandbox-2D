@@ -69,7 +69,8 @@ struct Map {
 
    // Render map
 
-   void render(const Rectangle &cameraBounds) const;
+   void renderWalls(const Rectangle &cameraBounds) const;
+   void renderBlocks(const Rectangle &cameraBounds) const;
    void renderFurniture(const Rectangle &cameraBounds) const;
 };
 
