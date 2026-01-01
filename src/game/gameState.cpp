@@ -444,8 +444,11 @@ State* GameState::change() {
 // Helper functions
 
 void GameState::calculateCameraBounds() {
-   cameraBounds = getCameraBounds(camera);
+   // formula I pulled out my ass that magically works
+   camera.target.x = clamp(camera.target.x * camera.zoom, camera.offset.x, map.sizeX * camera.zoom - camera.offset.x) / camera.zoom;
+   camera.target.y = clamp(camera.target.y * camera.zoom, camera.offset.y, map.sizeY * camera.zoom - camera.offset.y) / camera.zoom;
 
+   cameraBounds = getCameraBounds(camera);
    cameraBounds.x = max(0, int(cameraBounds.x));
    cameraBounds.y = max(0, int(cameraBounds.y));
    cameraBounds.width = min(map.sizeX - 1, int(cameraBounds.x + cameraBounds.width) + 1);
