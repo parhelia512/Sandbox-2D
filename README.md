@@ -1,7 +1,7 @@
 # Sandbox-2D
 Sandbox-2D is a 2D sidescrolling sandbox game where you can build, destroy and play with physics. It has procedurally generated worlds featuring different biomes.
 
-![Main Menu Screenshot](assets/screenshots/2025-12-24_09-53.png)
+![Main Menu Screenshot](assets/screenshots/2026-01-01_19-00.png)
 
 ## Table of Contents
 - [Features](#features)
@@ -16,8 +16,9 @@ Sandbox-2D is a 2D sidescrolling sandbox game where you can build, destroy and p
 - Water, lava and sand physics.
 - Player controller.
 - World generation with multiple biomes.
+- Lighting system.
 
-![Game Screenshot](assets/screenshots/2025-12-24_09-54.png)
+![Game Screenshot](assets/screenshots/2026-01-01_18-48_1.png)
 
 ## Controls
 

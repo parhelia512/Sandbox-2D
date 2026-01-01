@@ -165,27 +165,28 @@ void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bg
 
 // Time functions
 
-float getLastTimeOfDay() {
-   return lastTime;
-}
-
-float& getTimeOfDay() {
+float getTimeOfDay() {
    return currentTime;
 }
 
-int getLastMoonPhase() {
-   return lastMoonPhase;
-}
-
-int& getMoonPhase() {
+int getMoonPhase() {
    return moonPhase;
 }
+
+void setTimeOfDay(float timeOfDay) {
+   lastTime = currentTime = timeOfDay;
+}
+
+void setMoonPhase(int moonPhase) {
+   lastMoonPhase = moonPhase - 1;
+   ::moonPhase = moonPhase;
+}
+
+// Texture functions
 
 Color getLightBasedOnTime() {
    return fadeColor({15, 15, 15, 255}, WHITE, getFadeStrengthBasedOnTime());
 }
-
-// Texture functions
 
 Texture& getRandomBackground() {
    return getTexture(random(backgroundTextures));

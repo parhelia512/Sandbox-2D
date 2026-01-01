@@ -95,7 +95,6 @@ MenuState::MenuState()
    renameButtonRenaming.text = "Rename";
    renameInput = worldName;
    renameInput.fallback = "Rename Your World...";
-   resetBackground();
 
    // Init world generation screen
    generationProgressBar.progress = generationProgressBar.progressInterpolation = 0.0f;

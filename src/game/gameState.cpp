@@ -31,7 +31,6 @@ GameState::GameState(const std::string &worldName)
    const Vector2 center = getScreenCenter();
    
    // Init world and camera
-   resetBackground();
    loadWorldData(worldName, player, camera.zoom, map, inventory, droppedItems);
 
    camera.zoom = clamp(camera.zoom, minCameraZoom, maxCameraZoom);
@@ -53,6 +52,7 @@ GameState::GameState(const std::string &worldName)
 GameState::~GameState() {
    inventory.discardItem();
    saveWorldData(worldName, player.position.x, player.position.y, camera.zoom, map, &inventory, &droppedItems);
+   resetBackground();
 }
 
 // Update

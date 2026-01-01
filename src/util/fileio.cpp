@@ -61,8 +61,8 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
    file.write(reinterpret_cast<const char*>(&map.sizeY), sizeof(map.sizeY));
    file.write(reinterpret_cast<const char*>(&zoom), sizeof(zoom));
 
-   int timeOfDay = (inventory ? getLastTimeOfDay() : 0);
-   int moonPhase = (inventory ? getLastMoonPhase() : 0);
+   float timeOfDay = (inventory ? getTimeOfDay() : 0);
+   int moonPhase = (inventory ? getMoonPhase() : 0);
    int selectedX = (inventory ? inventory->selectedX : 0);
    int selectedY = (inventory ? inventory->selectedY : 0);
 
@@ -147,12 +147,12 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
    file.read(reinterpret_cast<char*>(&map.sizeY), sizeof(map.sizeY));
    file.read(reinterpret_cast<char*>(&zoom), sizeof(zoom));
 
-   int timeofDay = 0;
+   float timeofDay = 0;
    int moonPhase = 0;
    file.read(reinterpret_cast<char*>(&timeofDay), sizeof(timeofDay));
    file.read(reinterpret_cast<char*>(&moonPhase), sizeof(moonPhase));
-   getTimeOfDay() = timeofDay;
-   getMoonPhase() = moonPhase;
+   setTimeOfDay(timeofDay);
+   setMoonPhase(moonPhase);
 
    file.read(reinterpret_cast<char*>(&inventory.selectedX), sizeof(inventory.selectedX));
    file.read(reinterpret_cast<char*>(&inventory.selectedY), sizeof(inventory.selectedY));

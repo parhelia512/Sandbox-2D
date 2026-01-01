@@ -6,12 +6,13 @@
 void resetBackground();
 void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bgSpeed, float fgSpeed, float daySpeed);
 
-int getLastMoonPhase();
-int& getMoonPhase();
-float getLastTimeOfDay();
-float& getTimeOfDay();
-Color getLightBasedOnTime();
+int getMoonPhase();
+float getTimeOfDay();
 
+void setMoonPhase(int moonPhase);
+void setTimeOfDay(float timeOfDay);
+
+Color getLightBasedOnTime();
 Texture& getRandomBackground();
 Texture& getRandomForeground();
 
