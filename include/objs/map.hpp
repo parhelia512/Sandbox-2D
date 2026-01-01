@@ -28,6 +28,7 @@ struct Block {
 
    // Values used by physics updates, specific to the block type
    unsigned char value = 0, value2 = 0;
+   bool isLight = false;
 
    static unsigned char getId(const std::string &name);
    static std::string getName(unsigned char id);
@@ -36,9 +37,15 @@ struct Block {
 // Map
 
 struct Map {
+   RenderTexture lightmap;
+   
    std::vector<std::vector<Block>> blocks, walls;
    std::vector<Furniture> furniture;
    int sizeX = 0, sizeY = 0;
+
+   // Deconstructor
+
+   ~Map();
 
    // Set block functions
 
@@ -69,9 +76,7 @@ struct Map {
 
    // Render map
 
-   void renderWalls(const Rectangle &cameraBounds) const;
-   void renderBlocks(const Rectangle &cameraBounds) const;
-   void renderFurniture(const Rectangle &cameraBounds) const;
+   void render(const std::vector<struct DroppedItem> &droppedItems, const struct Player &player, float accumulator, const Rectangle &cameraBounds, const Camera2D &camera) const;
 };
 
 #endif

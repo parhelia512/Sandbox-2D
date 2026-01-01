@@ -398,14 +398,7 @@ void GameState::render() const {
 // Render game
 
 void GameState::renderGame() const {
-   map.renderWalls(cameraBounds);
-   map.renderFurniture(cameraBounds);
-   player.render(accumulator);
-   map.renderBlocks(cameraBounds);
-
-   for (const DroppedItem &droppedItem : droppedItems) {
-      droppedItem.render();
-   }
+   map.render(droppedItems, player, accumulator, cameraBounds, camera);
 
    /************************************/
    // Scary method of rendering furniture and block preview correctly

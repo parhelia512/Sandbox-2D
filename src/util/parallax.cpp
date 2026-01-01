@@ -40,6 +40,18 @@ struct Star {
    unsigned char frameX = 0;
 };
 
+// Static members
+
+static Star stars[starCountMax];
+static int starCount = 0;
+static float fgProgress = 0;
+static float bgProgress = 0;
+static float currentTime = 0;
+static float lastTime = 0;
+static int moonPhase = -1;
+static int lastMoonPhase = -1;
+static bool isNight = false;
+
 // Color helper functions
 
 inline Color fadeColor(const Color &a, const Color &b, float t) {
@@ -47,7 +59,7 @@ inline Color fadeColor(const Color &a, const Color &b, float t) {
    return {(unsigned char)((a.r * i) + (b.r * t)), (unsigned char)((a.g * i) + (b.g * t)), (unsigned char)((a.b * i) + (b.b * t)), 255};
 }
 
-float getFadeStrengthBasedOnTime(float currentTime) {
+float getFadeStrengthBasedOnTime() {
    if (currentTime >= 45.0f && currentTime <= 135.0f) {
       return 1.0f;
    } else if (currentTime >= 225.0f && currentTime <= 315.0f) {
@@ -61,18 +73,6 @@ float getFadeStrengthBasedOnTime(float currentTime) {
    }
    return 0.0f;
 }
-
-// Static members
-
-static Star stars[starCountMax];
-static int starCount = 0;
-static float fgProgress = 0;
-static float bgProgress = 0;
-static float currentTime = 0;
-static float lastTime = 0;
-static int moonPhase = -1;
-static int lastMoonPhase = -1;
-static bool isNight = false;
 
 // Background functions
 
@@ -117,7 +117,7 @@ void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bg
       lastMoonPhase = moonPhase;
    }
 
-   float t = getFadeStrengthBasedOnTime(currentTime);
+   float t = getFadeStrengthBasedOnTime();
 
    // Draw the sky
    DrawTexturePro(getTexture("sky"), getBox(getTexture("sky")), {0, 0, getScreenSize().x, getScreenSize().y}, {0, 0}, 0, fadeColor(skyColorNight, skyColorDay, t));
@@ -179,6 +179,10 @@ int getLastMoonPhase() {
 
 int& getMoonPhase() {
    return moonPhase;
+}
+
+Color getLightBasedOnTime() {
+   return fadeColor({15, 15, 15, 255}, WHITE, getFadeStrengthBasedOnTime());
 }
 
 // Texture functions

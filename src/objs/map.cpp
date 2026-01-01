@@ -1,6 +1,9 @@
 #include "mngr/resource.hpp"
 #include "objs/map.hpp"
+#include "objs/item.hpp"
+#include "objs/player.hpp"
 #include "util/format.hpp"
+#include "util/parallax.hpp"
 #include "util/render.hpp"
 #include <array>
 #include <unordered_map>
@@ -8,6 +11,7 @@
 // Constants
 
 constexpr unsigned char blockCount = 20;
+constexpr Color orangeLightColor = {255, 125, 0, 255};
 
 static inline const std::unordered_map<std::string, unsigned char> blockIds {
    {"air", 0}, {"grass", 1}, {"dirt", 2}, {"clay", 3}, {"stone", 4},
@@ -42,9 +46,16 @@ std::string Block::getName(unsigned char id) {
    return blockNames.at(id);
 }
 
+// Map destructors
+
+Map::~Map() {
+   UnloadRenderTexture(lightmap);
+}
+
 // Set block functions
 
 void Map::init() {
+   lightmap = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
    blocks = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
    walls  = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
 }
@@ -167,7 +178,8 @@ std::vector<Block>& Map::operator[](size_t index) {
 
 // Render functions
 
-void Map::renderWalls(const Rectangle &cameraBounds) const {
+void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &player, float accumulator, const Rectangle &cameraBounds, const Camera2D &camera) const {
+   // Render background walls
    for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
       for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
          const Block &wall = walls[y][x];
@@ -184,9 +196,20 @@ void Map::renderWalls(const Rectangle &cameraBounds) const {
          x -= 1;
       }
    }
-}
 
-void Map::renderBlocks(const Rectangle &cameraBounds) const {
+   // Render furniture
+   for (const Furniture &obj: furniture) {
+      obj.render(cameraBounds);
+   }
+
+   // Render the player
+   player.render(accumulator);
+
+   for (const DroppedItem &droppedItem : droppedItems) {
+      droppedItem.render();
+   }
+
+   // Render blocks
    Shader &waterShader = getShader("water");
 
    int timeLocation = GetShaderLocation(waterShader, "time");
@@ -238,10 +261,45 @@ void Map::renderBlocks(const Rectangle &cameraBounds) const {
       drawFluidBlock(*block.pointer->texture, {(float)block.x, (float)block.y + (1 - height), 1, height}, Fade(liquidFlags, height));
    }
    EndShaderMode();
-}
 
-void Map::renderFurniture(const Rectangle &cameraBounds) const {
-   for (const Furniture &obj: furniture) {
-      obj.render(cameraBounds);
+   // // Render lights
+   BeginTextureMode(lightmap);
+   ClearBackground(BLACK);
+   BeginBlendMode(BLEND_ADDITIVE);
+
+   int lightBoundsMinX = std::max<int>(0, cameraBounds.x - 6);
+   int lightBoundsMinY = std::max<int>(0, cameraBounds.y - 6);
+   int lightBoundsMaxX = std::min<int>(sizeX - 1, cameraBounds.width + 6);
+   int lightBoundsMaxY = std::min<int>(sizeY - 1, cameraBounds.height + 6);
+
+   Color airLightColor   = getLightBasedOnTime();
+   Color waterLightColor = Fade(airLightColor, 0.1f);
+   Vector2 lightSize = {7.0f * camera.zoom, 7.0f * camera.zoom};
+
+   for (int y = lightBoundsMinY; y <= lightBoundsMaxY; ++y) {
+      for (int x = lightBoundsMinX; x <= lightBoundsMaxX; ++x) {
+         Color color = {0, 0, 0, 0};
+         if (blocks[y][x].type == Block::lava) {
+            color = orangeLightColor;
+         }
+
+         if (isTransparent(x, y) && (walls[y][x].type == Block::transparent || walls[y][x].type == Block::air)) {
+            color = (blocks[y][x].type == Block::water ? waterLightColor : airLightColor);
+         }
+
+         if (color.a != 0) {
+            drawTexture(getTexture("lightsource"), GetWorldToScreen2D({x + 0.5f, y + 0.5f}, camera), lightSize, 0, color);
+         }
+      }
    }
+
+   EndBlendMode();
+   EndTextureMode();
+
+   BeginBlendMode(BLEND_MULTIPLIED);
+   DrawTexturePro(lightmap.texture, {0, 0, (float)GetScreenWidth(), -(float)GetScreenHeight()}, {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()}, {0, 0}, 0, WHITE);
+   EndBlendMode();
+
+   // DrawFPS(100, 100);
+   BeginMode2D(camera); // EndTextureMode disables it for some reason
 }

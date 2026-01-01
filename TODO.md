@@ -30,7 +30,6 @@
 - Make crafting use nearby chests.
 
 ### Lighting
-- Add lighting and make the sky emit light.
 - Add solid light blocks.
 - Add torches.
 

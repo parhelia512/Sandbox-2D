@@ -10,6 +10,7 @@ int getLastMoonPhase();
 int& getMoonPhase();
 float getLastTimeOfDay();
 float& getTimeOfDay();
+Color getLightBasedOnTime();
 
 Texture& getRandomBackground();
 Texture& getRandomForeground();
