@@ -25,16 +25,18 @@ constexpr int cactusBranchChance = 50;
 constexpr int cactusFlowerChance = 10;
 
 constexpr int textureSize    = 8;
-constexpr int furnitureCount = 10;
+constexpr int furnitureCount = 11;
 
 static inline const std::unordered_map<std::string, int> furnitureTextureIds {
    {"tree", 0}, {"sapling", 1}, {"palm", 2}, {"palm_sapling", 3}, {"pine", 4},
-   {"pine_sapling", 5}, {"jungle_tree", 6}, {"jungle_sapling", 7}, {"cactus", 8}, {"cactus_seed", 9}
+   {"pine_sapling", 5}, {"jungle_tree", 6}, {"jungle_sapling", 7}, {"cactus", 8}, {"cactus_seed", 9},
+   {"table", 10}
 };
 
 static inline const std::array<const char*, furnitureCount> furnitureTextureNames {
    "tree", "sapling", "palm", "palm_sapling", "pine",
-   "pine_sapling", "jungle_tree", "jungle_sapling", "cactus", "cactus_seed"
+   "pine_sapling", "jungle_tree", "jungle_sapling", "cactus", "cactus_seed",
+   "table"
 };
 
 // Helper functions
@@ -46,7 +48,11 @@ inline void setBlock(FurniturePiece &piece, int tx, int ty) {
 }
 
 inline bool isBlockSoil(const Map &map, int x, int y) {
-   return map.is(x, y, Block::grass) || map.isu(x, y, Block::dirt) || map.isu(x, y, Block::sand) || map.isu(x, y, Block::snow);
+   return map.isPositionValid(x, y) && (map.isu(x, y, Block::grass) || map.isu(x, y, Block::dirt) || map.isu(x, y, Block::sand) || map.isu(x, y, Block::snow));
+}
+
+inline bool isBlockEmpty(const Map &map, int x, int y) {
+   return map.isPositionValid(x, y) && (map.isu(x, y, Block::air) || map.isu(x, y, Block::lava) || map.isu(x, y, Block::torch) || map.isu(x, y, Block::water));
 }
 
 // Furniture functions
@@ -66,12 +72,16 @@ Furniture::Furniture(const std::string &texture, int posX, int posY, int sizeX, 
 void Furniture::update(Map &map) {
    switch (type) {
 
+   // Update trees
+
    case Type::tree: {
       if (!isBlockSoil(map, posX + 1, posY + sizeY)) {
          map.removeFurniture(*this);
          return;
       }
    } break;
+
+   // Update saplings
 
    case Type::sapling: {
       if (!isBlockSoil(map, posX, posY + sizeY) || map.is(posX, posY - 1, Block::sand)) {
@@ -95,12 +105,16 @@ void Furniture::update(Map &map) {
       }
    } break;
 
+   // Update cacti
+
    case Type::cactus: {
       if (!map.isu(posX + 1, posY + sizeY, Block::sand)) {
          map.removeFurniture(*this);
          return;
       }
    } break;
+
+   // Update cacti seeds
 
    case Type::cactus_seed: {
       if (!map.isu(posX, posY + sizeY, Block::sand) || map.is(posX, posY - 1, Block::sand) || map.isu(posX, posY, Block::water) || map.isu(posX, posY, Block::lava)) {
@@ -119,6 +133,15 @@ void Furniture::update(Map &map) {
       }
    } break;
 
+   // Update tables (yes, they also need this)
+
+   case Type::table: {
+      if (isBlockEmpty(map, posX, posY + sizeY) || isBlockEmpty(map, posX + 1, posY + sizeY) || isBlockEmpty(map, posX + 2, posY + sizeY)) {
+         map.removeFurniture(*this);
+         return;
+      }
+   } break;
+
    default: break;
    }
 }
@@ -127,6 +150,8 @@ void Furniture::update(Map &map) {
 
 Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
    switch (type) {
+
+   // Make a tree
 
    case Type::tree: {
       if (!debug && (x < 1 || x >= map.sizeX - 1 || y < 0 || !isBlockSoil(map, x , y + 1))) {
@@ -211,6 +236,8 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
       return tree;
    } break;
 
+   // Make a sapling
+
    case Type::sapling: {
       if (!debug && (x < 0 || x >= map.sizeX || y < 0 || !isBlockSoil(map, x , y + 2) || !map.empty(x, y) || !map.empty(x, y + 1))) {
          return {};
@@ -230,6 +257,8 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
       setBlock(sapling.pieces[1][0], offsetTx, 1 * textureSize);
       return sapling;
    } break;
+
+   // Make a cactus
 
    case Type::cactus: {
       if (!debug && (x < 1 || x >= map.sizeX - 1 || y < 0 || !map.isu(x , y + 1, Block::sand))) {
@@ -307,6 +336,8 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
       return cactus;
    } break;
 
+   // Make a cactus seed
+
    case Type::cactus_seed: {
       if (!debug && (!map.is(x, y + 1, Block::sand) || !map.empty(x, y))) {
          return {};
@@ -318,6 +349,23 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
 
       setBlock(cactus_seed.pieces[0][0], offsetTx * textureSize, 0 * textureSize);
       return cactus_seed;
+   } break;
+
+   // Make a table
+
+   case Type::table: {
+      Furniture table ("table", x, y, 3, 2, Furniture::table);
+      table.isWalkable = true;
+      
+      for (int yy = 0; yy < 2; ++yy) {
+         for (int xx = 0; xx < 3; ++xx) {
+            if (!debug && !map.empty(xx + x, yy + y)) {
+               return {};
+            }
+            setBlock(table.pieces[yy][xx], textureSize * xx, textureSize * yy);
+         }
+      }
+      return table;
    } break;
 
    default: return {};

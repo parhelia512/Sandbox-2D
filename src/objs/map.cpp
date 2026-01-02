@@ -126,6 +126,10 @@ void Map::deleteBlock(int x, int y, bool wall) {
 
 void Map::moveBlock(int oldX, int oldY, int newX, int newY) {
    std::swap(blocks[oldY][oldX], blocks[newY][newX]);
+
+   // Preserve furniture status
+   std::swap(blocks[oldY][oldX].furniture, blocks[newY][newX].furniture);
+   std::swap(blocks[oldY][oldX].isWalkable, blocks[newY][newX].isWalkable);
 }
 
 // Set furniture functions
@@ -135,6 +139,7 @@ void Map::addFurniture(Furniture &object) {
       for (int x = object.posX; x < object.sizeX + object.posX; ++x) {
          if (!object.pieces[y - object.posY][x - object.posX].nil) {
             blocks[y][x].furniture = true;
+            blocks[y][x].isWalkable = (object.isWalkable && y == object.posY);
          }
       }
    }
@@ -145,7 +150,7 @@ void Map::removeFurniture(Furniture &object) {
    for (int y = object.posY; y < object.sizeY + object.posY; ++y) {
       for (int x = object.posX; x < object.sizeX + object.posX; ++x) {
          if (!object.pieces[y - object.posY][x - object.posX].nil) {
-            blocks[y][x].furniture = false;
+            blocks[y][x].furniture = blocks[y][x].isWalkable = false;
          }
       }
    }
@@ -167,7 +172,7 @@ bool Map::isu(int x, int y, Block::Type type) const {
 }
 
 bool Map::empty(int x, int y) const {
-   return isPositionValid(x, y) && !blocks[y][x].furniture && blocks[y][x].type == Block::air;
+   return isPositionValid(x, y) && !blocks[y][x].furniture && (blocks[y][x].type == Block::air || ((blocks[y][x].type == Block::water || blocks[y][x].type == Block::water) && blocks[y][x].value2 <= minWaterLayers));
 }
 
 bool Map::isTransparent(int x, int y) const {

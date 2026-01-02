@@ -25,10 +25,10 @@ struct Block {
    // block space, so it's a problem for later
    unsigned char id = 0;
    bool furniture = false;
+   bool isWalkable = false;
 
    // Values used by physics updates, specific to the block type
    unsigned char value = 0, value2 = 0;
-   bool isLight = false;
 
    static unsigned char getId(const std::string &name);
    static std::string getName(unsigned char id);

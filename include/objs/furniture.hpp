@@ -23,7 +23,7 @@ struct FurniturePiece {
 };
 
 struct Furniture {
-   enum Type { none, tree, sapling, cactus, cactus_seed };
+   enum Type { none, tree, sapling, cactus, cactus_seed, table };
 
    std::vector<std::vector<FurniturePiece>> pieces;
    Type type = Type::none;
@@ -32,6 +32,7 @@ struct Furniture {
    int value = 0, value2 = 0;
    int posX = 0, posY = 0, sizeX = 0, sizeY = 0;
    bool deleted = false;
+   bool isWalkable = false;
 
    // Constructors
 

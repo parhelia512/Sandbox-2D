@@ -118,6 +118,7 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
       file.write(reinterpret_cast<const char*>(&obj.value), sizeof(obj.value));
       file.write(reinterpret_cast<const char*>(&obj.value2), sizeof(obj.value2));
       file.write(reinterpret_cast<const char*>(&obj.texId), sizeof(obj.texId));
+      file.write(reinterpret_cast<const char*>(&obj.isWalkable), sizeof(obj.isWalkable));
 
       for (const std::vector<FurniturePiece> &row: obj.pieces) {
          file.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(FurniturePiece));
@@ -195,6 +196,7 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
       file.read(reinterpret_cast<char*>(&obj.value), sizeof(obj.value));
       file.read(reinterpret_cast<char*>(&obj.value2), sizeof(obj.value2));
       file.read(reinterpret_cast<char*>(&obj.texId), sizeof(obj.texId));
+      file.read(reinterpret_cast<char*>(&obj.isWalkable), sizeof(obj.isWalkable));
 
       obj.pieces.resize(obj.sizeY, std::vector<FurniturePiece>(obj.sizeX));
       for (std::vector<FurniturePiece> &row: obj.pieces) {
