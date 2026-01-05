@@ -15,24 +15,59 @@ constexpr inline unsigned char playerThreshold    = maxWaterLayers / 2;
 
 // Block
 
+// Bad practice to make enums unsigned, but as blocks attributes will grow, it'll be
+// increasingly useful, also makes bitwise operations slightly easier
+enum class BlockType: unsigned short {
+   empty       = 1,
+   grass       = 2,
+   dirt        = 4,
+   sand        = 8,
+   ice         = 16,
+   solid       = 32,
+   platform    = 64,
+   transparent = 128,
+   water       = 256,
+   lava        = 512,
+   liquid      = 1024,
+   lightsource = 2048,
+   torch       = 4096,
+   furniture   = 8192,
+};
+
+// Block type operators
+constexpr inline BlockType operator|(BlockType lhs, BlockType rhs) {
+   return static_cast<BlockType>(static_cast<unsigned short>(lhs) | static_cast<unsigned short>(rhs));
+}
+
+constexpr inline bool operator&(BlockType lhs, BlockType rhs) {
+   return (static_cast<unsigned short>(lhs) & static_cast<unsigned short>(rhs)) != 0;
+}
+
+// Instead of retrieving a boolean like the previous function, return the result as
+// a block type. DOES NOT ACT LIKE A MODULUS OPERATOR! 
+constexpr inline BlockType operator%(BlockType lhs, BlockType rhs) {
+   return static_cast<BlockType>(static_cast<unsigned short>(lhs) & static_cast<unsigned short>(rhs));
+}
+
+constexpr inline BlockType operator~(BlockType bt) {
+   return static_cast<BlockType>(~static_cast<unsigned short>(bt));
+}
+
+// Currently has 2 free bytes due to struct padding, meaning one short or two chars
+// can be safely added without expanding memory usage
 struct Block {
-   enum Type: char { air, grass, dirt, solid, platform, transparent, sand, snow, ice, water, lava, lamp, torch };
-
    Texture *texture = nullptr;
-   Type type = Type::air;
-
-   // Unsigned chars can only hold 256 unique IDs. Currently trying to save
-   // block space, so it's a problem for later
-   unsigned char id = 0;
-   bool furniture = false;
-   bool isWalkable = false;
+   BlockType type = BlockType::empty | BlockType::transparent; // air
+   unsigned short id = 0;
 
    // Values used by physics updates, specific to the block type
-   unsigned char value = 0, value2 = 0;
-
-   static unsigned char getId(const std::string &name);
-   static std::string getName(unsigned char id);
+   unsigned char value = 0;
+   unsigned char value2 = 0;
 };
+
+// Block getter functions
+unsigned short getBlockIdFromName(const std::string &name);
+std::string getBlockNameFromId(unsigned short id);
 
 // Map
 
@@ -43,19 +78,20 @@ struct Map {
    std::vector<Furniture> furniture;
    int sizeX = 0, sizeY = 0, timeShaderLocation = 0;
 
-   // Deconstructor
+   // Constructors
 
+   void init();
    ~Map();
 
    // Set block functions
 
-   void init();
    void setRow(int y, const std::string &name, bool isWall = false);
-   void setRow(int y, unsigned char *ids, unsigned char *physicsValues);
-   void setWallRow(int y, unsigned char *ids);
+   void setRow(int y, unsigned short *ids, unsigned char *physicsValues);
+   void setWallRow(int y, unsigned short *ids);
    
    void setBlock(int x, int y, const std::string &name, bool isWall = false);
-   void setBlock(int x, int y, unsigned char id, bool isWall = false);
+   void setBlock(int x, int y, unsigned short id, bool isWall = false);
+
    void deleteBlock(int x, int y, bool isWall = false);
    void moveBlock(int oldX, int oldY, int newX, int newY);
 
@@ -67,12 +103,15 @@ struct Map {
    // Get block functions
 
    bool isPositionValid(int x, int y) const;
-   bool is(int x, int y, Block::Type type) const;
-   bool isu(int x, int y, Block::Type type) const; // Unsafe is variant
-   bool empty(int x, int y) const;
-   bool isTransparent(int x, int y) const; // Unsafe
+   bool is(int x, int y, BlockType type) const;
+   bool isu(int x, int y, BlockType type) const; // Unsafe is variant
 
-   std::vector<Block>& operator[](size_t index);
+   bool isSoil(int x, int y) const;
+   bool isLiquid(int x, int y) const;
+   bool isEmpty(int x, int y) const;
+   bool isNotSolid(int x, int y) const; // Is either empty or a full liquid
+   bool isStable(int x, int y) const; // Is solid or furniture and not platform
+   bool isPlatformedFurniture(int x, int y) const;
 
    // Render map
 

@@ -450,7 +450,7 @@ void Inventory::renderItem(const Item &item, const Vector2 &position, bool isSel
    Color drawColor = (isSelected ? Fade(WHITE, 0.75f) : WHITE);
 
    if (!item.isFurniture) {
-      drawTexture(getTexture(Block::getName(item.id)), position, itemframeItemSize, 0.0f, drawColor);
+      drawTexture(getTexture(getBlockNameFromId(item.id)), position, itemframeItemSize, 0.0f, drawColor);
    } else if (item.isFurniture) {
       FurnitureTexture texture = Furniture::getFurnitureIcon(item.id);
       Vector2 newPos = Vector2Add(position, Vector2Scale(itemframeSize, 0.5f));

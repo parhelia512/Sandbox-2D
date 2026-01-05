@@ -50,7 +50,7 @@ void DroppedItem::render() const {
    Vector2 size = droppedItemSize;
 
    if (!isFurniture) {
-      drawTexture(getTexture(Block::getName(id)), position, size, 0.0f, WHITE);
+      drawTexture(getTexture(getBlockNameFromId(id)), position, size, 0.0f, WHITE);
    } else {
       FurnitureTexture texture = Furniture::getFurnitureIcon(id);
 

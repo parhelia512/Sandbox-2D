@@ -117,12 +117,10 @@ void Player::updateCollisions(Map &map) {
 
    for (int y = max(0, (int)position.y); y < maxY; ++y) {
       for (int x = max(0, (int)position.x); x < maxX; ++x) {
-
-         // Logic is my speciality
-         if ((!map[y][x].isWalkable || IsKeyDown(KEY_S)) && (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || map.isu(x, y, Block::lava) || (IsKeyDown(KEY_S) && map.isu(x, y, Block::platform)) || map.isu(x, y, Block::torch))) {
+         if ((!map.isu(x, y, BlockType::solid) && !map.isPlatformedFurniture(x, y)) || (map.isu(x, y, BlockType::platform) && IsKeyDown(KEY_S))) {
             // Only check water and lava tile count in the first iteration
-            waterTileCount += (map.isu(x, y, Block::water) && map[y][x].value2 > playerThreshold);
-            lavaTileCount += (map.isu(x, y, Block::lava) && map[y][x].value2 > playerThreshold);
+            waterTileCount += (map.isu(x, y, BlockType::water) && map.blocks[y][x].value2 > playerThreshold);
+            lavaTileCount  += (map.isu(x, y, BlockType::lava)  && map.blocks[y][x].value2 > playerThreshold);
             continue;
          }
 
@@ -130,7 +128,7 @@ void Player::updateCollisions(Map &map) {
             continue;
          }
 
-         if (previousPosition.y >= y + 1.f && !map.isu(x, y, Block::platform) && !map[y][x].isWalkable) {
+         if (previousPosition.y >= y + 1.f && !map.isu(x, y, BlockType::platform)) {
             velocity.y = max(0.f, velocity.y);
             position.y = y + 1.f;
             collisionY = true;
@@ -141,7 +139,7 @@ void Player::updateCollisions(Map &map) {
             position.y = y - playerSize.y;
             onGround = true;
             collisionY = true;
-            iceTileCount += map.isu(x, y, Block::ice);
+            iceTileCount += map.isu(x, y, BlockType::ice);
          }
       }
    }
@@ -163,7 +161,7 @@ void Player::updateCollisions(Map &map) {
 
    for (int y = max(0, (int)position.y - 1); y < maxY; ++y) {
       for (int x = max(0, (int)position.x); x < maxX; ++x) {
-         if (map.isu(x, y, Block::air) || map.isu(x, y, Block::water) || map.isu(x, y, Block::lava) || (map.isu(x, y, Block::platform) && !IsKeyDown(KEY_W)) || map.isu(x, y, Block::torch)) {
+         if ((!map.isu(x, y, BlockType::solid) && !map.isPlatformedFurniture(x, y)) || (map.isu(x, y, BlockType::platform) && !IsKeyDown(KEY_W))) {
             continue;
          }
 
@@ -172,7 +170,7 @@ void Player::updateCollisions(Map &map) {
             feetCollisionY = y;
          }
 
-         if (map.isu(x, y, Block::platform)) {
+         if (map.isu(x, y, BlockType::platform)) {
             continue;
          }
 

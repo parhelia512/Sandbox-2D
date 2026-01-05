@@ -44,3 +44,6 @@
 
 ### Other
 - World generation.
+- Make water flow through platforms
+- Improve structure, block and furniture logic seems to not work together well. feels too bloated to add.
+- Instead of placing blocks one by one, generate an array of block ids and batch them in world generation.

@@ -8,9 +8,9 @@
 #include <fstream>
 #include <vector>
 
-// Constants
-
-constexpr int fileVersion = 2;
+// Please increment after any breaking changes to warn players
+// about corrupted worlds
+constexpr int fileVersion = 3;
 
 // File functions
 
@@ -44,10 +44,6 @@ void saveLinesToFile(const std::string &path, const std::vector<std::string> &li
 
 // World saving functions
 // Save and load functions must follow the same data arrangement
-
-static_assert(std::is_trivially_copyable_v<Item>);
-static_assert(std::is_trivially_copyable_v<FurniturePiece>);
-static_assert(std::is_trivially_copyable_v<DroppedItem>);
 
 void saveWorldData(const std::string &name, float playerX, float playerY, float zoom, const Map &map, const Inventory *inventory, const std::vector<DroppedItem> *droppedItems) {
    std::ofstream file ("data/worlds/" + name + ".bin", std::ios::binary);
@@ -83,7 +79,9 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
 
    // Write the map
    int blockCount = map.sizeX * map.sizeY;
-   std::vector<unsigned char> blocks, physicsValues, walls;
+   std::vector<unsigned short> blocks, walls;
+   std::vector<unsigned char> physicsValues;
+
    blocks.reserve(blockCount);
    physicsValues.reserve(blockCount);
    walls.reserve(blockCount);
@@ -101,9 +99,9 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
       }
    }
 
-   file.write(reinterpret_cast<const char*>(blocks.data()), blocks.size() * sizeof(unsigned char));
+   file.write(reinterpret_cast<const char*>(blocks.data()), blocks.size() * sizeof(unsigned short));
    file.write(reinterpret_cast<const char*>(physicsValues.data()), physicsValues.size() * sizeof(unsigned char));
-   file.write(reinterpret_cast<const char*>(walls.data()), walls.size() * sizeof(unsigned char));
+   file.write(reinterpret_cast<const char*>(walls.data()), walls.size() * sizeof(unsigned short));
 
    // Write the furniture
    size_t furnitureCount = map.furniture.size();
@@ -164,14 +162,16 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
 
    // Read map
    int blockCount = map.sizeX * map.sizeY;
-   std::vector<unsigned char> blocks, physicsValues, walls;
+   std::vector<unsigned short> blocks, walls;
+   std::vector<unsigned char> physicsValues;
+
    blocks.resize(blockCount);
    physicsValues.resize(blockCount);
    walls.resize(blockCount);
 
-   file.read(reinterpret_cast<char*>(blocks.data()), blocks.size() * sizeof(unsigned char));
+   file.read(reinterpret_cast<char*>(blocks.data()), blocks.size() * sizeof(unsigned short));
    file.read(reinterpret_cast<char*>(physicsValues.data()), physicsValues.size() * sizeof(unsigned char));
-   file.read(reinterpret_cast<char*>(walls.data()), walls.size() * sizeof(unsigned char));
+   file.read(reinterpret_cast<char*>(walls.data()), walls.size() * sizeof(unsigned short));
 
    for (int y = 0; y < map.sizeY; ++y) {
       int x = y * map.sizeX;

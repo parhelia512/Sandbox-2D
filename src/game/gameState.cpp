@@ -89,20 +89,20 @@ void GameState::fixedUpdate() {
    // Loop backwards to avoid updating most of the moving blocks twice
    for (int y = physicsBounds.height; y >= physicsBounds.y; --y) {
       for (int x = physicsBounds.width; x >= physicsBounds.x; --x) {
-         Block &block = map[y][x];
+         BlockType type = map.blocks[y][x].type;
 
-         switch (block.type) {
-         case Block::lava:
-            if (updateLava) {
-               updateLavaPhysics(x, y);
-            }
-            break;
-         case Block::water: updateWaterPhysics(x, y); break;
-         case Block::sand:  updateSandPhysics(x, y);  break;
-         case Block::grass: updateGrassPhysics(x, y); break;
-         case Block::dirt:  updateDirtPhysics(x, y);  break;
-         case Block::torch: updateTorchPhysics(x, y); break;
-         default: break;
+         if ((type & BlockType::lava) && updateLava) {
+            updateLavaPhysics(x, y);
+         } else if (type & BlockType::water) {
+            updateWaterPhysics(x, y);
+         } else if (type & BlockType::sand) {
+            updateSandPhysics(x, y);
+         } else if (type & BlockType::grass) {
+            updateGrassPhysics(x, y);
+         } else if (type & BlockType::dirt) {
+            updateDirtPhysics(x, y);
+         } else if (type & BlockType::torch) {
+            updateTorchPhysics(x, y);
          }
       }
    }
@@ -199,13 +199,13 @@ void GameState::updatePhysics() {
 
       if (isMouseDownOutsideUI(MOUSE_BUTTON_LEFT)) {
          map.deleteBlock(mousePos.x, mousePos.y, drawWall);
-      } else if (isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT) && canDraw && !map.blocks[mousePos.y][mousePos.x].furniture) {
+      } else if (isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT) && canDraw && !map.isu(mousePos.x, mousePos.y, BlockType::furniture)) {
          if (ftype != Furniture::none) {
             Furniture::generate(mousePos.x, mousePos.y, map, ftype);
          } else {
             map.setBlock(mousePos.x, mousePos.y, blockMap[index], drawWall);
          }
-      } else if (isMousePressedOutsideUI(MOUSE_BUTTON_MIDDLE) && (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type != Block::air) {
+      } else if (isMousePressedOutsideUI(MOUSE_BUTTON_MIDDLE) && !((drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type & BlockType::empty)) {
          index = (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].id - 1;
       }
    }
@@ -258,95 +258,95 @@ static void applyHalfFlowDown(Block &block1, Block &block2) {
 
 void GameState::updateFluid(int x, int y) {
    // block.value2 is the fluid layers, which cannot exceed maxWaterLayers
-   Block &block = map[y][x];
+   Block &block = map.blocks[y][x];
+   BlockType liquidType = ((block.type & BlockType::water) ? BlockType::water : BlockType::lava);
+
    if (block.value2 == 0) {
       map.deleteBlock(x, y);
       return;
    }
 
    // Handle water going down
-   if (map.is(x, y + 1, Block::torch)) {
+   if (map.is(x, y + 1, BlockType::torch) && block.value2 > minWaterLayers) {
       map.deleteBlock(x, y + 1);
    }
 
-   if (map.is(x, y + 1, Block::air)) {
+   if (map.is(x, y + 1, BlockType::empty)) {
       map.moveBlock(x, y, x, y + 1);
-   } else if (map.is(x, y + 1, block.type)) {
-      applyFlowDown(block, map[y + 1][x]);
+   } else if (map.is(x, y + 1, liquidType)) {
+      applyFlowDown(block, map.blocks[y + 1][x]);
    }
 
    // Handle water going left. If first if is true, then it will automatically go over the second.
-   if (map.is(x - 1, y, Block::torch)) {
+   if (map.is(x - 1, y, BlockType::torch) && block.value2 > minWaterLayers) {
       map.deleteBlock(x - 1, y);
    }
 
-   if (map.is(x - 1, y, Block::air)) {
+   if (map.is(x - 1, y, BlockType::empty)) {
       map.setBlock(x - 1, y, block.id);
-      map[y][x - 1].value2 = 0;
+      map.blocks[y][x - 1].value2 = 0;
    }
 
-   if (map.is(x - 1, y, block.type) && map[y][x - 1].value2 < block.value2 && map[y][x - 1].value2 <= maxWaterLayers) {
-      applyHalfFlowDown(block, map[y][x - 1]);
+   if (map.is(x - 1, y, liquidType) && map.blocks[y][x - 1].value2 < block.value2 && map.blocks[y][x - 1].value2 <= maxWaterLayers) {
+      applyHalfFlowDown(block, map.blocks[y][x - 1]);
    }
 
    // Handle water going right, same as with the left side
-   if (map.is(x + 1, y, Block::torch)) {
+   if (map.is(x + 1, y, BlockType::torch) && block.value2 > minWaterLayers) {
       map.deleteBlock(x + 1, y);
    }
    
-   if (map.is(x + 1, y, Block::air)) {
+   if (map.is(x + 1, y, BlockType::empty)) {
       map.setBlock(x + 1, y, block.id);
-      map[y][x + 1].value2 = 0;
+      map.blocks[y][x + 1].value2 = 0;
    }
 
-   if (map.is(x + 1, y, block.type) && map[y][x + 1].value2 < block.value2 && map[y][x + 1].value2 <= maxWaterLayers) {
-      applyHalfFlowDown(block, map[y][x + 1]);
+   if (map.is(x + 1, y, liquidType) && map.blocks[y][x + 1].value2 < block.value2 && map.blocks[y][x + 1].value2 <= maxWaterLayers) {
+      applyHalfFlowDown(block, map.blocks[y][x + 1]);
    }
 }
 
+// Since lava updates 3x slower and in batch, make water turn
+// nearby tiles into obsidian
 void GameState::updateWaterPhysics(int x, int y) {
-   updateFluid(x, y);
-}
-
-void GameState::updateLavaPhysics(int x, int y) {
-   Block &block = map[y][x];
+   Block &block = map.blocks[y][x];
 
    // What even is C++ syntax?
    for (const Vector2 &offset: {Vector2{1, 0}, Vector2{0, 1}, Vector2{-1, 0}, Vector2{0, -1}}) {
-      if (!map.isu(x + offset.x, y + offset.y, Block::water)) {
+      if (!map.is(x + offset.x, y + offset.y, BlockType::lava)) {
          continue;
       }
 
-      if (map.blocks[y + offset.y][x + offset.x].value2 < lavaLayerThreshold) {
+      if (map.blocks[y + offset.y][x + offset.x].value2 < lavaLayerThreshold || (map.blocks[y + offset.y][x + offset.x].type & BlockType::furniture)) {
          map.deleteBlock(x + offset.x, y + offset.y);
          continue;
       }
 
-      if (block.furniture || block.value2 < lavaLayerThreshold) {
-         map.deleteBlock(x + offset.x, y + offset.y);
-      } else {
+      if (block.value2 >= lavaLayerThreshold) {
          map.setBlock(x + offset.x, y + offset.y, "obsidian");
       }
       map.deleteBlock(x, y);
    }
 
-   if (block.type == Block::lava) {
+   if (block.type & BlockType::liquid) {
       updateFluid(x, y);
    }
 }
 
-void GameState::updateSandPhysics(int x, int y) {
-   constexpr auto isPassable = [](const Map &map, int x, int y) -> bool {
-      return map.empty(x, y) || map.isu(x, y, Block::water);
-   };
+void GameState::updateLavaPhysics(int x, int y) {
+   updateFluid(x, y);
+}
 
-   if (isPassable(map, x, y + 1)) {
+void GameState::updateSandPhysics(int x, int y) {
+   if (map.isNotSolid(x, y + 1)) {
       map.moveBlock(x, y, x, y + 1);
       return;
    }
 
-   bool leftEmpty  = isPassable(map, x - 1, y + 1);
-   bool rightEmpty = isPassable(map, x + 1, y + 1);
+   bool leftEmpty  = map.isNotSolid(x - 1, y + 1);
+   bool rightEmpty = map.isNotSolid(x + 1, y + 1);
+
+   // Hacky solution, but works
    if (rightEmpty && leftEmpty && chance(50)) {
       rightEmpty = false;
    }
@@ -355,16 +355,15 @@ void GameState::updateSandPhysics(int x, int y) {
       map.moveBlock(x, y, x + 1, y + 1);
    } else if (leftEmpty) {
       map.moveBlock(x, y, x - 1, y + 1);
-      x -= 1; // Prevent the same water tile to update twice
    }
 }
 
 void GameState::updateGrassPhysics(int x, int y) {
-   if (map.is(x, y - 1, Block::air) || map.is(x, y - 1, Block::water) || map.is(x, y - 1, Block::platform) || map.is(x, y - 1, Block::torch)) {
+   if (!map.is(x, y - 1, BlockType::solid)) {
       return;
    }
 
-   Block &block = map[y][x];
+   Block &block = map.blocks[y][x];
    if (block.value2 == 0) {
       block.value2 = random(grassGrowSpeedMin, grassGrowSpeedMax);
    }
@@ -373,16 +372,21 @@ void GameState::updateGrassPhysics(int x, int y) {
    if (block.value >= block.value2) {
       block.value = 0;
       block.value2 = 0;
-      map.setBlock(x, y, (block.id == Block::getId("grass") ? "dirt" : "mud"));
+
+      // This might be a tripping point in the future, when more dirt and
+      // grass is added. I don't care though, I don't want to create a map
+      // here, which'll also be a tripping point. Just define grass exactly
+      // before dirt in objs/map.cpp, please.
+      map.setBlock(x, y, block.id + 1);
    }
 }
 
 void GameState::updateDirtPhysics(int x, int y) {
-   if (!map.is(x, y - 1, Block::air) && !map.is(x, y - 1, Block::water) && !map.is(x, y - 1, Block::platform) && !map.is(x, y - 1, Block::torch)) {
+   if (map.is(x, y - 1, BlockType::solid)) {
       return;
    }
 
-   Block &block = map[y][x];
+   Block &block = map.blocks[y][x];
    if (block.value2 == 0) {
       block.value2 = random(grassGrowSpeedMin, grassGrowSpeedMax);
    }
@@ -391,28 +395,26 @@ void GameState::updateDirtPhysics(int x, int y) {
    if (block.value >= block.value2) {
       block.value = 0;
       block.value2 = 0;
-      map.setBlock(x, y, (block.id == Block::getId("dirt") ? "grass" : "jungle_grass"));
+   
+      // Same as before. Just define grass exactly before dirt, so IDs
+      // match right
+      map.setBlock(x, y, block.id - 1);
    }
 }
 
 void GameState::updateTorchPhysics(int x, int y) {
-   Block &block = map[y][x];
+   Block &block = map.blocks[y][x];
    block.value = (block.value + 1) % 5;
 
-   auto isEmpty = [this](int x, int y, bool platform) -> bool {
-      Block::Type type = map.blocks[y][x].type;
-      return !map.blocks[y][x].furniture && (!map.isPositionValid(x, y) || type == Block::air || (!platform && type == Block::platform) || type == Block::water || type == Block::lava || type == Block::torch);
-   };
+   bool downEmpty = !map.is(x, y + 1, BlockType::solid) && !map.is(x, y + 1, BlockType::furniture);
 
-   bool downEmpty = isEmpty(x, y + 1, true);
-
-   if (downEmpty && !isEmpty(x - 1, y, false)) {
+   if (downEmpty && map.isStable(x - 1, y)) {
       block.value2 = 2;
-   } else if (downEmpty && !isEmpty(x + 1, y, false)) {
+   } else if (downEmpty && map.isStable(x + 1, y)) {
       block.value2 = 3;
-   } else if (downEmpty && map.walls[y][x].type != Block::air) {
+   } else if (downEmpty && !(map.walls[y][x].type & BlockType::empty)) {
       block.value2 = 4;
-   } else if (!downEmpty && !isEmpty(x, y - 1, false)) {
+   } else if (!downEmpty && map.isStable(x, y - 1)) {
       block.value2 = 1;
    } else if (!downEmpty) {
       block.value2 = 0;
@@ -444,8 +446,8 @@ void GameState::renderGame() const {
    if (canDraw && map.isPositionValid(mousePos.x, mousePos.y)) {
       Furniture::Type ftype = getFurnitureType();
       if (ftype != Furniture::none) {
-         static Block::Type oldBelow = Block::air;
-         Block::Type below = (map.isPositionValid(mousePos.x, mousePos.y + obj.sizeY) ? map.blocks[mousePos.y + obj.sizeY][mousePos.x].type : Block::air);
+         static BlockType oldBelow = BlockType::empty;
+         BlockType below = (map.isPositionValid(mousePos.x, mousePos.y + obj.sizeY) ? map.blocks[mousePos.y + obj.sizeY][mousePos.x].type : BlockType::empty);
          
          if (ftype != obj.type || oldBelow != below) {
             obj = Furniture::get(mousePos.x, mousePos.y, map, ftype, true);
@@ -455,7 +457,7 @@ void GameState::renderGame() const {
          obj.posY = mousePos.y;
          obj.preview(map);
       } else {
-         DrawTexturePro(getTexture(blockMap[index]), {0, 0, 8, 8}, {(float)(int)mousePos.x, (float)(int)mousePos.y, 1, 1}, {0, 0}, 0, Fade((drawWall ? wallTint : (map.blocks[mousePos.y][mousePos.x].furniture ? RED : WHITE)), previewAlpha));
+         DrawTexturePro(getTexture(blockMap[index]), {0, 0, 8, 8}, {(float)(int)mousePos.x, (float)(int)mousePos.y, 1, 1}, {0, 0}, 0, Fade((drawWall ? wallTint : (map.isu(mousePos.x, mousePos.y, BlockType::furniture) ? RED : WHITE)), previewAlpha));
       }
    }
    /************************************/

@@ -147,7 +147,7 @@ void MapGenerator::generateWater() {
    int seaY = map.sizeY * seaLevel;
 
    for (int x = 0; x < map.sizeX; ++x) {
-      for (int y = seaY; y < map.sizeY && map.isu(x, y, Block::air); ++y) {
+      for (int y = seaY; y < map.sizeY && map.isu(x, y, BlockType::empty); ++y) {
          map.setBlock(x, y, (y == seaY && biomeData[(int)getBiome(x)].wamth == BiomeWarmth::cold ? "ice" : "water"));
       }
    }
@@ -158,7 +158,7 @@ void MapGenerator::generateDebri() {
 
    for (int x = 0; x < map.sizeX; ++x) {
       for (int y = 0; y < map.sizeY; ++y) {
-         if (map.isu(x, y, Block::air) || map.isu(x, y, Block::grass) || map.isu(x, y, Block::sand) || map.isu(x, y, Block::snow)) {
+         if (map.isu(x, y, BlockType::empty) || map.isu(x, y, BlockType::grass) || map.isu(x, y, BlockType::sand)) {
             continue;
          }
 
@@ -167,7 +167,7 @@ void MapGenerator::generateDebri() {
             map.setBlock(x, y, "clay");
          } else if (value <= .2f) {
             map.setBlock(x, y, "dirt");
-         } else if (!map.isu(x, y, Block::dirt) && normalizedNoise2D(sandDebriNoise, x, y, 0.04f) <= .15f) {
+         } else if (!map.isu(x, y, BlockType::dirt) && normalizedNoise2D(sandDebriNoise, x, y, 0.04f) <= .15f) {
             map.setBlock(x, y, "sand");
          }
       }
@@ -181,13 +181,13 @@ void MapGenerator::generateTrees() {
    int counter = 0, counterThreshold = 0;
    
    for (int x = 0; x < map.sizeX; ++x) {
-      while (y < map.sizeY - 1 && map.isu(x, y + 1, Block::air)) { y++; }
-      while (y > 0 && !map.isu(x, y, Block::air)) { y--; }
+      while (y < map.sizeY - 1 && map.isu(x, y + 1, BlockType::empty)) { y++; }
+      while (y > 0 && !map.isu(x, y, BlockType::empty)) { y--; }
 
       if (counter >= counterThreshold && chance(biomeData[(int)getBiome(x)].treeRate)) {
          bool sapling = chance(5);
 
-         if (map.isu(x, y + 1, Block::sand) && chance(60)) {
+         if (map.blocks[y + 1][x].id != getBlockIdFromName("sand") && chance(60)) {
             Furniture::generate(x, y, map, (sapling ? Furniture::cactus_seed : Furniture::cactus));
          } else {
             Furniture::generate(x, (sapling ? y - 1 : y), map, (sapling ? Furniture::sapling : Furniture::tree));
@@ -227,13 +227,13 @@ Vector2 MapGenerator::findPlayerSpawnLocation() {
    int offset = 0;
 
    for (int x = map.sizeX / 2; x < map.sizeX && x >= 0; x = map.sizeX / 2 + offset) {
-      while (y < map.sizeY - 1 && map.isu(x, y + 1, Block::air)) { y++; }
-      while (y > 0 && !map.isu(x, y, Block::air)) { y--; }
+      while (y < map.sizeY - 1 && map.isu(x, y + 1, BlockType::empty)) { y++; }
+      while (y > 0 && !map.isu(x, y, BlockType::empty)) { y--; }
 
       bool valid = true;
       for (int yy = 0; yy < 3; ++yy) {
          for (int xx = 0; xx < 2; ++xx) {
-            if (!map.is(x + xx, y - yy, Block::air)) {
+            if (!map.is(x + xx, y - yy, BlockType::empty)) {
                valid = false;
                goto breakOut;
             }
@@ -241,9 +241,9 @@ Vector2 MapGenerator::findPlayerSpawnLocation() {
       }
    breakOut:
 
-      if (map.is(x, y + 1, Block::water) || map.is(x + 1, y + 1, Block::water)) {
+      if (map.is(x, y + 1, BlockType::liquid) || map.is(x + 1, y + 1, BlockType::liquid)) {
          valid = false;
-      } 
+      }
 
       if (valid) {
          return {(float)x, y - 2}; // To avoid spawning the player in ground
