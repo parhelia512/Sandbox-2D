@@ -109,7 +109,7 @@ void Map::setBlock(int x, int y, const std::string &name, bool isWall) {
    
    block.id = getBlockIdFromName(name);
    block.value = block.value2 = 0;
-   block.type = blockAttributes[block.id];
+   block.type = blockAttributes[block.id] | (block.type % (BlockType::furniture | BlockType::furnitureTop));
 
    if (block.id != 0) {
       block.texture = &getTexture(name);
@@ -124,17 +124,25 @@ void Map::setBlock(int x, int y, unsigned short id, bool isWall) {
    setBlock(x, y, getBlockNameFromId(id), isWall);
 }
 
+// Fuck furniture logic, rewrite it one day
 void Map::deleteBlock(int x, int y, bool wall) {
    Block &block = (wall ? walls : blocks)[y][x];
    block.texture = nullptr;
-   block.type = blockAttributes[0];
+
+   block.type = blockAttributes[0] | (block.type % (BlockType::furniture | BlockType::furnitureTop));
    block.id = block.value = block.value2 = 0;
 }
 
+// Fuck this
 void Map::moveBlock(int oldX, int oldY, int newX, int newY) {
-   Block &oldBlock = blocks[oldY][oldX];
-   Block &newBlock = blocks[newY][newX];
-   std::swap(newBlock, oldBlock);
+   constexpr BlockType furnitureMask = (BlockType::furniture | BlockType::furnitureTop);
+   BlockType oldType = blocks[oldY][oldX].type % furnitureMask;
+   BlockType newType = blocks[newY][newX].type % furnitureMask;
+
+   std::swap(blocks[oldY][oldX], blocks[newY][newX]);
+
+   blocks[newY][newX].type = (blocks[newY][newX].type % ~furnitureMask) | oldType;
+   blocks[oldY][oldX].type = (blocks[oldY][oldX].type % ~furnitureMask) | newType;
 }
 
 // Set furniture functions
@@ -147,7 +155,7 @@ void Map::addFurniture(Furniture &object) {
          }
          blocks[y][x].type = blocks[y][x].type | BlockType::furniture;
          if (object.isWalkable && y == object.posY) {
-            blocks[y][x].type = blocks[y][x].type | BlockType::platform;
+            blocks[y][x].type = blocks[y][x].type | BlockType::furnitureTop;
          }
       }
    }
@@ -159,7 +167,7 @@ void Map::removeFurniture(Furniture &object) {
       for (int x = object.posX; x < object.sizeX + object.posX; ++x) {
          if (!object.pieces[y - object.posY][x - object.posX].nil) {
             // Again, modulus is overloaded as 'bitwise and' here.
-            blocks[y][x].type = blocks[y][x].type % ~(BlockType::furniture | BlockType::platform);
+            blocks[y][x].type = blocks[y][x].type % ~(BlockType::furniture | BlockType::furnitureTop);
          }
       }
    }
@@ -201,7 +209,7 @@ bool Map::isStable(int x, int y) const {
 }
 
 bool Map::isPlatformedFurniture(int x, int y) const {
-   return (blocks[y][x].type & BlockType::furniture) && (blocks[y][x].type & BlockType::platform);
+   return (blocks[y][x].type & BlockType::furniture) && (blocks[y][x].type & BlockType::furnitureTop);
 }
 
 // Render functions
@@ -238,7 +246,7 @@ void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &pla
    for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
       for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
          const Block &block = blocks[y][x];
-         if ((block.type & BlockType::platform) && !(block.type & BlockType::furniture)) {
+         if (block.type & BlockType::platform) {
             DrawTexturePro(*block.texture, {0, 0, (float)block.texture->width, (float)block.texture->height}, {(float)x, (float)y, 1, 1}, {0, 0}, 0, WHITE);
          } else if (block.type & BlockType::torch) {
             constexpr static float torchLightOffsetsY[] = {-1.0f, -1.0f * (5.0f / 8.0f), -0.75f, -0.75f, -1.0f * (5.0f / 8.0f)};
@@ -272,13 +280,15 @@ void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &pla
    for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
       for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
          const Block &block = blocks[y][x];
-         if ((block.type & BlockType::empty) || ((block.type & BlockType::platform) && !(block.type & BlockType::furniture)) || (block.type & BlockType::torch)) {
+         if ((block.type & BlockType::empty) || (block.type & BlockType::torch)) {
             continue;
          }
 
          // Render fluids
-         if (block.type & BlockType::liquid) {
-            liquidTiles.push_back(Liquid{&block, x, y});
+         if ((block.type & BlockType::liquid) || (block.type & BlockType::platform)) {
+            if (block.value2 > minWaterLayers) {
+               liquidTiles.push_back(Liquid{&block, x, y});
+            }
             continue;
          }
 

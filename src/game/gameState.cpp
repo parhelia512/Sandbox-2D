@@ -272,8 +272,12 @@ void GameState::updateFluid(int x, int y) {
    }
 
    if (map.is(x, y + 1, BlockType::empty)) {
-      map.moveBlock(x, y, x, y + 1);
-   } else if (map.is(x, y + 1, liquidType)) {
+      // Why? Because move function fails and I have no fucking idea why
+      map.setBlock(x, y + 1, block.id);
+      map.blocks[y + 1][x].value2 = block.value2;
+      map.deleteBlock(x, y);
+      return;
+   } else if (map.is(x, y + 1, liquidType) && map.blocks[y + 1][x].value2 < maxWaterLayers) {
       applyFlowDown(block, map.blocks[y + 1][x]);
    }
 

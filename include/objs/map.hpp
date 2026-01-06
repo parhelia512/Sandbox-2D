@@ -16,22 +16,23 @@ constexpr inline unsigned char playerThreshold    = maxWaterLayers / 2;
 // Block
 
 // Bad practice to make enums unsigned, but as blocks attributes will grow, it'll be
-// increasingly useful, also makes bitwise operations slightly easier
+// increasingly useful, also makes bitwise operations slightly easier (probably).
 enum class BlockType: unsigned short {
-   empty       = 1,
-   grass       = 2,
-   dirt        = 4,
-   sand        = 8,
-   ice         = 16,
-   solid       = 32,
-   platform    = 64,
-   transparent = 128,
-   water       = 256,
-   lava        = 512,
-   liquid      = 1024,
-   lightsource = 2048,
-   torch       = 4096,
-   furniture   = 8192,
+   empty        = 1,
+   grass        = 2,
+   dirt         = 4,
+   sand         = 8,
+   ice          = 16,
+   solid        = 32,
+   platform     = 64,
+   transparent  = 128,
+   water        = 256,
+   lava         = 512,
+   liquid       = 1024,
+   lightsource  = 2048,
+   torch        = 4096,
+   furniture    = 8192,
+   furnitureTop = 16384,
 };
 
 // Block type operators

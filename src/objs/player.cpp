@@ -117,7 +117,7 @@ void Player::updateCollisions(Map &map) {
 
    for (int y = max(0, (int)position.y); y < maxY; ++y) {
       for (int x = max(0, (int)position.x); x < maxX; ++x) {
-         if ((!map.isu(x, y, BlockType::solid) && !map.isPlatformedFurniture(x, y)) || (map.isu(x, y, BlockType::platform) && IsKeyDown(KEY_S))) {
+         if ((!map.isu(x, y, BlockType::solid) && !map.isPlatformedFurniture(x, y)) || ((map.isu(x, y, BlockType::platform) || map.isu(x, y, BlockType::furnitureTop)) && IsKeyDown(KEY_S))) {
             // Only check water and lava tile count in the first iteration
             waterTileCount += (map.isu(x, y, BlockType::water) && map.blocks[y][x].value2 > playerThreshold);
             lavaTileCount  += (map.isu(x, y, BlockType::lava)  && map.blocks[y][x].value2 > playerThreshold);
@@ -161,7 +161,7 @@ void Player::updateCollisions(Map &map) {
 
    for (int y = max(0, (int)position.y - 1); y < maxY; ++y) {
       for (int x = max(0, (int)position.x); x < maxX; ++x) {
-         if ((!map.isu(x, y, BlockType::solid) && !map.isPlatformedFurniture(x, y)) || (map.isu(x, y, BlockType::platform) && !IsKeyDown(KEY_W))) {
+         if ((!map.isu(x, y, BlockType::solid) && !map.isPlatformedFurniture(x, y)) || ((map.isu(x, y, BlockType::platform) || map.isu(x, y, BlockType::furnitureTop)) && !IsKeyDown(KEY_W))) {
             continue;
          }
 
@@ -170,7 +170,7 @@ void Player::updateCollisions(Map &map) {
             feetCollisionY = y;
          }
 
-         if (map.isu(x, y, BlockType::platform)) {
+         if (map.isu(x, y, BlockType::platform) || map.isu(x, y, BlockType::furnitureTop)) {
             continue;
          }
 
