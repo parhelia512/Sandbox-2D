@@ -1,6 +1,7 @@
-#include "objs/furniture.hpp"
 #include "mngr/resource.hpp"
+#include "objs/furniture.hpp"
 #include "objs/map.hpp"
+#include "objs/player.hpp"
 #include "util/random.hpp"
 #include <array>
 #include <unordered_map>
@@ -28,18 +29,18 @@ constexpr int textureSize    = 8;
 
 // Furniture ID constants
 
-constexpr int furnitureCount = 11;
+constexpr int furnitureCount = 12;
 
 static inline const std::unordered_map<std::string, int> furnitureTextureIds {
    {"tree", 0}, {"sapling", 1}, {"palm", 2}, {"palm_sapling", 3}, {"pine", 4},
    {"pine_sapling", 5}, {"jungle_tree", 6}, {"jungle_sapling", 7}, {"cactus", 8}, {"cactus_seed", 9},
-   {"table", 10}
+   {"table", 10}, {"chair", 11}
 };
 
 static inline const std::array<const char*, furnitureCount> furnitureTextureNames {
    "tree", "sapling", "palm", "palm_sapling", "pine",
    "pine_sapling", "jungle_tree", "jungle_sapling", "cactus", "cactus_seed",
-   "table"
+   "table", "chair"
 };
 
 // Helper functions
@@ -64,7 +65,7 @@ Furniture::Furniture(const std::string &texture, int posX, int posY, short sizeX
 
 // Update furniture
 
-void Furniture::update(Map &map) {
+void Furniture::update(Map &map, Player &player, const Vector2 &mousePos) {
    // If the furniture isn't valid, just destroy it immediately
    if (!isValid(map)) {
       map.removeFurniture(*this);
@@ -81,7 +82,7 @@ void Furniture::update(Map &map) {
       value += 1;
       if (value >= value2) {
          map.removeFurniture(*this);
-         generateFurniture(posX, posY + 1, map, FurnitureType::tree);
+         generateFurniture(posX, posY + 1, map, FurnitureType::tree, false); // Not important for trees
       }
    } break;
 
@@ -93,9 +94,19 @@ void Furniture::update(Map &map) {
       value += 1;
       if (value >= value2) {
          map.removeFurniture(*this);
-         generateFurniture(posX, posY, map, FurnitureType::cactus);
+         generateFurniture(posX, posY, map, FurnitureType::cactus, false); // Same with cacti
       }
    } break;
+
+   case FurnitureType::chair: {
+      if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && CheckCollisionPointRec(mousePos, {(float)posX, (float)posY, (float)sizeX, (float)sizeY})) {
+         player.sitting = true;
+         player.flipX = (pieces[0][0].tx == 0); // Flip player if chair is flipped
+         player.position.x = posX - (player.flipX ? 0 : 1); // Adjust flipped player's position
+         player.position.y = posY - 1;
+      }
+   } break;
+
    default: break;
    }
 }
@@ -116,7 +127,10 @@ bool Furniture::isValid(const Map &map) const {
    
    case FurnitureType::table:
       return map.is(posX, posY + sizeY, BlockType::solid) && map.is(posX + 2, posY + sizeY, BlockType::solid);
-   
+
+   case FurnitureType::chair:
+      return map.is(posX, posY + sizeY, BlockType::solid);
+
    default:
       return false;
    }
@@ -124,7 +138,7 @@ bool Furniture::isValid(const Map &map) const {
 
 // Get functions
 
-Furniture getFurniture(int x, int y, const Map &map, FurnitureType type, bool debug) {
+Furniture getFurniture(int x, int y, const Map &map, FurnitureType type, bool playerFacingLeft, bool debug) {
    switch (type) {
    case FurnitureType::tree: {
       if (!debug && (x < 1 || x >= map.sizeX - 1 || y < 0 || !map.isSoil(x , y + 1))) {
@@ -343,12 +357,26 @@ Furniture getFurniture(int x, int y, const Map &map, FurnitureType type, bool de
       return table;
    } break;
 
+   case FurnitureType::chair: {
+      if (!debug && !map.is(x, y + 2, BlockType::solid)) {
+         return {};
+      }
+      Furniture chair ("chair", x, y, 1, 2, FurnitureType::chair);
+      for (int yy = 0; yy < 2; ++yy) {
+         if (!debug && !map.isNotSolid(x, yy + y)) {
+            return {};
+         }
+         setBlock(chair.pieces[yy][0], (playerFacingLeft ? 0 : textureSize), yy * textureSize);
+      }
+      return chair;
+   } break;
+
    default: return {};
    };
 }
 
-void generateFurniture(int x, int y, Map &map, FurnitureType type) {
-   Furniture furniture = getFurniture(x, y, map, type);
+void generateFurniture(int x, int y, Map &map, FurnitureType type, bool playerFacingleft) {
+   Furniture furniture = getFurniture(x, y, map, type, playerFacingleft);
    if (furniture.type != FurnitureType::none) {
       map.addFurniture(furniture);
    }
@@ -395,7 +423,7 @@ FurnitureTexture getFurnitureIcon(unsigned char id) {
    constexpr std::array<Vector2, furnitureCount> textureSizes {{
       {}, {textureSize, textureSize * 2}, {}, {}, {},
       {}, {}, {}, {}, {textureSize, textureSize},
-      {textureSize * 3, textureSize * 2},
+      {textureSize * 3, textureSize * 2}, {textureSize, textureSize * 2},
    }};
    return {getTexture(getFurnitureNameFromId(id)), textureSizes[id].x, textureSizes[id].y};
 }

@@ -11,6 +11,7 @@
 #include <raymath.h>
 #include <algorithm>
 #include <cmath>
+#include <unordered_map>
 
 // Constants
 
@@ -69,6 +70,16 @@ void GameState::fixedUpdate() {
       return;
    }
    player.updatePlayer(map);
+   
+   // Update furniture
+   const Vector2 translatedMousePos = GetScreenToWorld2D(GetMousePosition(), camera);
+   for (Furniture &obj: map.furniture) {
+      obj.update(map, player, translatedMousePos);
+   }
+
+   map.furniture.erase(std::remove_if(map.furniture.begin(), map.furniture.end(), [](Furniture &f) -> bool {
+      return f.deleted;
+   }), map.furniture.end());
 
    // Update physics
    physicsCounter = (physicsCounter + 1) % physicsTicks;
@@ -106,15 +117,6 @@ void GameState::fixedUpdate() {
          }
       }
    }
-   
-   for (Furniture &obj: map.furniture) {
-      obj.update(map);
-   }
-
-   // Remove deleted furniture
-   map.furniture.erase(std::remove_if(map.furniture.begin(), map.furniture.end(), [](Furniture &f) -> bool {
-      return f.deleted;
-   }), map.furniture.end());
 }
 
 // Update pause screen
@@ -160,16 +162,21 @@ void GameState::updateControls() {
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp. Everything between these multi-comments is temporary.
 static int index = 0;
-static int size = 24;
+static int size = 25;
 static const char *blockMap[] {
    "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian",
    "lava", "platform", "snow", "ice", "mud", "jungle_grass", "lamp", "torch",
-   "sapling", "cactus_seed", "table"
+   "sapling", "cactus_seed", "table", "chair"
 };
 static bool drawWall = false;
 static bool canDraw = false;
 static Furniture obj;
-inline FurnitureType getFurnitureType() { return (index == 21 ? FurnitureType::sapling : (index == 22 ? FurnitureType::cactusSeed : (index == 23 ? FurnitureType::table : FurnitureType::none))); }
+inline FurnitureType getFurnitureType() {
+   static std::unordered_map<int, FurnitureType> ftypes = {{
+      {21, FurnitureType::sapling}, {22, FurnitureType::cactusSeed}, {23, FurnitureType::table}, {24, FurnitureType::chair}
+   }};
+   return ftypes.count(index) ? ftypes[index] : FurnitureType::none;
+}
 /************************************/
 
 void GameState::updatePhysics() {
@@ -201,7 +208,7 @@ void GameState::updatePhysics() {
          map.deleteBlock(mousePos.x, mousePos.y, drawWall);
       } else if (isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT) && canDraw && !map.isu(mousePos.x, mousePos.y, BlockType::furniture)) {
          if (ftype != FurnitureType::none) {
-            generateFurniture(mousePos.x, mousePos.y, map, ftype);
+            generateFurniture(mousePos.x, mousePos.y, map, ftype, player.flipX);
          } else {
             map.setBlock(mousePos.x, mousePos.y, blockMap[index], drawWall);
          }
@@ -451,11 +458,14 @@ void GameState::renderGame() const {
       FurnitureType ftype = getFurnitureType();
       if (ftype != FurnitureType::none) {
          static BlockType oldBelow = BlockType::empty;
+         static bool flippedX = false;
+         
          BlockType below = (map.isPositionValid(mousePos.x, mousePos.y + obj.sizeY) ? map.blocks[mousePos.y + obj.sizeY][mousePos.x].type : BlockType::empty);
          
-         if (ftype != obj.type || oldBelow != below) {
-            obj = getFurniture(mousePos.x, mousePos.y, map, ftype, true);
+         if (ftype != obj.type || oldBelow != below || flippedX != player.flipX) {
+            obj = getFurniture(mousePos.x, mousePos.y, map, ftype, player.flipX, true);
          }
+         flippedX = player.flipX;
          oldBelow = below;
          obj.posX = mousePos.x;
          obj.posY = mousePos.y;

@@ -188,9 +188,9 @@ void MapGenerator::generateTrees() {
          bool sapling = chance(5);
 
          if (map.blocks[y + 1][x].id != getBlockIdFromName("sand") && chance(60)) {
-            generateFurniture(x, y, map, (sapling ? FurnitureType::cactusSeed : FurnitureType::cactus));
+            generateFurniture(x, y, map, (sapling ? FurnitureType::cactusSeed : FurnitureType::cactus), false);
          } else {
-            generateFurniture(x, (sapling ? y - 1 : y), map, (sapling ? FurnitureType::sapling : FurnitureType::tree));
+            generateFurniture(x, (sapling ? y - 1 : y), map, (sapling ? FurnitureType::sapling : FurnitureType::tree), false);
          }
          counter = 0;
          counterThreshold = random(1, 4);

@@ -11,13 +11,18 @@ constexpr inline float previewAlpha = 0.75f;
 
 // Furniture
 
+// Polymorphism could never, too much abstraction + everything works
+// fine just as it is. Also when adding new furniture, you have to
+// change the following: getFurnitureIcon, getFurniture, Furniture::
+// isValid, Furniture::update and furniture ID constants
 enum class FurnitureType: unsigned char {
    none,
    tree,
    sapling,
    cactus,
    cactusSeed,
-   table
+   table,
+   chair
 };
 
 struct FurnitureTexture {
@@ -43,7 +48,7 @@ struct Furniture {
 
    // Update functions
 
-   void update(struct Map &map);
+   void update(struct Map &map, struct Player &player, const Vector2 &mousePos);
    bool isValid(const struct Map &map) const;
 
    // Render functions
@@ -76,7 +81,7 @@ FurnitureTexture getFurnitureIcon(unsigned char id);
 
 // Furniture generation functions
 
-Furniture getFurniture(int x, int y, const struct Map &map, FurnitureType type, bool debug = false);
-void generateFurniture(int x, int y, struct Map &map, FurnitureType type);
+Furniture getFurniture(int x, int y, const struct Map &map, FurnitureType type, bool playerFacingLeft, bool debug = false);
+void generateFurniture(int x, int y, struct Map &map, FurnitureType type, bool playerFacingLeft);
 
 #endif

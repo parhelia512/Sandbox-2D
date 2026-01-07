@@ -45,5 +45,13 @@
 ### Other
 - World generation.
 - Make water flow through platforms
-- Improve structure, block and furniture logic seems to not work together well. feels too bloated to add.
 - Instead of placing blocks one by one, generate an array of block ids and batch them in world generation.
+
+# Bugs
+
+### Actual Bugs
+
+### "Features"
+Bugs that may or may not be features. Might fix in the future, might not.
+- Chairs teleport you.
+- Platforms while holding W make you go up really quickly.

@@ -45,6 +45,17 @@ void Player::updatePlayer(Map &map) {
 }
 
 void Player::updateMovement() {
+   int directionX = IsKeyDown(KEY_D) - IsKeyDown(KEY_A);
+
+   if (sitting) {
+      if (directionX != 0 || IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_S) || IsKeyDown(KEY_W)) {
+         sitting = false;
+         goto notSittingAnymore;
+      }
+      return;
+   }
+notSittingAnymore:
+
    // Handle gravity
    if (!onGround) {
       velocity.y += gravity * waterMultiplier;
@@ -56,8 +67,6 @@ void Player::updateMovement() {
    }
 
    // Handle movement
-   int directionX = IsKeyDown(KEY_D) - IsKeyDown(KEY_A);
-
    if (directionX != 0) {
       float speedX = (onGround ? playerSpeed : playerSpeed * airMultiplier);
       velocity.x = lerp(velocity.x, directionX * speedX, acceleration * iceMultiplier);
@@ -97,6 +106,7 @@ void Player::updateMovement() {
 // Update collisions
 
 void Player::updateCollisions(Map &map) {
+   if (sitting) return;
    position.y += velocity.y;
 
    bool collisionY = false, canGoUpSlopes = true;
@@ -212,6 +222,11 @@ void Player::updateCollisions(Map &map) {
 }
 
 void Player::updateAnimation() {
+   if (sitting) {
+      frameX = 15;
+      return;
+   }
+
    if (!onGround) {
       fallTimer += fixedUpdateDT;
       if (fallTimer >= .05f) {
