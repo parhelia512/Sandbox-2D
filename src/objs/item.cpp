@@ -52,7 +52,7 @@ void DroppedItem::render() const {
    if (!isFurniture) {
       drawTexture(getTexture(getBlockNameFromId(id)), position, size, 0.0f, WHITE);
    } else {
-      FurnitureTexture texture = Furniture::getFurnitureIcon(id);
+      FurnitureTexture texture = getFurnitureIcon(id);
 
       if (texture.sizeX < texture.sizeY) {
          size.x *= texture.sizeX / texture.sizeY;

@@ -169,7 +169,7 @@ static const char *blockMap[] {
 static bool drawWall = false;
 static bool canDraw = false;
 static Furniture obj;
-inline Furniture::Type getFurnitureType() { return (index == 21 ? Furniture::sapling : (index == 22 ? Furniture::cactus_seed : (index == 23 ? Furniture::table : Furniture::none))); }
+inline FurnitureType getFurnitureType() { return (index == 21 ? FurnitureType::sapling : (index == 22 ? FurnitureType::cactusSeed : (index == 23 ? FurnitureType::table : FurnitureType::none))); }
 /************************************/
 
 void GameState::updatePhysics() {
@@ -194,14 +194,14 @@ void GameState::updatePhysics() {
    }
 
    if (map.isPositionValid(mousePos.x, mousePos.y)) {
-      Furniture::Type ftype = getFurnitureType();
-      canDraw = (drawWall || ftype != Furniture::none || !CheckCollisionRecs(player.getBounds(), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}));
+      FurnitureType ftype = getFurnitureType();
+      canDraw = (drawWall || ftype != FurnitureType::none || !CheckCollisionRecs(player.getBounds(), {(float)(int)mousePos.x, (float)(int)mousePos.y, 1.f, 1.f}));
 
       if (isMouseDownOutsideUI(MOUSE_BUTTON_LEFT)) {
          map.deleteBlock(mousePos.x, mousePos.y, drawWall);
       } else if (isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT) && canDraw && !map.isu(mousePos.x, mousePos.y, BlockType::furniture)) {
-         if (ftype != Furniture::none) {
-            Furniture::generate(mousePos.x, mousePos.y, map, ftype);
+         if (ftype != FurnitureType::none) {
+            generateFurniture(mousePos.x, mousePos.y, map, ftype);
          } else {
             map.setBlock(mousePos.x, mousePos.y, blockMap[index], drawWall);
          }
@@ -448,13 +448,13 @@ void GameState::renderGame() const {
    // Scary method of rendering furniture and block preview correctly
    Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
    if (canDraw && map.isPositionValid(mousePos.x, mousePos.y)) {
-      Furniture::Type ftype = getFurnitureType();
-      if (ftype != Furniture::none) {
+      FurnitureType ftype = getFurnitureType();
+      if (ftype != FurnitureType::none) {
          static BlockType oldBelow = BlockType::empty;
          BlockType below = (map.isPositionValid(mousePos.x, mousePos.y + obj.sizeY) ? map.blocks[mousePos.y + obj.sizeY][mousePos.x].type : BlockType::empty);
          
          if (ftype != obj.type || oldBelow != below) {
-            obj = Furniture::get(mousePos.x, mousePos.y, map, ftype, true);
+            obj = getFurniture(mousePos.x, mousePos.y, map, ftype, true);
          }
          oldBelow = below;
          obj.posX = mousePos.x;

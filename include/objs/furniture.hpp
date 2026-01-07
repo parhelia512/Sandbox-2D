@@ -4,7 +4,6 @@
 #include <raylib.h>
 #include <string>
 #include <vector>
-struct Map;
 
 // Constants
 
@@ -12,53 +11,72 @@ constexpr inline float previewAlpha = 0.75f;
 
 // Furniture
 
+enum class FurnitureType: unsigned char {
+   none,
+   tree,
+   sapling,
+   cactus,
+   cactusSeed,
+   table
+};
+
 struct FurnitureTexture {
    Texture &texture;
-   float sizeX = 0, sizeY = 0;
+
+   // Floats just to avoid redundant casting
+   float sizeX = 0;
+   float sizeY = 0;
 };
 
 struct FurniturePiece {
-   unsigned char tx = 0, ty = 0;
+   unsigned char tx = 0;
+   unsigned char ty = 0;
    bool nil = true;
 };
 
 struct Furniture {
-   enum Type { none, tree, sapling, cactus, cactus_seed, table };
-
-   std::vector<std::vector<FurniturePiece>> pieces;
-   Type type = Type::none;
-   unsigned char texId = 0;
-
-   int value = 0, value2 = 0;
-   int posX = 0, posY = 0, sizeX = 0, sizeY = 0;
-   bool deleted = false;
-   bool isWalkable = false;
-
    // Constructors
 
    Furniture() = default;
-   Furniture(Type type, unsigned char texId, int value, int value2, int posX, int posY, int sizeX, int sizeY);
-   Furniture(const std::string &texture, int posX, int posY, int sizeX, int sizeY, Type type);
+   Furniture(FurnitureType type, unsigned char id, short value, short value2, int posX, int posY, short sizeX, short sizeY);
+   Furniture(const std::string &texture, int posX, int posY, short sizeX, short sizeY, FurnitureType type);
 
    // Update functions
 
-   void update(Map &map);
-
-   // Getter functions
-
-   static Furniture get(int x, int y, const Map &map, Type type, bool debug = false);
-   static void generate(int x, int y, Map &map, Type type);
+   void update(struct Map &map);
+   bool isValid(const struct Map &map) const;
 
    // Render functions
 
-   void preview(const Map &map) const;
+   void preview(const struct Map &map) const;
    void render(const Rectangle &cameraBounds) const;
 
-   // Id functions
+   // Members
 
-   static unsigned char getId(const std::string &name);
-   static std::string getName(unsigned char id);
-   static FurnitureTexture getFurnitureIcon(unsigned char id);
+   std::vector<std::vector<FurniturePiece>> pieces;
+   FurnitureType type = FurnitureType::none;
+   unsigned char id = 0;
+
+   short value = 0;
+   short value2 = 0;
+   int posX = 0;
+   int posY = 0;
+   short sizeX = 0;
+   short sizeY = 0;
+
+   bool deleted = false;
+   bool isWalkable = false;
 };
+
+// Furniture getter functions
+
+unsigned char getFurnitureIdFromName(const std::string &name);
+std::string getFurnitureNameFromId(unsigned char id);
+FurnitureTexture getFurnitureIcon(unsigned char id);
+
+// Furniture generation functions
+
+Furniture getFurniture(int x, int y, const struct Map &map, FurnitureType type, bool debug = false);
+void generateFurniture(int x, int y, struct Map &map, FurnitureType type);
 
 #endif

@@ -25,6 +25,9 @@ constexpr int cactusBranchChance = 50;
 constexpr int cactusFlowerChance = 10;
 
 constexpr int textureSize    = 8;
+
+// Furniture ID constants
+
 constexpr int furnitureCount = 11;
 
 static inline const std::unordered_map<std::string, int> furnitureTextureIds {
@@ -47,118 +50,90 @@ inline void setBlock(FurniturePiece &piece, int tx, int ty) {
    piece.ty = ty;
 }
 
-// Furniture functions
+// Furniture constructors
 
-Furniture::Furniture(Type type, unsigned char texId, int value, int value2, int posX, int posY, int sizeX, int sizeY)
-   : type(type), texId(texId), value(value), value2(value2), posX(posX), posY(posY), sizeX(sizeX), sizeY(sizeY) {
+Furniture::Furniture(FurnitureType type, unsigned char id, short value, short value2, int posX, int posY, short sizeX, short sizeY)
+   : type(type), id(id), value(value), value2(value2), posX(posX), posY(posY), sizeX(sizeX), sizeY(sizeY) {
    pieces = std::vector<std::vector<FurniturePiece>>(sizeY, std::vector<FurniturePiece>(sizeX, FurniturePiece{}));   
 }
 
-Furniture::Furniture(const std::string &texture, int posX, int posY, int sizeX, int sizeY, Type type)
-   : type(type), texId(furnitureTextureIds.at(texture)), posX(posX), posY(posY), sizeX(sizeX), sizeY(sizeY) {
+Furniture::Furniture(const std::string &texture, int posX, int posY, short sizeX, short sizeY, FurnitureType type)
+   : type(type), id(furnitureTextureIds.at(texture)), posX(posX), posY(posY), sizeX(sizeX), sizeY(sizeY) {
    pieces = std::vector<std::vector<FurniturePiece>>(sizeY, std::vector<FurniturePiece>(sizeX, FurniturePiece{}));
 }
 
 // Update furniture
 
 void Furniture::update(Map &map) {
+   // If the furniture isn't valid, just destroy it immediately
+   if (!isValid(map)) {
+      map.removeFurniture(*this);
+      return;
+   }
+   
+   // Update specific furniture
    switch (type) {
-
-   // Update trees
-
-   case Type::tree: {
-      if (!map.isSoil(posX + 1, posY + sizeY)) {
-         map.removeFurniture(*this);
-         return;
-      }
-   } break;
-
-   // Update saplings
-
-   case Type::sapling: {
-      // Either there's no soil below the sapling or there's sand on top of it
-      if (!map.isSoil(posX, posY + sizeY) || map.is(posX, posY - 1, BlockType::sand)) {
-         map.removeFurniture(*this);
-         return;
-      }
-
-      // The sapling is covered in liquid
-      if (map.isLiquid(posX, posY) && map.isLiquid(posX, posY + 1)) {
-         map.removeFurniture(*this);
-         return;
-      }
-
+   case FurnitureType::sapling: {
       if (value == 0) {
          value2 = random(saplingGrowSpeedMin, saplingGrowSpeedMax);
       }
 
       value += 1;
       if (value >= value2) {
-         // Our beautiful tree has grown
          map.removeFurniture(*this);
-         Furniture::generate(posX, posY + 1, map, Type::tree);
+         generateFurniture(posX, posY + 1, map, FurnitureType::tree);
       }
    } break;
 
-   // Update cacti
-
-   case Type::cactus: {
-      // Tile below it is not sand
-      if (map.blocks[posY + sizeY][posX + 1].id != getBlockIdFromName("sand")) {
-         map.removeFurniture(*this);
-         return;
-      }
-   } break;
-
-   // Update cacti seeds
-
-   case Type::cactus_seed: {
-      // Tile below it is not sand or tile above it is sand (crushed) or it is covered in liquid
-      if (map.blocks[posY + 1][posX].id != getBlockIdFromName("sand") || map.is(posX, posY - 1, BlockType::sand) || map.isLiquid(posX, posY)) {
-         map.removeFurniture(*this);
-         return;
-      }
-
+   case FurnitureType::cactusSeed: {
       if (value == 0) {
          value2 = random(cactusGrowSpeedMin, cactusGrowSpeedMax);
       }
 
       value += 1;
       if (value >= value2) {
-         // Our beautiful cactus has grown
          map.removeFurniture(*this);
-         Furniture::generate(posX, posY, map, Type::cactus);
+         generateFurniture(posX, posY, map, FurnitureType::cactus);
       }
    } break;
-
-   // Update tables (yes, they also need this)
-
-   case Type::table: {
-      // Any of the tiles below it isn't solid
-      if (!map.is(posX, posY + sizeY, BlockType::solid) || !map.is(posX + 1, posY + sizeY, BlockType::solid) || !map.is(posX + 2, posY + sizeY, BlockType::solid)) {
-         map.removeFurniture(*this);
-         return;
-      }
-   } break;
-
    default: break;
+   }
+}
+
+bool Furniture::isValid(const Map &map) const {
+   switch (type) {
+   case FurnitureType::tree:
+      return map.isSoil(posX + 1, posY + sizeY);
+   
+   case FurnitureType::sapling:
+      return map.isSoil(posX, posY + sizeY) && !map.is(posX, posY - 1, BlockType::sand) && !(map.isLiquid(posX, posY) && map.isLiquid(posX, posY + 1));
+   
+   case FurnitureType::cactus:
+      return map.blocks[posY + sizeY][posX + 1].id == getBlockIdFromName("sand");
+
+   case FurnitureType::cactusSeed:
+      return map.blocks[posY + 1][posX].id == getBlockIdFromName("sand") && !map.is(posX, posY - 1, BlockType::sand) && !map.isLiquid(posX, posY);
+   
+   case FurnitureType::table:
+      return map.is(posX, posY + sizeY, BlockType::solid) && map.is(posX + 2, posY + sizeY, BlockType::solid);
+   
+   default:
+      return false;
    }
 }
 
 // Get functions
 
-Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
+Furniture getFurniture(int x, int y, const Map &map, FurnitureType type, bool debug) {
    switch (type) {
-
-   // Make a tree
-
-   case Type::tree: {
+   case FurnitureType::tree: {
       if (!debug && (x < 1 || x >= map.sizeX - 1 || y < 0 || !map.isSoil(x , y + 1))) {
          return {};
       }
-      
-      bool palm = (map.isu(x, y + 1, BlockType::sand) && map.blocks[y + 1][x].id == getBlockIdFromName("sand"));
+
+      bool palm = map.blocks[y + 1][x].id == getBlockIdFromName("sand");
       int height = (palm ? random(palmSizeMin, palmSizeMax) : random(treeSizeMin, treeSizeMax));
+
       for (int i = 0; i < height && i < map.sizeY; ++i) {
          if (!map.isNotSolid(x, y - i)) {
             height = i;
@@ -174,15 +149,17 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
          {getBlockIdFromName("snow"),  "pine"}, {getBlockIdFromName("mud"),  "jungle_tree"}, {getBlockIdFromName("jungle_grass"), "jungle_tree"}
       };
 
-      Furniture tree (textureMap[map.blocks[y + 1][x].id], x - 1, y - height + 1, 3, height, Furniture::tree);
+      Furniture tree (textureMap[map.blocks[y + 1][x].id], x - 1, y - height + 1, 3, height, FurnitureType::tree);
       int offsetTx = (chance(50) ? 0 : 3 * textureSize);
 
+      // Generate the tree top
       for (int i = 0; i < (palm ? 3 : 2); ++i) {
          for (int j = 0; j < 3; ++j) {
             setBlock(tree.pieces[i][j], offsetTx + j * textureSize, i * textureSize);
          }
       }
 
+      // Generate everything from the trunk to the sticks and roots
       for (int i = (palm ? 3 : 2); i < height; ++i) {
          FurniturePiece &piece = tree.pieces[i][1];
          if (palm) {
@@ -192,6 +169,7 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
 
          setBlock(piece, 2 * textureSize, 3 * textureSize);
 
+         // Trunk logic
          if (i + 1 == height) {
             bool rightFree = (map.isNotSolid(tree.posX + 2, tree.posY + i) && map.isSoil(tree.posX + 2, tree.posY + i + 1) && chance(treeRootChance));
             bool leftFree = (map.isNotSolid(tree.posX, tree.posY + i) && map.isSoil(tree.posX, tree.posY + i + 1) && chance(treeRootChance));
@@ -212,6 +190,8 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
             } else if (!rightFree && !leftFree) {
                piece.ty = 4 * textureSize;
             }
+
+         // Branch logic
          } else {
             bool rightFree = (map.isNotSolid(tree.posX + 2, tree.posY + i) && chance(treeBranchChance));
             bool leftFree = (map.isNotSolid(tree.posX, tree.posY + i) && chance(treeBranchChance));
@@ -235,9 +215,7 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
       return tree;
    } break;
 
-   // Make a sapling
-
-   case Type::sapling: {
+   case FurnitureType::sapling: {
       if (!debug && (x < 0 || x >= map.sizeX || y < 0 || !map.isSoil(x , y + 2) || !map.isEmpty(x, y) || !map.isEmpty(x, y + 1))) {
          return {};
       }
@@ -246,21 +224,18 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
          {getBlockIdFromName("grass"), "sapling"},      {getBlockIdFromName("dirt"), "sapling"},        {getBlockIdFromName("sand"),         "palm_sapling"},
          {getBlockIdFromName("snow"),  "pine_sapling"}, {getBlockIdFromName("mud"),  "jungle_sapling"}, {getBlockIdFromName("jungle_grass"), "jungle_sapling"}
       };
-      unsigned char btype = map.blocks[y + 2][x].id;
-      Furniture sapling ((!textureMap.count(btype) ? "sapling" : textureMap[btype]), x, y, 1, 2, Furniture::sapling);
 
-      int value = random(0, 100);
-      int offsetTx = (value < 33 ? 0 : (value < 66 ? textureSize : 2 * textureSize));
+      int offsetTx = (random(0, 100) / 33) * textureSize;
+      unsigned char btype = map.blocks[y + 2][x].id;
+      Furniture sapling ((!textureMap.count(btype) ? "sapling" : textureMap[btype]), x, y, 1, 2, FurnitureType::sapling);
 
       setBlock(sapling.pieces[0][0], offsetTx, 0 * textureSize);
       setBlock(sapling.pieces[1][0], offsetTx, 1 * textureSize);
       return sapling;
    } break;
 
-   // Make a cactus
-
-   case Type::cactus: {
-      if (!debug && (x < 1 || x >= map.sizeX - 1 || y < 0 || y + 1 >= map.sizeY || map.blocks[y + 1][x].id != getBlockIdFromName("sand"))) {
+   case FurnitureType::cactus: {
+      if (!debug && (x < 1 || x >= map.sizeX - 1 || y < 0 || y >= map.sizeY || map.blocks[y + 1][x].id != getBlockIdFromName("sand"))) {
          return {};
       }
 
@@ -276,9 +251,8 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
          return {};
       }
 
-      Furniture cactus ("cactus", x - 1, y - height + 1, 3, height, Furniture::cactus);
-      cactus.value = height;
-      
+      Furniture cactus ("cactus", x - 1, y - height + 1, 3, height, FurnitureType::cactus);
+
       for (int i = 0; i < cactus.sizeY; ++i) {
          for (int j = 0; j < cactus.sizeX; ++j) {
             if (!map.isNotSolid(cactus.posX + j, cactus.posY + i)) {
@@ -335,33 +309,31 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
       return cactus;
    } break;
 
-   // Make a cactus seed
-
-   case Type::cactus_seed: {
-      if (!debug && (y + 1 >= map.sizeY || map.blocks[y + 1][x].id != getBlockIdFromName("sand") || !map.isEmpty(x, y))) {
+   case FurnitureType::cactusSeed: {
+      if (!debug && (y < 0 || x < 0 || x >= map.sizeX || y + 1 >= map.sizeY || map.blocks[y + 1][x].id != getBlockIdFromName("sand") || !map.isEmpty(x, y))) {
          return {};
       }
 
-      Furniture cactus_seed ("cactus_seed", x, y, 1, 1, Furniture::cactus_seed);
-      int value = random(0, 100);
-      int offsetTx = (value < 33 ? 0 : (value < 66 ? textureSize : 2 * textureSize));
-
-      setBlock(cactus_seed.pieces[0][0], offsetTx * textureSize, 0 * textureSize);
-      return cactus_seed;
+      Furniture cactusSeed ("cactus_seed", x, y, 1, 1, FurnitureType::cactusSeed);
+      setBlock(cactusSeed.pieces[0][0], (random(0, 100) / 33) * textureSize, 0);
+      return cactusSeed;
    } break;
 
-   // Make a table
-
-   case Type::table: {
-      if (!debug && (!map.is(x, y + 2, BlockType::solid) || !map.is(x + 1, y + 2, BlockType::solid) || !map.is(x + 2, y + 2, BlockType::solid))) {
+   case FurnitureType::table: {
+      if (!debug && (!map.is(x, y + 2, BlockType::solid) || !map.is(x + 2, y + 2, BlockType::solid))) {
          return {};
       }
 
-      Furniture table ("table", x, y, 3, 2, Furniture::table);
+      Furniture table ("table", x, y, 3, 2, FurnitureType::table);
       table.isWalkable = true;
-      
+
       for (int yy = 0; yy < 2; ++yy) {
          for (int xx = 0; xx < 3; ++xx) {
+            // Skip the block inbetween the tables legs
+            if (yy == 1 && xx == 1) {
+               continue;
+            }
+
             if (!debug && !map.isNotSolid(xx + x, yy + y)) {
                return {};
             }
@@ -375,9 +347,9 @@ Furniture Furniture::get(int x, int y, const Map &map, Type type, bool debug) {
    };
 }
 
-void Furniture::generate(int x, int y, Map &map, Type type) {
-   Furniture furniture = Furniture::get(x, y, map, type);
-   if (furniture.type != Furniture::none) {
+void generateFurniture(int x, int y, Map &map, FurnitureType type) {
+   Furniture furniture = getFurniture(x, y, map, type);
+   if (furniture.type != FurnitureType::none) {
       map.addFurniture(furniture);
    }
 }
@@ -392,7 +364,7 @@ void Furniture::preview(const Map &map) const {
             continue;
          }
          Color color = Fade((map.isNotSolid(x, y) ? WHITE : RED), previewAlpha);
-         DrawTexturePro(getTexture(furnitureTextureNames[texId]), {(float)piece.tx, (float)piece.ty, textureSize, textureSize}, {(float)x, (float)y, 1.f, 1.f}, {0, 0}, 0, color);
+         DrawTexturePro(getTexture(furnitureTextureNames[id]), {(float)piece.tx, (float)piece.ty, textureSize, textureSize}, {(float)x, (float)y, 1.f, 1.f}, {0, 0}, 0, color);
       }
    }
 }
@@ -404,26 +376,26 @@ void Furniture::render(const Rectangle &cameraBounds) const {
          if (y < cameraBounds.y || x < cameraBounds.x || piece.nil) {
             continue;
          }
-         DrawTexturePro(getTexture(furnitureTextureNames[texId]), {(float)piece.tx, (float)piece.ty, textureSize, textureSize}, {(float)x, (float)y, 1.f, 1.f}, {0, 0}, 0, WHITE);
+         DrawTexturePro(getTexture(furnitureTextureNames[id]), {(float)piece.tx, (float)piece.ty, textureSize, textureSize}, {(float)x, (float)y, 1.f, 1.f}, {0, 0}, 0, WHITE);
       }
    }
 }
 
 // Id functions
 
-unsigned char Furniture::getId(const std::string &name) {
+unsigned char getFurnitureIdFromName(const std::string &name) {
    return furnitureTextureIds.at(name);
 }
 
-std::string Furniture::getName(unsigned char id) {
+std::string getFurnitureNameFromId(unsigned char id) {
    return furnitureTextureNames.at(id);
 }
 
-FurnitureTexture Furniture::getFurnitureIcon(unsigned char id) {
+FurnitureTexture getFurnitureIcon(unsigned char id) {
    constexpr std::array<Vector2, furnitureCount> textureSizes {{
       {}, {textureSize, textureSize * 2}, {}, {}, {},
       {}, {}, {}, {}, {textureSize, textureSize},
       {textureSize * 3, textureSize * 2},
    }};
-   return {getTexture(getName(id)), textureSizes[id].x, textureSizes[id].y};
+   return {getTexture(getFurnitureNameFromId(id)), textureSizes[id].x, textureSizes[id].y};
 }

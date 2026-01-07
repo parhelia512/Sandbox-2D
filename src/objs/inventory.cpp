@@ -452,7 +452,7 @@ void Inventory::renderItem(const Item &item, const Vector2 &position, bool isSel
    if (!item.isFurniture) {
       drawTexture(getTexture(getBlockNameFromId(item.id)), position, itemframeItemSize, 0.0f, drawColor);
    } else if (item.isFurniture) {
-      FurnitureTexture texture = Furniture::getFurnitureIcon(item.id);
+      FurnitureTexture texture = getFurnitureIcon(item.id);
       Vector2 newPos = Vector2Add(position, Vector2Scale(itemframeSize, 0.5f));
       Vector2 fSize = itemframeItemSize;
 
