@@ -385,6 +385,14 @@ void MenuState::updateLevelCreation() {
          return;
       }
 
+      // World with the same name already exists
+      for (const Button &button: worldButtons) {
+         if (button.text == worldName.text) {
+            insertPopup("World Exists", format("Cannot create world with the name '{}', as a world with the same name already exists.", worldName.text), false);
+            return;
+         }
+      }
+
       generationSplash = getRandomLineFromFile("assets/splash.txt");
       wrapText(generationSplash, GetScreenWidth() - 50.0f, 40.0f, 1.0f);
 
@@ -416,6 +424,14 @@ void MenuState::updateLevelRenaming() {
       if (renameInput.text.size() < minWorldNameSize) {
          insertPopup("Invalid World Name", format("World name must contain from {} to {} characters, but it has {} instead.", minWorldNameSize, maxWorldNameSize, renameInput.text.size()), false);
          return;
+      }
+
+      // World with the same name already exists
+      for (const Button &button: worldButtons) {
+         if (button.text == renameInput.text) {
+            insertPopup("World Exists", format("Cannot rename world to '{}', as a world with the same name already exists.", renameInput.text), false);
+            return;
+         }
       }
 
       std::string newName = format("data/worlds/{}.bin", renameInput.text);

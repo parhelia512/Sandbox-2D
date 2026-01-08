@@ -8,10 +8,10 @@
 
 // Constants
 
-constexpr int cactusGrowSpeedMin  = 350;
-constexpr int cactusGrowSpeedMax  = 1750;
-constexpr int saplingGrowSpeedMin = 200;
-constexpr int saplingGrowSpeedMax = 1500;
+constexpr int cactusGrowSpeedMin  = 8 * 350;
+constexpr int cactusGrowSpeedMax  = 8 * 1750;
+constexpr int saplingGrowSpeedMin = 8 * 200;
+constexpr int saplingGrowSpeedMax = 8 * 1500;
 
 constexpr int cactusSizeMin = 4;
 constexpr int cactusSizeMax = 9;
@@ -99,7 +99,7 @@ void Furniture::update(Map &map, Player &player, const Vector2 &mousePos) {
    } break;
 
    case FurnitureType::chair: {
-      if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && CheckCollisionPointRec(mousePos, {(float)posX, (float)posY, (float)sizeX, (float)sizeY})) {
+      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && CheckCollisionPointRec(mousePos, {(float)posX, (float)posY, (float)sizeX, (float)sizeY})) {
          player.sitting = true;
          player.flipX = (pieces[0][0].tx == 0); // Flip player if chair is flipped
          player.position.x = posX - (player.flipX ? 0 : 1); // Adjust flipped player's position

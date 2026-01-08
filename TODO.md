@@ -48,8 +48,8 @@
 - Instead of placing blocks one by one, generate an array of block ids and batch them in world generation.
 
 # Bugs
-
 ### Actual Bugs
+Bugs that are bugs.
 
 ### "Features"
 Bugs that may or may not be features. Might fix in the future, might not.
