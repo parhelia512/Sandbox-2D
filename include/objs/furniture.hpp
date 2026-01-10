@@ -11,10 +11,10 @@ constexpr inline float previewAlpha = 0.75f;
 
 // Furniture
 
-// Polymorphism could never, too much abstraction + everything works
-// fine just as it is. Also when adding new furniture, you have to
-// change the following: getFurnitureIcon, getFurniture, Furniture::
-// isValid, Furniture::update and furniture ID constants
+// Polymorphism would be too complex in this situation and everything
+// works fine just as it is. Also when adding new furniture, you have
+// to change the following: getFurnitureIcon, getFurniture, Furniture
+// ::isValid, Furniture::update and furniture ID constants
 enum class FurnitureType: unsigned char {
    none,
    tree,
@@ -22,7 +22,8 @@ enum class FurnitureType: unsigned char {
    cactus,
    cactusSeed,
    table,
-   chair
+   chair,
+   door
 };
 
 struct FurnitureTexture {

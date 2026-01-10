@@ -29,18 +29,18 @@ constexpr int textureSize    = 8;
 
 // Furniture ID constants
 
-constexpr int furnitureCount = 12;
+constexpr int furnitureCount = 13;
 
 static inline const std::unordered_map<std::string, int> furnitureTextureIds {
    {"tree", 0}, {"sapling", 1}, {"palm", 2}, {"palm_sapling", 3}, {"pine", 4},
    {"pine_sapling", 5}, {"jungle_tree", 6}, {"jungle_sapling", 7}, {"cactus", 8}, {"cactus_seed", 9},
-   {"table", 10}, {"chair", 11}
+   {"table", 10}, {"chair", 11}, {"door", 12}
 };
 
 static inline const std::array<const char*, furnitureCount> furnitureTextureNames {
    "tree", "sapling", "palm", "palm_sapling", "pine",
    "pine_sapling", "jungle_tree", "jungle_sapling", "cactus", "cactus_seed",
-   "table", "chair"
+   "table", "chair", "door"
 };
 
 // Helper functions
@@ -107,6 +107,25 @@ void Furniture::update(Map &map, Player &player, const Vector2 &mousePos) {
       }
    } break;
 
+   case FurnitureType::door: {
+      Rectangle doorRect = {(float)posX, (float)posY, (float)sizeX, (float)sizeY};
+      bool previousValue = value;
+      bool previousValue2 = value2;
+
+      value2 = CheckCollisionRecs(doorRect, player.getBounds());
+      if (previousValue2 != value2 && (!value || !value2)) {
+         value = !value;
+      }
+
+      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && CheckCollisionPointRec(mousePos, doorRect)) {
+         value = !value;
+      }
+
+      for (int i = 0; value != previousValue && i < sizeY; ++i) {
+         pieces[i][0].ty = (value ? textureSize * (i + 3) : textureSize * i);
+      }
+   } break;
+
    default: break;
    }
 }
@@ -130,6 +149,9 @@ bool Furniture::isValid(const Map &map) const {
 
    case FurnitureType::chair:
       return map.is(posX, posY + sizeY, BlockType::solid);
+   
+   case FurnitureType::door:
+      return map.is(posX, posY + sizeY, BlockType::solid) && map.is(posX, posY - 1, BlockType::solid);
 
    default:
       return false;
@@ -371,6 +393,20 @@ Furniture getFurniture(int x, int y, const Map &map, FurnitureType type, bool pl
       return chair;
    } break;
 
+   case FurnitureType::door: {
+      if (!debug && (!map.is(x, y + 3, BlockType::solid) || !map.is(x, y - 1, BlockType::solid))) {
+         return {};
+      }
+      Furniture door ("door", x, y, 1, 3, FurnitureType::door);
+      for (int yy = 0; yy < 3; ++yy) {
+         if (!debug && !map.isNotSolid(x, yy + y)) {
+            return {};
+         }
+         setBlock(door.pieces[yy][0], (playerFacingLeft ? 0 : textureSize), yy * textureSize);
+      }
+      return door;
+   } break;
+
    default: return {};
    };
 }
@@ -404,7 +440,8 @@ void Furniture::render(const Rectangle &cameraBounds) const {
          if (y < cameraBounds.y || x < cameraBounds.x || piece.nil) {
             continue;
          }
-         DrawTexturePro(getTexture(furnitureTextureNames[id]), {(float)piece.tx, (float)piece.ty, textureSize, textureSize}, {(float)x, (float)y, 1.f, 1.f}, {0, 0}, 0, WHITE);
+         Color color = (type == FurnitureType::door && value ? wallTint : WHITE);
+         DrawTexturePro(getTexture(furnitureTextureNames[id]), {(float)piece.tx, (float)piece.ty, textureSize, textureSize}, {(float)x, (float)y, 1.f, 1.f}, {0, 0}, 0, color);
       }
    }
 }
@@ -423,7 +460,7 @@ FurnitureTexture getFurnitureIcon(unsigned char id) {
    constexpr std::array<Vector2, furnitureCount> textureSizes {{
       {}, {textureSize, textureSize * 2}, {}, {}, {},
       {}, {}, {}, {}, {textureSize, textureSize},
-      {textureSize * 3, textureSize * 2}, {textureSize, textureSize * 2},
+      {textureSize * 3, textureSize * 2}, {textureSize, textureSize * 2}, {textureSize, textureSize * 3}
    }};
    return {getTexture(getFurnitureNameFromId(id)), textureSizes[id].x, textureSizes[id].y};
 }

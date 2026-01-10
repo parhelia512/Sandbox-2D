@@ -71,16 +71,6 @@ void GameState::fixedUpdate() {
    }
    player.updatePlayer(map);
    
-   // Update furniture
-   const Vector2 translatedMousePos = GetScreenToWorld2D(GetMousePosition(), camera);
-   for (Furniture &obj: map.furniture) {
-      obj.update(map, player, translatedMousePos);
-   }
-
-   map.furniture.erase(std::remove_if(map.furniture.begin(), map.furniture.end(), [](Furniture &f) -> bool {
-      return f.deleted;
-   }), map.furniture.end());
-
    // Update physics
    physicsCounter = (physicsCounter + 1) % physicsTicks;
    if (physicsCounter != 0) {
@@ -162,18 +152,19 @@ void GameState::updateControls() {
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp. Everything between these multi-comments is temporary.
 static int index = 0;
-static int size = 25;
+static int size = 26;
 static const char *blockMap[] {
    "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian",
    "lava", "platform", "snow", "ice", "mud", "jungle_grass", "lamp", "torch",
-   "sapling", "cactus_seed", "table", "chair"
+   "sapling", "cactus_seed", "table", "chair", "door"
 };
 static bool drawWall = false;
 static bool canDraw = false;
 static Furniture obj;
 inline FurnitureType getFurnitureType() {
    static std::unordered_map<int, FurnitureType> ftypes = {{
-      {21, FurnitureType::sapling}, {22, FurnitureType::cactusSeed}, {23, FurnitureType::table}, {24, FurnitureType::chair}
+      {21, FurnitureType::sapling}, {22, FurnitureType::cactusSeed}, {23, FurnitureType::table}, {24, FurnitureType::chair},
+      {25, FurnitureType::door},
    }};
    return ftypes.count(index) ? ftypes[index] : FurnitureType::none;
 }
@@ -184,6 +175,16 @@ void GameState::updatePhysics() {
       return;
    }
    
+   // Update furniture
+   const Vector2 translatedMousePos = GetScreenToWorld2D(GetMousePosition(), camera);
+   for (Furniture &obj: map.furniture) {
+      obj.update(map, player, translatedMousePos);
+   }
+
+   map.furniture.erase(std::remove_if(map.furniture.begin(), map.furniture.end(), [](Furniture &f) -> bool {
+      return f.deleted;
+   }), map.furniture.end());
+
    /************************************/
    // Move this to a different function later on!
    Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
