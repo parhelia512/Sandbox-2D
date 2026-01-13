@@ -20,7 +20,8 @@ constexpr float minCameraZoom     = 12.5f;
 constexpr float maxCameraZoom     = 200.0f;
 
 constexpr int physicsTicks      = 8;
-constexpr int lavaUpdateSpeed   = 3; // Lava updates 3x slower than water
+constexpr int lavaUpdateSpeed   = 2; // Lava updates 2x slower than water
+constexpr int honeyUpdateSpeed  = 4; // Honey updates 2x slower than lava
 constexpr int grassGrowSpeedMin = 100;
 constexpr int grassGrowSpeedMax = 255;
 
@@ -78,7 +79,9 @@ void GameState::fixedUpdate() {
    }
 
    lavaCounter = (lavaCounter + 1) % lavaUpdateSpeed;
+   honeyCounter = (honeyCounter + 1) % honeyUpdateSpeed;
    bool updateLava = (lavaCounter == 0);
+   bool updateHoney = (honeyCounter == 0);
 
    Rectangle physicsBounds = cameraBounds;
    Vector2 halfSize = {(cameraBounds.width - cameraBounds.x) / 2.0f, (cameraBounds.height - cameraBounds.y) / 2.0f};
@@ -95,8 +98,10 @@ void GameState::fixedUpdate() {
          if (map.isLiquidAtAll(x, y)) {
             if (map.isLiquidOfType(x, y, LiquidType::water)) {
                updateWaterPhysics(x, y);
-            } else if (updateLava) {
+            } else if (updateLava && map.isLiquidOfType(x, y, LiquidType::lava)) {
                updateLavaPhysics(x, y);
+            } else if (updateHoney && map.isLiquidOfType(x, y, LiquidType::honey)) {
+               updateHoneyPhysics(x, y);
             }
 
             // Do not update the block if it has any liquid in it. Remove
@@ -161,19 +166,20 @@ void GameState::updateControls() {
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp. Everything between these multi-comments is temporary.
 static int index = 0;
-static int size = 24;
+static int size = 26;
 static const char *blockMap[] {
    "grass", "dirt", "clay", "stone", "sand", "sandstone", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian",
-   "platform", "snow", "ice", "mud", "jungle_grass", "lamp", "torch",
+   "platform", "snow", "ice", "mud", "jungle_grass", "lamp", "torch", "honey_block", "crispy_honey_block",
    "sapling", "cactus_seed", "table", "chair", "door"
 };
 static bool drawWall = false;
 static bool canDraw = false;
 static Furniture obj;
 inline FurnitureType getFurnitureType() {
+   static int si = 21;
    static std::unordered_map<int, FurnitureType> ftypes = {{
-      {19, FurnitureType::sapling}, {20, FurnitureType::cactusSeed}, {21, FurnitureType::table}, {22, FurnitureType::chair},
-      {23, FurnitureType::door},
+      {si, FurnitureType::sapling}, {si + 1, FurnitureType::cactusSeed}, {si + 2, FurnitureType::table}, {si + 3, FurnitureType::chair},
+      {si + 4, FurnitureType::door},
    }};
    return ftypes.count(index) ? ftypes[index] : FurnitureType::none;
 }
@@ -232,6 +238,9 @@ void GameState::updatePhysics() {
       } else if (IsKeyDown(KEY_X)) {
          map.liquidsHeights[mousePos.y][mousePos.x] = 32;
          map.liquidTypes[mousePos.y][mousePos.x] = LiquidType::lava;
+      } else if (IsKeyDown(KEY_C)) {
+         map.liquidsHeights[mousePos.y][mousePos.x] = 32;
+         map.liquidTypes[mousePos.y][mousePos.x] = LiquidType::honey;
       }
    }
    /************************************/
@@ -280,6 +289,28 @@ static void applyHalfFlowDown(unsigned char &flow1, unsigned char &flow2) {
    flow2 += halfFlowDown;
 }
 
+bool GameState::handleLiquidToBlock(int x, int y, LiquidType type, unsigned short blockId) {
+   // What even is C++ syntax?
+   for (const Vector2 &offset: {Vector2{1, 0}, Vector2{0, 1}, Vector2{-1, 0}, Vector2{0, -1}}) {
+      if (!map.isLiquidAtAll(x + offset.x, y + offset.y) || !map.isLiquidOfType(x + offset.x, y + offset.y, type)) {
+         continue;
+      }
+
+      if (map.getLiquidHeight(x + offset.x, y + offset.y) < liquidToBlockThreshold || !(map.blocks[y + offset.y][x + offset.x].type & BlockType::empty)) {
+         map.liquidTypes[y + offset.y][x + offset.x] = LiquidType::none;
+         map.liquidsHeights[y + offset.y][x + offset.x] = 0;
+         continue;
+      }
+
+      if (map.getLiquidHeight(x, y) >= liquidToBlockThreshold) {
+         map.setBlock(x + offset.x, y + offset.y, blockId);
+      }
+      map.liquidTypes[y][x] = LiquidType::none;
+      map.liquidsHeights[y][x] = 0;
+   }
+   return map.isLiquidAtAll(x, y);
+}
+
 void GameState::updateFluid(int x, int y) {
    unsigned char height = map.getLiquidHeight(x, y);
    LiquidType type = map.liquidTypes[y][x];
@@ -318,31 +349,20 @@ void GameState::updateFluid(int x, int y) {
 // Since lava updates 3x slower and in batch, make water turn
 // nearby tiles into obsidian
 void GameState::updateWaterPhysics(int x, int y) {
-   // What even is C++ syntax?
-   for (const Vector2 &offset: {Vector2{1, 0}, Vector2{0, 1}, Vector2{-1, 0}, Vector2{0, -1}}) {
-      if (!map.isLiquidAtAll(x + offset.x, y + offset.y) || !map.isLiquidOfType(x + offset.x, y + offset.y, LiquidType::lava)) {
-         continue;
+   if (handleLiquidToBlock(x, y, LiquidType::lava, getBlockIdFromName("obsidian"))) {
+      if (handleLiquidToBlock(x, y, LiquidType::honey, getBlockIdFromName("honey_block"))) {
+         updateFluid(x, y);
       }
-
-      if (map.getLiquidHeight(x + offset.x, y + offset.y) < liquidToBlockThreshold || !(map.blocks[y + offset.y][x + offset.x].type & BlockType::empty)) {
-         map.liquidTypes[y + offset.y][x + offset.x] = LiquidType::none;
-         map.liquidsHeights[y + offset.y][x + offset.x] = 0;
-         continue;
-      }
-
-      if (map.getLiquidHeight(x, y) >= liquidToBlockThreshold) {
-         map.setBlock(x + offset.x, y + offset.y, "obsidian");
-      }
-      map.liquidTypes[y][x] = LiquidType::none;
-      map.liquidsHeights[y][x] = 0;
-   }
-
-   if (map.isLiquidAtAll(x, y)) {
-      updateFluid(x, y);
    }
 }
 
 void GameState::updateLavaPhysics(int x, int y) {
+   if (handleLiquidToBlock(x, y, LiquidType::honey, getBlockIdFromName("crispy_honey_block"))) {
+      updateFluid(x, y);
+   }
+}
+
+void GameState::updateHoneyPhysics(int x, int y) {
    updateFluid(x, y);
 }
 

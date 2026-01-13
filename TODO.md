@@ -44,7 +44,6 @@
 
 ### Other
 - World generation.
-- Make water flow through platforms
 - Instead of placing blocks one by one, generate an array of block ids and batch them in world generation.
 
 # Bugs

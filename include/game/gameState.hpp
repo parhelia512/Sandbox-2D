@@ -23,9 +23,12 @@ struct GameState: public State {
    void updateControls();
    void updatePhysics();
 
+   bool handleLiquidToBlock(int x, int y, LiquidType type, unsigned short blockId);
    void updateFluid(int x, int y);
    void updateWaterPhysics(int x, int y);
    void updateLavaPhysics(int x, int y);
+   void updateHoneyPhysics(int x, int y);
+
    void updateSandPhysics(int x, int y);
    void updateGrassPhysics(int x, int y);
    void updateDirtPhysics(int x, int y);
@@ -64,6 +67,7 @@ struct GameState: public State {
    bool paused = false;
    int physicsCounter = 0;
    int lavaCounter = 0;
+   int honeyCounter = 0;
 };
 
 #endif

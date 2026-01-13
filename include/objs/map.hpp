@@ -20,6 +20,7 @@ enum class LiquidType: unsigned char {
    none,
    water,
    lava,
+   honey,
 };
 
 // Bad practice to make enums unsigned, but as blocks attributes will grow, it'll be
