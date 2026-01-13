@@ -11,33 +11,78 @@
 
 // Constants
 
-constexpr unsigned short blockCount = 22;
+constexpr unsigned short blockCount = 20;
 
 // NOTE: due to logic in gameState.cpp, any grass blocks must be defined RIGHT
 // BEFORE the dirt block, for an example, you can see blocks 1 and 2
 static inline const std::unordered_map<std::string, unsigned short> blockIds {
-   {"air", 0}, {"grass", 1}, {"dirt", 2}, {"clay", 3}, {"stone", 4},
-   {"sand", 5}, {"sandstone", 6}, {"water", 7}, {"bricks", 8}, {"glass", 9},
-   {"planks", 10}, {"stone_bricks", 11}, {"tiles", 12}, {"obsidian", 13}, {"lava", 14},
-   {"platform", 15}, {"snow", 16}, {"ice", 17}, {"jungle_grass", 18}, {"mud", 19},
-   {"lamp", 20}, {"torch", 21}
+   {"air", 0},
+   {"grass", 1},
+   {"dirt", 2},
+   {"clay", 3},
+   {"stone", 4},
+   {"sand", 5},
+   {"sandstone", 6},
+   {"bricks", 7},
+   {"glass", 8},
+   {"planks", 9},
+   {"stone_bricks", 10},
+   {"tiles", 11},
+   {"obsidian", 12},
+   {"platform", 13},
+   {"snow", 14},
+   {"ice", 15},
+   {"jungle_grass", 16},
+   {"mud", 17},
+   {"lamp", 18},
+   {"torch", 19},
 };
 
 constexpr static inline std::array<const char*, blockCount> blockNames {
-   "air", "grass", "dirt", "clay", "stone",
-   "sand", "sandstone", "water", "bricks", "glass",
-   "planks", "stone_bricks", "tiles", "obsidian", "lava",
-   "platform", "snow", "ice", "jungle_grass", "mud",
-   "lamp", "torch"
+   "air",
+   "grass",
+   "dirt",
+   "clay",
+   "stone",
+   "sand",
+   "sandstone",
+   "bricks",
+   "glass",
+   "planks",
+   "stone_bricks",
+   "tiles",
+   "obsidian",
+   "platform",
+   "snow",
+   "ice",
+   "jungle_grass",
+   "mud",
+   "lamp",
+   "torch"
 };
 
 // This is a nightmare to edit, but at least makes other code easier!
 constexpr static inline const std::array<BlockType, blockCount> blockAttributes {{
-   BlockType::empty | BlockType::transparent, BlockType::solid | BlockType::grass, BlockType::solid | BlockType::dirt, BlockType::solid, BlockType::solid,
-   BlockType::solid | BlockType::sand, BlockType::solid, BlockType::transparent | BlockType::water | BlockType::liquid, BlockType::solid, BlockType::solid | BlockType::transparent,
-   BlockType::solid, BlockType::solid, BlockType::solid, BlockType::solid, BlockType::transparent | BlockType::lava | BlockType::lightsource | BlockType::liquid,
-   BlockType::platform | BlockType::transparent | BlockType::solid, BlockType::sand | BlockType::solid, BlockType::ice | BlockType::solid, BlockType::solid | BlockType::grass, BlockType::solid | BlockType::dirt,
-   BlockType::lightsource | BlockType::solid, BlockType::transparent | BlockType::lightsource | BlockType::torch,
+   BlockType::empty | BlockType::transparent | BlockType::flowable, // air
+   BlockType::solid | BlockType::grass, // grass
+   BlockType::solid | BlockType::dirt, // dirt
+   BlockType::solid, // clay
+   BlockType::solid, // stone
+   BlockType::solid | BlockType::sand, // sand
+   BlockType::solid, // sandstone
+   BlockType::solid, // bricks
+   BlockType::solid | BlockType::transparent, // glass
+   BlockType::solid, // planks
+   BlockType::solid, // stone bricks
+   BlockType::solid, // tiles
+   BlockType::solid, // obsidian
+   BlockType::platform | BlockType::transparent | BlockType::solid | BlockType::flowable, // platform
+   BlockType::sand | BlockType::solid, // snow
+   BlockType::ice | BlockType::solid, // ice
+   BlockType::solid | BlockType::grass, // jungle grass
+   BlockType::solid | BlockType::dirt, // mud
+   BlockType::lightsource | BlockType::solid, // lamp
+   BlockType::transparent | BlockType::lightsource | BlockType::torch | BlockType::flowable, // torch
 }};
 
 // Block getter functions
@@ -62,6 +107,9 @@ void Map::init() {
 
    blocks = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
    walls  = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
+
+   liquidsHeights = std::vector<std::vector<unsigned char>>(sizeY, std::vector<unsigned char>(sizeX, 0));
+   liquidTypes    = std::vector<std::vector<LiquidType>>(sizeY, std::vector<LiquidType>(sizeX, LiquidType::none));
 }
 
 Map::~Map() {
@@ -74,15 +122,13 @@ void Map::setRow(int y, const std::string &name, bool isWall) {
    unsigned short id = getBlockIdFromName(name);
    BlockType type = blockAttributes[id];
 
-   (isWall ? walls : blocks)[y] = std::vector<Block>(sizeX, Block{&getTexture(name), type, id, ((type & BlockType::liquid) ? maxWaterLayers : (unsigned char)0)});
+   (isWall ? walls : blocks)[y] = std::vector<Block>(sizeX, Block{&getTexture(name), type, id});
 }
 
-void Map::setRow(int y, unsigned short *ids, unsigned char *physicsValues) {
+void Map::setRow(int y, unsigned short *ids) {
    for (int x = 0; x < sizeX; ++x) {
       Block &block = blocks[y][x];
       block.id = ids[x];
-      block.value = 0;
-      block.value2 = physicsValues[x];
       block.type = blockAttributes[block.id];
 
       if (block.id != 0) {
@@ -95,7 +141,6 @@ void Map::setWallRow(int y, unsigned short *ids) {
    for (int x = 0; x < sizeX; ++x) {
       Block &block = walls[y][x];
       block.id = ids[x];
-      block.value = block.value2 = 0;
       block.type = blockAttributes[block.id];
 
       if (block.id != 0) {
@@ -106,17 +151,17 @@ void Map::setWallRow(int y, unsigned short *ids) {
 
 void Map::setBlock(int x, int y, const std::string &name, bool isWall) {
    Block &block = (isWall ? walls : blocks)[y][x];
-   
+   if (!isWall) {
+      liquidsHeights[y][x] = 0;
+      liquidTypes[y][x] = LiquidType::none;
+   }
+
    block.id = getBlockIdFromName(name);
    block.value = block.value2 = 0;
    block.type = blockAttributes[block.id] | (block.type % (BlockType::furniture | BlockType::furnitureTop));
 
    if (block.id != 0) {
       block.texture = &getTexture(name);
-   }
-
-   if (block.type & BlockType::liquid) {
-      block.value2 = maxWaterLayers;
    }
 }
 
@@ -126,9 +171,16 @@ void Map::setBlock(int x, int y, unsigned short id, bool isWall) {
 
 // Fuck furniture logic, rewrite it one day
 void Map::deleteBlock(int x, int y, bool wall) {
+   deleteBlockWithoutDeletingLiquids(x, y, wall);
+   if (!wall) {
+      liquidsHeights[y][x] = 0;
+      liquidTypes[y][x] = LiquidType::none;
+   }
+}
+
+void Map::deleteBlockWithoutDeletingLiquids(int x, int y, bool wall) {
    Block &block = (wall ? walls : blocks)[y][x];
    block.texture = nullptr;
-
    block.type = blockAttributes[0] | (block.type % (BlockType::furniture | BlockType::furnitureTop));
    block.id = block.value = block.value2 = 0;
 }
@@ -140,6 +192,8 @@ void Map::moveBlock(int oldX, int oldY, int newX, int newY) {
    BlockType newType = blocks[newY][newX].type % furnitureMask;
 
    std::swap(blocks[oldY][oldX], blocks[newY][newX]);
+   std::swap(liquidsHeights[oldY][oldX], liquidsHeights[newY][newX]);
+   std::swap(liquidTypes[oldY][oldX], liquidTypes[newY][newX]);
 
    blocks[newY][newX].type = (blocks[newY][newX].type % ~furnitureMask) | oldType;
    blocks[oldY][oldX].type = (blocks[oldY][oldX].type % ~furnitureMask) | newType;
@@ -192,16 +246,12 @@ bool Map::isSoil(int x, int y) const {
    return isPositionValid(x, y) && (blocks[y][x].type & (BlockType::grass | BlockType::dirt | BlockType::sand));
 }
 
-bool Map::isLiquid(int x, int y) const {
-   return isPositionValid(x, y) && (blocks[y][x].type & BlockType::liquid) && blocks[y][x].value2 > minWaterLayers;
-}
-
 bool Map::isEmpty(int x, int y) const {
-   return isPositionValid(x, y) && ((blocks[y][x].type & BlockType::empty) || ((blocks[y][x].type & BlockType::liquid) && blocks[y][x].value <= minWaterLayers));
+   return isPositionValid(x, y) && (blocks[y][x].type & BlockType::empty) && !isLiquid(x, y);
 }
 
 bool Map::isNotSolid(int x, int y) const {
-   return isPositionValid(x, y) && (blocks[y][x].type & (BlockType::empty | BlockType::liquid)) && !(blocks[y][x].type & BlockType::furniture);
+   return isPositionValid(x, y) && (blocks[y][x].type & BlockType::empty) && !(blocks[y][x].type & BlockType::furniture);
 }
 
 bool Map::isStable(int x, int y) const {
@@ -210,6 +260,34 @@ bool Map::isStable(int x, int y) const {
 
 bool Map::isPlatformedFurniture(int x, int y) const {
    return (blocks[y][x].type & BlockType::furniture) && (blocks[y][x].type & BlockType::furnitureTop);
+}
+
+// Liquid functions
+
+bool Map::isLiquid(int x, int y) const {
+   return isPositionValid(x, y) && liquidTypes[y][x] != LiquidType::none && liquidsHeights[y][x] > minLiquidLayers;
+}
+
+bool Map::isLiquidAtAll(int x, int y) const {
+   return isPositionValid(x, y) && liquidTypes[y][x] != LiquidType::none;
+}
+
+unsigned char Map::getLiquidHeight(int x, int y) const {
+   return liquidsHeights[y][x];
+}
+
+unsigned char Map::isLiquidOfType(int x, int y, LiquidType type) const {
+   return liquidTypes[y][x] == type;
+}
+
+Texture &Map::getLiquidTexture(int x, int y) const {
+   if (liquidTypes[y][x] == LiquidType::water) {
+      return getTexture("water");
+   } else if (liquidTypes[y][x] == LiquidType::lava) {
+      return getTexture("lava");
+   } else {
+      return getTexture(""); // Get fallback texture
+   }
 }
 
 // Render functions
@@ -242,53 +320,21 @@ void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &pla
       obj.render(cameraBounds);
    }
 
-   // Render furniture-like blocks before the player
+   // Render blocks
    for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
       for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
          const Block &block = blocks[y][x];
-         if (block.type & BlockType::platform) {
-            DrawTexturePro(*block.texture, {0, 0, (float)block.texture->width, (float)block.texture->height}, {(float)x, (float)y, 1, 1}, {0, 0}, 0, WHITE);
-         } else if (block.type & BlockType::torch) {
+         if (block.type & BlockType::empty) {
+            continue;
+         }
+
+         // Render torches
+         else if (block.type & BlockType::torch) {
             constexpr static float torchLightOffsetsY[] = {-1.0f, -1.0f * (5.0f / 8.0f), -0.75f, -0.75f, -1.0f * (5.0f / 8.0f)};
 
             float textureSize = block.texture->height / 2.0f;
             DrawTexturePro(*block.texture, {textureSize * block.value2, 0, textureSize, textureSize}, {(float)x, (float)y, 1, 1}, {0, 0}, 0, WHITE);
             DrawTexturePro(*block.texture, {textureSize * block.value, textureSize, textureSize, textureSize}, {(float)x, (float)y + torchLightOffsetsY[block.value2], 1, 1}, {0, 0}, 0, WHITE);
-         }
-      }
-   }
-
-   // Render the player
-   player.render(accumulator);
-
-   for (const DroppedItem &droppedItem : droppedItems) {
-      droppedItem.render();
-   }
-
-   Shader &waterShader = getShader("water");
-   float time = GetTime();
-   SetShaderValue(waterShader, timeShaderLocation, &time, SHADER_UNIFORM_FLOAT);
-
-   struct Liquid {
-      const Block *pointer;
-      int x, y;
-   };
-   static std::vector<Liquid> liquidTiles;
-   liquidTiles.clear();
-
-   // Render blocks
-   for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
-      for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
-         const Block &block = blocks[y][x];
-         if ((block.type & BlockType::empty) || (block.type & BlockType::torch)) {
-            continue;
-         }
-
-         // Render fluids
-         if ((block.type & BlockType::liquid) || (block.type & BlockType::platform)) {
-            if (block.value2 > minWaterLayers) {
-               liquidTiles.push_back(Liquid{&block, x, y});
-            }
             continue;
          }
 
@@ -303,19 +349,37 @@ void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &pla
       }
    }
 
+   // Render the player
+   player.render(accumulator);
+
+   for (const DroppedItem &droppedItem : droppedItems) {
+      droppedItem.render();
+   }
+
+   // Render fluids
+   Shader &waterShader = getShader("water");
+   float time = GetTime();
+   SetShaderValue(waterShader, timeShaderLocation, &time, SHADER_UNIFORM_FLOAT);
+
    // Render fluids
    BeginShaderMode(waterShader);
-   for (const Liquid &block: liquidTiles) {
-      float height = (float)block.pointer->value2 / (float)maxWaterLayers;
-      Color liquidFlags;
-      liquidFlags.r = (is(block.x, block.y - 1, BlockType::solid) && !is(block.x, block.y - 1, BlockType::platform) ? 255 : 0);
-      liquidFlags.g = (!is(block.x, block.y + 1, block.pointer->type) ? 255 : 0);
+   for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
+      for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
+         if (!isLiquid(x, y)) {
+            continue;
+         }
+         
+         float height = (float)getLiquidHeight(x, y) / (float)maxLiquidLayers;
+         Color liquidFlags;
+         liquidFlags.r = (is(x, y - 1, BlockType::solid) && !is(x, y - 1, BlockType::platform) ? 255 : 0);
+         liquidFlags.g = (!isLiquidAtAll(x, y + 1) || !isLiquidOfType(x, y + 1, liquidTypes[y][x]) ? 255 : 0);
 
-      drawFluidBlock(*block.pointer->texture, {(float)block.x, (float)block.y + (1 - height), 1, height}, Fade(liquidFlags, height));
+         drawFluidBlock(getLiquidTexture(x, y), {(float)x, (float)y + (1 - height), 1, height}, Fade(liquidFlags, height));
+      }
    }
    EndShaderMode();
 
-   // // Render lights
+   // Render lights
    BeginTextureMode(lightmap);
    ClearBackground(BLACK);
    BeginBlendMode(BLEND_ADDITIVE);
@@ -352,11 +416,11 @@ void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &pla
          }
 
          // Direct light sources, ones who do not require the wall behind to be transparent
-         if (type & BlockType::lava) {
-            if (blocks[y][x].value2 <= minWaterLayers) {
-               continue;
+         if (isLiquidAtAll(x, y) && isLiquidOfType(x, y, LiquidType::lava)) {
+            if (isLiquid(x, y)) {
+               renderLight(camera, lightTexture, x + positionOffset, y + positionOffset, liquidSize, {255, 125, 0, 255});
             }
-            renderLight(camera, lightTexture, x + positionOffset, y + positionOffset, liquidSize, {255, 125, 0, 255});
+            continue;
          } else if (type & BlockType::torch) {
             renderLight(camera, lightHugeTexture, x + positionOffset, y + positionOffset, lightHugeSize, {255, 200, 160, 255}); // Light orange
          } else if (type & BlockType::lightsource) {
@@ -368,7 +432,7 @@ void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &pla
          }
 
          // Indirect light sources, these require to background to be empty
-         if ((type & BlockType::water) && blocks[y][x].value2 > minWaterLayers) {
+         if (isLiquid(x, y)) {
             renderLight(camera, lightTexture, x, y, lightSize, waterLightColor);
          } else {
             renderLight(camera, lightTexture, x, y, lightSize, airLightColor);

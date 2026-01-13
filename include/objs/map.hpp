@@ -8,12 +8,19 @@
 
 constexpr inline Color wallTint = {120, 120, 120, 255};
 
-constexpr inline unsigned char maxWaterLayers     = 32;
-constexpr inline unsigned char minWaterLayers     = maxWaterLayers / 8;
-constexpr inline unsigned char lavaLayerThreshold = maxWaterLayers / 4;
-constexpr inline unsigned char playerThreshold    = maxWaterLayers / 2;
+constexpr inline unsigned char maxLiquidLayers        = 32;
+constexpr inline unsigned char minLiquidLayers        = maxLiquidLayers / 8;
+constexpr inline unsigned char liquidToBlockThreshold = maxLiquidLayers / 4;
+constexpr inline unsigned char playerLiquidThreshold  = maxLiquidLayers / 2;
 
 // Block
+
+// Liquid enum
+enum class LiquidType: unsigned char {
+   none,
+   water,
+   lava,
+};
 
 // Bad practice to make enums unsigned, but as blocks attributes will grow, it'll be
 // increasingly useful, also makes bitwise operations slightly easier (probably).
@@ -26,13 +33,11 @@ enum class BlockType: unsigned short {
    solid        = 1 <<  5,
    platform     = 1 <<  6,
    transparent  = 1 <<  7,
-   water        = 1 <<  8,
-   lava         = 1 <<  9,
-   liquid       = 1 << 10,
-   lightsource  = 1 << 11,
-   torch        = 1 << 12,
-   furniture    = 1 << 13,
-   furnitureTop = 1 << 14,
+   lightsource  = 1 <<  8,
+   torch        = 1 <<  9,
+   furniture    = 1 << 10,
+   furnitureTop = 1 << 11,
+   flowable     = 1 << 12,
 };
 
 // Block type operators
@@ -58,7 +63,7 @@ constexpr inline BlockType operator~(BlockType bt) {
 // can be safely added without expanding memory usage
 struct Block {
    Texture *texture = nullptr;
-   BlockType type = BlockType::empty | BlockType::transparent; // air
+   BlockType type = BlockType::empty | BlockType::transparent | BlockType::flowable; // air
    unsigned short id = 0;
 
    // Values used by physics updates, specific to the block type
@@ -81,13 +86,14 @@ struct Map {
    // Set block functions
 
    void setRow(int y, const std::string &name, bool isWall = false);
-   void setRow(int y, unsigned short *ids, unsigned char *physicsValues);
+   void setRow(int y, unsigned short *ids);
    void setWallRow(int y, unsigned short *ids);
    
    void setBlock(int x, int y, const std::string &name, bool isWall = false);
    void setBlock(int x, int y, unsigned short id, bool isWall = false);
 
    void deleteBlock(int x, int y, bool isWall = false);
+   void deleteBlockWithoutDeletingLiquids(int x, int y, bool isWall = false);
    void moveBlock(int oldX, int oldY, int newX, int newY);
 
    // Set furniture functions
@@ -102,11 +108,18 @@ struct Map {
    bool isu(int x, int y, BlockType type) const; // Unsafe is variant
 
    bool isSoil(int x, int y) const;
-   bool isLiquid(int x, int y) const;
    bool isEmpty(int x, int y) const;
    bool isNotSolid(int x, int y) const; // Is either empty or a full liquid
    bool isStable(int x, int y) const; // Is solid or furniture and not platform
    bool isPlatformedFurniture(int x, int y) const;
+
+   // Liquid functions
+
+   bool isLiquid(int x, int y) const;
+   bool isLiquidAtAll(int x, int y) const;
+   unsigned char getLiquidHeight(int x, int y) const;
+   unsigned char isLiquidOfType(int x, int y, LiquidType type) const;
+   Texture &getLiquidTexture(int x, int y) const;
 
    // Render map
 
@@ -118,6 +131,9 @@ struct Map {
    RenderTexture lightmap;
    std::vector<std::vector<Block>> blocks, walls;
    std::vector<Furniture> furniture;
+
+   std::vector<std::vector<unsigned char>> liquidsHeights;
+   std::vector<std::vector<LiquidType>>    liquidTypes;
 
    int sizeX = 0;
    int sizeY = 0;

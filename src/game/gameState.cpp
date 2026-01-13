@@ -92,11 +92,20 @@ void GameState::fixedUpdate() {
       for (int x = physicsBounds.width; x >= physicsBounds.x; --x) {
          BlockType type = map.blocks[y][x].type;
 
-         if ((type & BlockType::lava) && updateLava) {
-            updateLavaPhysics(x, y);
-         } else if (type & BlockType::water) {
-            updateWaterPhysics(x, y);
-         } else if (type & BlockType::sand) {
+         if (map.isLiquidAtAll(x, y)) {
+            if (map.isLiquidOfType(x, y, LiquidType::water)) {
+               updateWaterPhysics(x, y);
+            } else if (updateLava) {
+               updateLavaPhysics(x, y);
+            }
+
+            // Do not update the block if it has any liquid in it. Remove
+            // later if any flowable blocks need to be updated or it just
+            // won't with liquid inside
+            continue;
+         }
+
+         if (type & BlockType::sand) {
             updateSandPhysics(x, y);
          } else if (type & BlockType::grass) {
             updateGrassPhysics(x, y);
@@ -152,10 +161,10 @@ void GameState::updateControls() {
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp. Everything between these multi-comments is temporary.
 static int index = 0;
-static int size = 26;
+static int size = 24;
 static const char *blockMap[] {
-   "grass", "dirt", "clay", "stone", "sand", "sandstone", "water", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian",
-   "lava", "platform", "snow", "ice", "mud", "jungle_grass", "lamp", "torch",
+   "grass", "dirt", "clay", "stone", "sand", "sandstone", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian",
+   "platform", "snow", "ice", "mud", "jungle_grass", "lamp", "torch",
    "sapling", "cactus_seed", "table", "chair", "door"
 };
 static bool drawWall = false;
@@ -163,8 +172,8 @@ static bool canDraw = false;
 static Furniture obj;
 inline FurnitureType getFurnitureType() {
    static std::unordered_map<int, FurnitureType> ftypes = {{
-      {21, FurnitureType::sapling}, {22, FurnitureType::cactusSeed}, {23, FurnitureType::table}, {24, FurnitureType::chair},
-      {25, FurnitureType::door},
+      {19, FurnitureType::sapling}, {20, FurnitureType::cactusSeed}, {21, FurnitureType::table}, {22, FurnitureType::chair},
+      {23, FurnitureType::door},
    }};
    return ftypes.count(index) ? ftypes[index] : FurnitureType::none;
 }
@@ -216,6 +225,14 @@ void GameState::updatePhysics() {
       } else if (isMousePressedOutsideUI(MOUSE_BUTTON_MIDDLE) && !((drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type & BlockType::empty)) {
          index = (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].id - 1;
       }
+
+      if (IsKeyDown(KEY_Z)) {
+         map.liquidsHeights[mousePos.y][mousePos.x] = 32;
+         map.liquidTypes[mousePos.y][mousePos.x] = LiquidType::water;
+      } else if (IsKeyDown(KEY_X)) {
+         map.liquidsHeights[mousePos.y][mousePos.x] = 32;
+         map.liquidTypes[mousePos.y][mousePos.x] = LiquidType::lava;
+      }
    }
    /************************************/
 
@@ -246,101 +263,81 @@ void GameState::updatePhysics() {
 // Block physic update functions
 
 static constexpr unsigned char calculateFlowDown(unsigned char flow1, unsigned char flow2) {
-   unsigned char availableSpace = maxWaterLayers - flow2;
+   unsigned char availableSpace = maxLiquidLayers - flow2;
    return min(availableSpace, flow1);
 }
 
-static void applyFlowDown(Block &block1, Block &block2) {
-   unsigned char flowDown = calculateFlowDown(block1.value2, block2.value2);
-   block1.value2 -= flowDown;
-   block2.value2 += flowDown;
+static void applyFlowDown(unsigned char &flow1, unsigned char &flow2) {
+   unsigned char flowDown = calculateFlowDown(flow1, flow2);
+   flow1 -= flowDown;
+   flow2 += flowDown;
 }
 
-static void applyHalfFlowDown(Block &block1, Block &block2) {
-   unsigned char flowDown = calculateFlowDown(block1.value2, block2.value2);
+static void applyHalfFlowDown(unsigned char &flow1, unsigned char &flow2) {
+   unsigned char flowDown = calculateFlowDown(flow1, flow2);
    unsigned char halfFlowDown = (flowDown == 1 ? 1 : flowDown / 2);
-   
-   block1.value2 -= halfFlowDown;
-   block2.value2 += halfFlowDown;
+   flow1 -= halfFlowDown;
+   flow2 += halfFlowDown;
 }
 
 void GameState::updateFluid(int x, int y) {
-   // block.value2 is the fluid layers, which cannot exceed maxWaterLayers
-   Block &block = map.blocks[y][x];
-   BlockType liquidType = ((block.type & BlockType::water) ? BlockType::water : BlockType::lava);
+   unsigned char height = map.getLiquidHeight(x, y);
+   LiquidType type = map.liquidTypes[y][x];
 
-   if (block.value2 == 0) {
-      map.deleteBlock(x, y);
+   // Delete the liquid if its height is zero
+   if (height == 0) {
+      map.liquidsHeights[y][x] = 0;
+      map.liquidTypes[y][x] = LiquidType::none;
       return;
    }
 
-   // Handle water going down
-   if (map.is(x, y + 1, BlockType::torch) && block.value2 > minWaterLayers) {
-      map.deleteBlock(x, y + 1);
-   }
-
-   if (map.is(x, y + 1, BlockType::empty)) {
-      // Why? Because move function fails and I have no fucking idea why
-      map.setBlock(x, y + 1, block.id);
-      map.blocks[y + 1][x].value2 = block.value2;
-      map.deleteBlock(x, y);
+   // Handle liquid going down
+   if (map.is(x, y + 1, BlockType::flowable) && !map.isLiquidAtAll(x, y + 1)) {
+      std::swap(map.liquidTypes[y][x], map.liquidTypes[y + 1][x]);
+      std::swap(map.liquidsHeights[y][x], map.liquidsHeights[y + 1][x]);
       return;
-   } else if (map.is(x, y + 1, liquidType) && map.blocks[y + 1][x].value2 < maxWaterLayers) {
-      applyFlowDown(block, map.blocks[y + 1][x]);
+   } else if (map.isLiquidAtAll(x, y + 1) && map.isLiquidOfType(x, y + 1, type) && map.getLiquidHeight(x, y + 1) < maxLiquidLayers) {
+      applyFlowDown(map.liquidsHeights[y][x], map.liquidsHeights[y + 1][x]);
    }
 
-   // Handle water going left. If first if is true, then it will automatically go over the second.
-   if (map.is(x - 1, y, BlockType::torch) && block.value2 > minWaterLayers) {
-      map.deleteBlock(x - 1, y);
+   // Handle liquid going left
+   if ((map.is(x - 1, y, BlockType::flowable) && !map.isLiquidAtAll(x - 1, y))
+    || (map.isLiquidAtAll(x - 1, y) && map.isLiquidOfType(x - 1, y, type) && map.getLiquidHeight(x - 1, y) < height && map.getLiquidHeight(x - 1, y) < maxLiquidLayers)) {
+      map.liquidTypes[y][x - 1] = type;
+      applyHalfFlowDown(map.liquidsHeights[y][x], map.liquidsHeights[y][x - 1]);
    }
 
-   if (map.is(x - 1, y, BlockType::empty)) {
-      map.setBlock(x - 1, y, block.id);
-      map.blocks[y][x - 1].value2 = 0;
-   }
-
-   if (map.is(x - 1, y, liquidType) && map.blocks[y][x - 1].value2 < block.value2 && map.blocks[y][x - 1].value2 <= maxWaterLayers) {
-      applyHalfFlowDown(block, map.blocks[y][x - 1]);
-   }
-
-   // Handle water going right, same as with the left side
-   if (map.is(x + 1, y, BlockType::torch) && block.value2 > minWaterLayers) {
-      map.deleteBlock(x + 1, y);
-   }
-   
-   if (map.is(x + 1, y, BlockType::empty)) {
-      map.setBlock(x + 1, y, block.id);
-      map.blocks[y][x + 1].value2 = 0;
-   }
-
-   if (map.is(x + 1, y, liquidType) && map.blocks[y][x + 1].value2 < block.value2 && map.blocks[y][x + 1].value2 <= maxWaterLayers) {
-      applyHalfFlowDown(block, map.blocks[y][x + 1]);
+   // Handle liquid going right
+   if ((map.is(x + 1, y, BlockType::flowable) && !map.isLiquidAtAll(x + 1, y))
+    || (map.isLiquidAtAll(x + 1, y) && map.isLiquidOfType(x + 1, y, type) && map.getLiquidHeight(x + 1, y) < height && map.getLiquidHeight(x + 1, y) < maxLiquidLayers)) {
+      map.liquidTypes[y][x + 1] = type;
+      applyHalfFlowDown(map.liquidsHeights[y][x], map.liquidsHeights[y][x + 1]);
    }
 }
 
 // Since lava updates 3x slower and in batch, make water turn
 // nearby tiles into obsidian
 void GameState::updateWaterPhysics(int x, int y) {
-   Block &block = map.blocks[y][x];
-
    // What even is C++ syntax?
    for (const Vector2 &offset: {Vector2{1, 0}, Vector2{0, 1}, Vector2{-1, 0}, Vector2{0, -1}}) {
-      if (!map.is(x + offset.x, y + offset.y, BlockType::lava)) {
+      if (!map.isLiquidAtAll(x + offset.x, y + offset.y) || !map.isLiquidOfType(x + offset.x, y + offset.y, LiquidType::lava)) {
          continue;
       }
 
-      if (map.blocks[y + offset.y][x + offset.x].value2 < lavaLayerThreshold || (map.blocks[y + offset.y][x + offset.x].type & BlockType::furniture)) {
-         map.deleteBlock(x + offset.x, y + offset.y);
+      if (map.getLiquidHeight(x + offset.x, y + offset.y) < liquidToBlockThreshold || !(map.blocks[y + offset.y][x + offset.x].type & BlockType::empty)) {
+         map.liquidTypes[y + offset.y][x + offset.x] = LiquidType::none;
+         map.liquidsHeights[y + offset.y][x + offset.x] = 0;
          continue;
       }
 
-      if (block.value2 >= lavaLayerThreshold) {
+      if (map.getLiquidHeight(x, y) >= liquidToBlockThreshold) {
          map.setBlock(x + offset.x, y + offset.y, "obsidian");
       }
-      map.deleteBlock(x, y);
+      map.liquidTypes[y][x] = LiquidType::none;
+      map.liquidsHeights[y][x] = 0;
    }
 
-   if (block.type & BlockType::liquid) {
+   if (map.isLiquidAtAll(x, y)) {
       updateFluid(x, y);
    }
 }
@@ -418,6 +415,10 @@ void GameState::updateTorchPhysics(int x, int y) {
    Block &block = map.blocks[y][x];
    block.value = (block.value + 1) % 5;
 
+   if (map.getLiquidHeight(x, y) > liquidToBlockThreshold) {
+      map.deleteBlockWithoutDeletingLiquids(x, y);
+      return;
+   }
    bool downEmpty = !map.is(x, y + 1, BlockType::solid) && !map.is(x, y + 1, BlockType::furniture);
 
    if (downEmpty && map.isStable(x - 1, y)) {

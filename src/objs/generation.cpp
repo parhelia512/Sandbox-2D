@@ -148,7 +148,12 @@ void MapGenerator::generateWater() {
 
    for (int x = 0; x < map.sizeX; ++x) {
       for (int y = seaY; y < map.sizeY && map.isu(x, y, BlockType::empty); ++y) {
-         map.setBlock(x, y, (y == seaY && biomeData[(int)getBiome(x)].wamth == BiomeWarmth::cold ? "ice" : "water"));
+         if (y == seaY && biomeData[(int)getBiome(x)].wamth == BiomeWarmth::cold) {
+            map.setBlock(x, y, "ice");
+         } else {
+            map.liquidsHeights[y][x] = maxLiquidLayers;
+            map.liquidTypes[y][x] = LiquidType::water;
+         }
       }
    }
 }
@@ -241,7 +246,7 @@ Vector2 MapGenerator::findPlayerSpawnLocation() {
       }
    breakOut:
 
-      if (map.is(x, y + 1, BlockType::liquid) || map.is(x + 1, y + 1, BlockType::liquid)) {
+      if (map.isLiquid(x, y) || map.isLiquid(x, y)) {
          valid = false;
       }
 

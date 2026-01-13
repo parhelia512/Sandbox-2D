@@ -10,7 +10,7 @@
 
 // Please increment after any breaking changes to warn players
 // about corrupted worlds
-constexpr int fileVersion = 3;
+constexpr int fileVersion = 4;
 
 // File functions
 
@@ -80,16 +80,12 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
    // Write the map
    int blockCount = map.sizeX * map.sizeY;
    std::vector<unsigned short> blocks, walls;
-   std::vector<unsigned char> physicsValues;
-
    blocks.reserve(blockCount);
-   physicsValues.reserve(blockCount);
    walls.reserve(blockCount);
 
    for (const std::vector<Block> &row: map.blocks) {
       for (const Block &tile: row) {
          blocks.push_back(tile.id);
-         physicsValues.push_back(tile.value2);
       }
    }
 
@@ -100,8 +96,12 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
    }
 
    file.write(reinterpret_cast<const char*>(blocks.data()), blocks.size() * sizeof(unsigned short));
-   file.write(reinterpret_cast<const char*>(physicsValues.data()), physicsValues.size() * sizeof(unsigned char));
    file.write(reinterpret_cast<const char*>(walls.data()), walls.size() * sizeof(unsigned short));
+
+   for (int y = 0; y < map.sizeY; ++y) {
+      file.write(reinterpret_cast<const char*>(map.liquidsHeights[y].data()), map.liquidsHeights[y].size() * sizeof(unsigned char));
+      file.write(reinterpret_cast<const char*>(map.liquidTypes[y].data()), map.liquidTypes[y].size() * sizeof(LiquidType));
+   }
 
    // Write the furniture
    size_t furnitureCount = map.furniture.size();
@@ -163,19 +163,19 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
    // Read map
    int blockCount = map.sizeX * map.sizeY;
    std::vector<unsigned short> blocks, walls;
-   std::vector<unsigned char> physicsValues;
-
    blocks.resize(blockCount);
-   physicsValues.resize(blockCount);
    walls.resize(blockCount);
 
    file.read(reinterpret_cast<char*>(blocks.data()), blocks.size() * sizeof(unsigned short));
-   file.read(reinterpret_cast<char*>(physicsValues.data()), physicsValues.size() * sizeof(unsigned char));
    file.read(reinterpret_cast<char*>(walls.data()), walls.size() * sizeof(unsigned short));
 
    for (int y = 0; y < map.sizeY; ++y) {
-      int x = y * map.sizeX;
-      map.setRow(y, blocks.data() + x, physicsValues.data() + x);
+      file.read(reinterpret_cast<char*>(map.liquidsHeights[y].data()), map.liquidsHeights[y].size() * sizeof(unsigned char));
+      file.read(reinterpret_cast<char*>(map.liquidTypes[y].data()), map.liquidTypes[y].size() * sizeof(LiquidType));
+   }
+
+   for (int y = 0; y < map.sizeY; ++y) {
+      map.setRow(y, blocks.data() + y * map.sizeX);
    }
 
    for (int y = 0; y < map.sizeY; ++y) {
