@@ -4,6 +4,7 @@
 #include "mngr/sound.hpp"
 #include "util/math.hpp"
 #include "util/position.hpp"
+#include "util/random.hpp"
 #include <raymath.h>
 
 // Player's keybinds shouldn't overlap with any other keybinds in GameState. It
@@ -22,9 +23,10 @@ constexpr float maxGravity    = 1.333f;
 constexpr float acceleration  = 0.083f;
 constexpr float deceleration  = 0.167f;
 
-constexpr float coyoteTime = 0.1f;
-constexpr float foxTime    = 0.1f;
-constexpr float jumpTime   = 0.25f;
+constexpr float coyoteTime   = 0.1f;
+constexpr float foxTime      = 0.1f;
+constexpr float jumpTime     = 0.25f;
+constexpr float immunityTime = 0.4f;
 
 // Constructors
 
@@ -42,6 +44,7 @@ void Player::updatePlayer(Map &map) {
 
    delta = {position.x - previousPosition.x, position.y - previousPosition.y};
    previousPosition = position;
+   immunityFrame -= fixedUpdateDT;
 }
 
 void Player::updateMovement() {
@@ -120,8 +123,12 @@ void Player::updateCollisions(Map &map) {
    if (sitting) return;
    position.y += velocity.y;
 
-   bool collisionY = false, canGoUpSlopes = true;
-   int waterTileCount = 0, lavaTileCount = 0, iceTileCount = 0;
+   bool collisionY = false;
+   bool canGoUpSlopes = true;
+   int waterTileCount = 0;
+   int lavaTileCount = 0;
+   int honeyTileCount = 0;
+   int iceTileCount = 0;
 
    if (position.y < 0) {
       velocity.y = max(0.f, velocity.y);
@@ -138,8 +145,12 @@ void Player::updateCollisions(Map &map) {
 
    for (int y = max(0, (int)position.y); y < maxY; ++y) {
       for (int x = max(0, (int)position.x); x < maxX; ++x) {
-         waterTileCount += (map.isLiquidAtAll(x, y) &&  map.isLiquidOfType(x, y, LiquidType::water) && map.getLiquidHeight(x, y) > playerLiquidThreshold);
-         lavaTileCount  += (map.isu(x, y, BlockType::sticky) || (map.isLiquidAtAll(x, y) && !map.isLiquidOfType(x, y, LiquidType::water) && map.getLiquidHeight(x, y) > playerLiquidThreshold));
+         if (map.isLiquidAtAll(x, y) && map.getLiquidHeight(x, y) > playerLiquidThreshold) {
+            waterTileCount += map.isLiquidOfType(x, y, LiquidType::water);
+            lavaTileCount  += map.isLiquidOfType(x, y, LiquidType::lava);
+            honeyTileCount += map.isLiquidOfType(x, y, LiquidType::honey);
+         }
+         honeyTileCount += map.isu(x, y, BlockType::sticky);
 
          if ((!map.isu(x, y, BlockType::solid) && !map.isPlatformedFurniture(x, y)) || ((map.isu(x, y, BlockType::platform) || map.isu(x, y, BlockType::furnitureTop)) && IsKeyDown(KEY_S))) {
             continue;
@@ -184,9 +195,13 @@ void Player::updateCollisions(Map &map) {
 
    for (int y = max(0, (int)position.y - 1); y < maxY; ++y) {
       for (int x = max(0, (int)position.x); x < maxX; ++x) {
-         // Necessary for the player sticking to sticky walls
-         waterTileCount += (map.isLiquidAtAll(x, y) &&  map.isLiquidOfType(x, y, LiquidType::water) && map.getLiquidHeight(x, y) > playerLiquidThreshold);
-         lavaTileCount  += (map.isu(x, y, BlockType::sticky) || (map.isLiquidAtAll(x, y) && !map.isLiquidOfType(x, y, LiquidType::water) && map.getLiquidHeight(x, y) > playerLiquidThreshold));
+         // Necessary to count in both loops for making the player stick to sticky walls
+         if (map.isLiquidAtAll(x, y) && map.getLiquidHeight(x, y) > playerLiquidThreshold) {
+            waterTileCount += map.isLiquidOfType(x, y, LiquidType::water);
+            lavaTileCount  += map.isLiquidOfType(x, y, LiquidType::lava);
+            honeyTileCount += map.isLiquidOfType(x, y, LiquidType::honey);
+         }
+         honeyTileCount += map.isu(x, y, BlockType::sticky);
 
          if ((!map.isu(x, y, BlockType::solid) && !map.isPlatformedFurniture(x, y)) || ((map.isu(x, y, BlockType::platform) || map.isu(x, y, BlockType::furnitureTop)) && !IsKeyDown(KEY_W))) {
             continue;
@@ -222,7 +237,9 @@ void Player::updateCollisions(Map &map) {
    position.x = clamp(position.x, 0.f, map.sizeX - playerSize.x);
    position.y = clamp(position.y, 0.f, map.sizeY - playerSize.y);
 
-   if (lavaTileCount > 0) {
+   if (honeyTileCount > 0) {
+      waterMultiplier = 0.5f;
+   } else if (lavaTileCount > 0) {
       waterMultiplier = .6f;
    } else if (waterTileCount > 0) {
       waterMultiplier = .85f;
@@ -230,9 +247,9 @@ void Player::updateCollisions(Map &map) {
       waterMultiplier = 1.f;
    }
 
-   hearts -= lavaTileCount / 2;
-   hearts += waterTileCount / 2;
-   hearts = clamp(hearts, 0, maxHearts);
+   if (lavaTileCount > 0) {
+      takeDamage(random(25, 45));
+   }
 
    if (!collisionY) {
       onGround = false;
@@ -277,6 +294,16 @@ void Player::updateAnimation() {
 
       walkTimer -= .04f;
    }
+}
+
+// Health functions
+
+void Player::takeDamage(int damage) {
+   if (immunityFrame > 0.0f) {
+      return;
+   }
+   hearts = max(0, hearts - damage);
+   immunityFrame = immunityTime;
 }
 
 // Render functions

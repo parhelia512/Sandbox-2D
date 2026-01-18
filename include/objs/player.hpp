@@ -15,6 +15,10 @@ struct Player {
    void updateCollisions(Map &map);
    void updateAnimation();
 
+   // Health functions
+
+   void takeDamage(int damage);
+
    // Render
 
    void render(float accumulator) const;
@@ -50,6 +54,7 @@ struct Player {
 
    int hearts = 100;
    int maxHearts = 100;
+   float immunityFrame = 0.0f;
 };
 
 #endif
