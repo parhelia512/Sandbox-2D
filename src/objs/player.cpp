@@ -230,6 +230,10 @@ void Player::updateCollisions(Map &map) {
       waterMultiplier = 1.f;
    }
 
+   hearts -= lavaTileCount / 2;
+   hearts += waterTileCount / 2;
+   hearts = clamp(hearts, 0, maxHearts);
+
    if (!collisionY) {
       onGround = false;
    }

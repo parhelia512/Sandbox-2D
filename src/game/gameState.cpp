@@ -8,6 +8,7 @@
 #include "util/parallax.hpp"
 #include "util/position.hpp"
 #include "util/random.hpp"
+#include "util/render.hpp"
 #include <raymath.h>
 #include <algorithm>
 #include <cmath>
@@ -217,7 +218,7 @@ void GameState::updatePhysics() {
 
       if (isMouseDownOutsideUI(MOUSE_BUTTON_LEFT)) {
          map.deleteBlock(mousePos.x, mousePos.y, drawWall);
-      } else if (isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT) && canDraw && !map.isu(mousePos.x, mousePos.y, BlockType::furniture)) {
+      } else if (isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT) && canDraw && ((drawWall && ftype == FurnitureType::none) || !map.isu(mousePos.x, mousePos.y, BlockType::furniture))) {
          if (ftype != FurnitureType::none) {
             generateFurniture(mousePos.x, mousePos.y, map, ftype, player.flipX);
          } else {
@@ -504,6 +505,42 @@ void GameState::renderUI() const {
       menuButton.render();
    }
    pauseButton.render();
+
+   // Render all of the hearts dynamically
+   Texture2D &heartIcon = getTexture("heart_icon");
+   Shader &grayscaleShader = getShader("grayscale");
+   
+   int heartValue = 20;
+   int counter = maxHearts / heartValue;
+   int heartsPerRow = 10;
+   float size = 25;
+   float padding = 5;
+
+   float startingX = GetScreenWidth() - size * heartsPerRow - padding * (heartsPerRow - 1) - 15;
+   float x = startingX;
+   float y = 15;
+
+   BeginShaderMode(grayscaleShader);
+   for (int i = 1; i <= counter; ++i) {
+      float a = 1.0f;
+      int value = i * heartValue;
+
+      if (value > player.hearts) {
+         a = 1.0f - min(1.0f, float(value - player.hearts) / heartValue);
+      } else if (value < player.hearts) {
+         a = 1.0f;
+      }
+
+      drawTextureNoOrigin(heartIcon, {x, y}, {size, size}, Fade(WHITE, a));
+      x += size + padding;
+
+      if (i % heartsPerRow == 0) {
+         y += size + padding;
+         x = startingX;
+      }
+   }
+   EndShaderMode();
+   drawText({800, 200}, std::to_string(player.hearts).c_str(), 20);
 }
 
 // Change states
