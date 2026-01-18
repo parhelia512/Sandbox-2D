@@ -10,7 +10,7 @@
 
 // Please increment after any breaking changes to warn players
 // about corrupted worlds
-constexpr int fileVersion = 4;
+constexpr int fileVersion = 5;
 
 // File functions
 
@@ -45,7 +45,7 @@ void saveLinesToFile(const std::string &path, const std::vector<std::string> &li
 // World saving functions
 // Save and load functions must follow the same data arrangement
 
-void saveWorldData(const std::string &name, float playerX, float playerY, float zoom, const Map &map, const Inventory *inventory, const std::vector<DroppedItem> *droppedItems) {
+void saveWorldData(const std::string &name, float playerX, float playerY, int hearts, int maxHearts, float zoom, const Map &map, const Inventory *inventory, const std::vector<DroppedItem> *droppedItems) {
    std::ofstream file ("data/worlds/" + name + ".bin", std::ios::binary);
    assert(file.is_open(), "Failed to save world 'data/worlds/{}.bin'.", name);
 
@@ -53,6 +53,8 @@ void saveWorldData(const std::string &name, float playerX, float playerY, float 
    file.write(reinterpret_cast<const char*>(&fileVersion), sizeof(fileVersion));
    file.write(reinterpret_cast<const char*>(&playerX), sizeof(playerX));
    file.write(reinterpret_cast<const char*>(&playerY), sizeof(playerY));
+   file.write(reinterpret_cast<const char*>(&hearts), sizeof(hearts));
+   file.write(reinterpret_cast<const char*>(&maxHearts), sizeof(maxHearts));
    file.write(reinterpret_cast<const char*>(&map.sizeX), sizeof(map.sizeX));
    file.write(reinterpret_cast<const char*>(&map.sizeY), sizeof(map.sizeY));
    file.write(reinterpret_cast<const char*>(&zoom), sizeof(zoom));
@@ -142,6 +144,8 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
    file.read(reinterpret_cast<char*>(&versionOfFile), sizeof(versionOfFile));
    file.read(reinterpret_cast<char*>(&player.position.x), sizeof(player.position.x));
    file.read(reinterpret_cast<char*>(&player.position.y), sizeof(player.position.y));
+   file.read(reinterpret_cast<char*>(&player.hearts), sizeof(player.hearts));
+   file.read(reinterpret_cast<char*>(&player.maxHearts), sizeof(player.maxHearts));
    file.read(reinterpret_cast<char*>(&map.sizeX), sizeof(map.sizeX));
    file.read(reinterpret_cast<char*>(&map.sizeY), sizeof(map.sizeY));
    file.read(reinterpret_cast<char*>(&zoom), sizeof(zoom));

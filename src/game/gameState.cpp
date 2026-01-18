@@ -53,7 +53,7 @@ GameState::GameState(const std::string &worldName)
 
 GameState::~GameState() {
    inventory.discardItem();
-   saveWorldData(worldName, player.position.x, player.position.y, camera.zoom, map, &inventory, &droppedItems);
+   saveWorldData(worldName, player.position.x, player.position.y, player.hearts, player.maxHearts, camera.zoom, map, &inventory, &droppedItems);
    resetBackground();
 }
 
@@ -511,36 +511,21 @@ void GameState::renderUI() const {
    Shader &grayscaleShader = getShader("grayscale");
    
    int heartValue = 20;
-   int counter = maxHearts / heartValue;
+   int counter = player.maxHearts / heartValue;
    int heartsPerRow = 10;
    float size = 25;
-   float padding = 5;
+   float padding = size + 5;
 
-   float startingX = GetScreenWidth() - size * heartsPerRow - padding * (heartsPerRow - 1) - 15;
-   float x = startingX;
-   float y = 15;
+   float startingX = GetScreenWidth() - size * heartsPerRow - 5 * (heartsPerRow - 1) - 15;
+   float startingY = 40;
 
    BeginShaderMode(grayscaleShader);
-   for (int i = 1; i <= counter; ++i) {
-      float a = 1.0f;
-      int value = i * heartValue;
-
-      if (value > player.hearts) {
-         a = 1.0f - min(1.0f, float(value - player.hearts) / heartValue);
-      } else if (value < player.hearts) {
-         a = 1.0f;
-      }
-
-      drawTextureNoOrigin(heartIcon, {x, y}, {size, size}, Fade(WHITE, a));
-      x += size + padding;
-
-      if (i % heartsPerRow == 0) {
-         y += size + padding;
-         x = startingX;
-      }
+   for (int i = 0; i < counter; ++i) {
+      float a = 1.0f - min(1.0f, float((i + 1) * heartValue - player.hearts) / heartValue);
+      drawTextureNoOrigin(heartIcon, {startingX + padding * (i % heartsPerRow), startingY + padding * int(i / heartsPerRow)}, {size, size}, Fade(WHITE, a));
    }
    EndShaderMode();
-   drawText({800, 200}, std::to_string(player.hearts).c_str(), 20);
+   drawText({startingX + (GetScreenWidth() - startingX) / 2.0f, startingY / 2.0f}, TextFormat("HP: %d/%d", player.hearts, player.maxHearts), 20);
 }
 
 // Change states

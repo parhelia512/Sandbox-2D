@@ -3,8 +3,6 @@
 
 #include "objs/map.hpp"
 
-constexpr inline int maxHearts = 500;
-
 struct Player {
    // Constructors
 
@@ -50,7 +48,8 @@ struct Player {
    bool flipX = false;
    bool sitting = false;
 
-   int hearts = maxHearts;
+   int hearts = 100;
+   int maxHearts = 100;
 };
 
 #endif
