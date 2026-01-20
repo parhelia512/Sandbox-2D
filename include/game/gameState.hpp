@@ -9,6 +9,8 @@
 // Game state
 
 struct GameState: public State {
+   enum class Phase {playing, paused, died};
+
    // Constructors
 
    GameState(const std::string &worldName);
@@ -19,9 +21,11 @@ struct GameState: public State {
    void update() override;
    void fixedUpdate() override;
 
-   void updatePauseScreen();
-   void updateControls();
-   void updatePhysics();
+   void updatePlaying();
+   void updatePausing();
+   void updateDying();
+
+   // Physics functions
 
    bool handleLiquidToBlock(int x, int y, LiquidType type, unsigned short blockId);
    void updateFluid(int x, int y);
@@ -34,18 +38,10 @@ struct GameState: public State {
    void updateDirtPhysics(int x, int y);
    void updateTorchPhysics(int x, int y);
 
-   // Render
+   // Other
 
    void render() const override;
-   void renderGame() const;
-   void renderUI() const;
-
-   // Change states
-
    State* change() override;
-
-   // Helpler functions
-
    void calculateCameraBounds();
 
    // Members
@@ -57,14 +53,17 @@ struct GameState: public State {
 
    Camera2D camera;
    Rectangle cameraBounds;
+   Vector2 playerSpawnPosition;
 
    Inventory inventory;
    Button continueButton, menuButton, pauseButton;
 
    std::vector<DroppedItem> droppedItems;
    std::string worldName;
+   Phase phase = Phase::playing;
+   Phase phaseBeforePausing = Phase::playing;
 
-   bool paused = false;
+   float deathTimer = 0.0f;
    int physicsCounter = 0;
    int lavaCounter = 0;
    int honeyCounter = 0;

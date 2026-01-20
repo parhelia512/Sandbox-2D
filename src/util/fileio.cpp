@@ -10,7 +10,7 @@
 
 // Please increment after any breaking changes to warn players
 // about corrupted worlds
-constexpr int fileVersion = 6;
+constexpr int fileVersion = 7;
 
 // File functions
 
@@ -45,14 +45,16 @@ void saveLinesToFile(const std::string &path, const std::vector<std::string> &li
 // World saving functions
 // Save and load functions must follow the same data arrangement
 
-void saveWorldData(const std::string &name, float playerX, float playerY, int breath, int hearts, int maxHearts, float zoom, const Map &map, const Inventory *inventory, const std::vector<DroppedItem> *droppedItems) {
+void saveWorldData(const std::string &name, const Vector2 &playerSpawnPosition, const Vector2 &position, int breath, int hearts, int maxHearts, float zoom, const Map &map, const Inventory *inventory, const std::vector<DroppedItem> *droppedItems) {
    std::ofstream file ("data/worlds/" + name + ".bin", std::ios::binary);
    assert(file.is_open(), "Failed to save world 'data/worlds/{}.bin'.", name);
 
    // Write basic data
    file.write(reinterpret_cast<const char*>(&fileVersion), sizeof(fileVersion));
-   file.write(reinterpret_cast<const char*>(&playerX), sizeof(playerX));
-   file.write(reinterpret_cast<const char*>(&playerY), sizeof(playerY));
+   file.write(reinterpret_cast<const char*>(&playerSpawnPosition.x), sizeof(playerSpawnPosition.x));
+   file.write(reinterpret_cast<const char*>(&playerSpawnPosition.y), sizeof(playerSpawnPosition.y));
+   file.write(reinterpret_cast<const char*>(&position.x), sizeof(position.x));
+   file.write(reinterpret_cast<const char*>(&position.y), sizeof(position.y));
    file.write(reinterpret_cast<const char*>(&breath), sizeof(breath));
    file.write(reinterpret_cast<const char*>(&hearts), sizeof(hearts));
    file.write(reinterpret_cast<const char*>(&maxHearts), sizeof(maxHearts));
@@ -136,13 +138,15 @@ void saveWorldData(const std::string &name, float playerX, float playerY, int br
 
 // World loading functions
 
-void loadWorldData(const std::string &name, Player &player, float &zoom, Map &map, Inventory &inventory, std::vector<DroppedItem> &droppedItems) {
+void loadWorldData(const std::string &name, Vector2 &playerSpawnPosition, Player &player, float &zoom, Map &map, Inventory &inventory, std::vector<DroppedItem> &droppedItems) {
    std::ifstream file ("data/worlds/" + name + ".bin", std::ios::binary);
    assert(file.is_open(), "Failed to load world 'data/worlds/{}.bin'.", name);
 
    // Read basic data
    int versionOfFile = 0;
    file.read(reinterpret_cast<char*>(&versionOfFile), sizeof(versionOfFile));
+   file.read(reinterpret_cast<char*>(&playerSpawnPosition.x), sizeof(playerSpawnPosition.x));
+   file.read(reinterpret_cast<char*>(&playerSpawnPosition.y), sizeof(playerSpawnPosition.y));
    file.read(reinterpret_cast<char*>(&player.position.x), sizeof(player.position.x));
    file.read(reinterpret_cast<char*>(&player.position.y), sizeof(player.position.y));
    file.read(reinterpret_cast<char*>(&player.breath), sizeof(player.breath));

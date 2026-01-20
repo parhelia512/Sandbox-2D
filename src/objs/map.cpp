@@ -361,7 +361,9 @@ void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &pla
    }
 
    // Render the player
-   player.render(accumulator);
+   if (player.hearts != 0) {
+      player.render(accumulator);
+   }
 
    for (const DroppedItem &droppedItem : droppedItems) {
       droppedItem.render();

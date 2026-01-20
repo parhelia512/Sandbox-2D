@@ -26,137 +26,7 @@ constexpr int honeyUpdateSpeed  = 4; // Honey updates 2x slower than lava
 constexpr int grassGrowSpeedMin = 100;
 constexpr int grassGrowSpeedMax = 255;
 
-// Constructors
-
-GameState::GameState(const std::string &worldName)
-: backgroundTexture(getRandomBackground()), foregroundTexture(getRandomForeground()), inventory(map, player, droppedItems), worldName(worldName) {
-   const Vector2 center = getScreenCenter();
-   
-   // Init world and camera
-   loadWorldData(worldName, player, camera.zoom, map, inventory, droppedItems);
-
-   camera.zoom = clamp(camera.zoom, minCameraZoom, maxCameraZoom);
-   camera.target = player.getCenter();
-   camera.offset = center;
-   camera.rotation = 0.0f;
-   calculateCameraBounds();
-
-   // Init UI
-   continueButton.rectangle = {center.x, center.y, buttonWidth, buttonHeight};
-   continueButton.text = "Continue";
-   menuButton.rectangle = {continueButton.rectangle.x, continueButton.rectangle.y + buttonPaddingY, buttonWidth, buttonHeight};
-   menuButton.text = "Save & Quit";
-   pauseButton.rectangle = {GetScreenWidth() - buttonWidth / 2.f + 10.0f, GetScreenHeight() - buttonHeight / 2.f, buttonWidth, buttonHeight};
-   pauseButton.text = "Pause";
-   continueButton.texture = menuButton.texture = &getTexture("button");
-}
-
-GameState::~GameState() {
-   inventory.discardItem();
-   saveWorldData(worldName, player.position.x, player.position.y, player.breath, player.hearts, player.maxHearts, camera.zoom, map, &inventory, &droppedItems);
-   resetBackground();
-}
-
-// Update
-
-void GameState::update() {
-   updatePauseScreen();
-   updateControls();
-   updatePhysics();
-}
-
-void GameState::fixedUpdate() {
-   camera.target = lerp(camera.target, player.getCenter(), cameraFollowSpeed);
-
-   if (paused) {
-      return;
-   }
-   player.updatePlayer(map);
-   
-   // Update physics
-   physicsCounter = (physicsCounter + 1) % physicsTicks;
-   if (physicsCounter != 0) {
-      return;
-   }
-
-   lavaCounter = (lavaCounter + 1) % lavaUpdateSpeed;
-   honeyCounter = (honeyCounter + 1) % honeyUpdateSpeed;
-   bool updateLava = (lavaCounter == 0);
-   bool updateHoney = (honeyCounter == 0);
-
-   Rectangle physicsBounds = cameraBounds;
-   Vector2 halfSize = {(cameraBounds.width - cameraBounds.x) / 2.0f, (cameraBounds.height - cameraBounds.y) / 2.0f};
-   physicsBounds.x = max<int>(0, cameraBounds.x - halfSize.x);
-   physicsBounds.y = max<int>(0, cameraBounds.y - halfSize.y);
-   physicsBounds.width = min<int>(map.sizeX - 1, cameraBounds.width + halfSize.x);
-   physicsBounds.height = min<int>(map.sizeY - 1, cameraBounds.height + halfSize.y);
-
-   // Loop backwards to avoid updating most of the moving blocks twice
-   for (int y = physicsBounds.height; y >= physicsBounds.y; --y) {
-      for (int x = physicsBounds.width; x >= physicsBounds.x; --x) {
-         BlockType type = map.blocks[y][x].type;
-
-         if (map.isLiquidAtAll(x, y)) {
-            if (map.isLiquidOfType(x, y, LiquidType::water)) {
-               updateWaterPhysics(x, y);
-            } else if (updateLava && map.isLiquidOfType(x, y, LiquidType::lava)) {
-               updateLavaPhysics(x, y);
-            } else if (updateHoney && map.isLiquidOfType(x, y, LiquidType::honey)) {
-               updateHoneyPhysics(x, y);
-            }
-         }
-
-         if (type & BlockType::sand) {
-            updateSandPhysics(x, y);
-         } else if (type & BlockType::grass) {
-            updateGrassPhysics(x, y);
-         } else if (type & BlockType::dirt) {
-            updateDirtPhysics(x, y);
-         } else if (type & BlockType::torch) {
-            updateTorchPhysics(x, y);
-         }
-      }
-   }
-}
-
-// Update pause screen
-
-void GameState::updatePauseScreen() {
-   pauseButton.update(dt);
-   if (pauseButton.clicked || handleKeyPressWithSound(KEY_ESCAPE)) {
-      paused = !paused;
-   }
-
-   if (!paused) {
-      return;
-   }
-
-   continueButton.update(dt);
-   menuButton.update(dt);
-
-   if (continueButton.clicked) {
-      paused = false;
-   }
-
-   if (menuButton.clicked) {
-      fadingOut = true;
-   }
-}
-
-// Update controls
-
-void GameState::updateControls() {
-   if (!paused) {
-      const float zoomFactor = isKeyPressed(KEY_EQUAL) - isKeyPressed(KEY_MINUS);
-      if (zoomFactor != 0.f) {
-         camera.zoom = std::clamp<float>(std::exp(std::log(camera.zoom) + zoomFactor * 0.2f), minCameraZoom, maxCameraZoom);
-      }
-      inventory.update();
-   }
-   calculateCameraBounds();
-}
-
-// Update physics
+constexpr float timeToRespawn = 10.0f;
 
 /************************************/
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
@@ -181,11 +51,124 @@ inline FurnitureType getFurnitureType() {
 }
 /************************************/
 
-void GameState::updatePhysics() {
-   if (paused) {
+// Constructors
+
+GameState::GameState(const std::string &worldName)
+: backgroundTexture(getRandomBackground()), foregroundTexture(getRandomForeground()), inventory(map, player, droppedItems), worldName(worldName) {
+   const Vector2 center = getScreenCenter();
+   
+   // Init world and camera
+   loadWorldData(worldName, playerSpawnPosition, player, camera.zoom, map, inventory, droppedItems);
+
+   camera.zoom = clamp(camera.zoom, minCameraZoom, maxCameraZoom);
+   camera.target = player.getCenter();
+   camera.offset = center;
+   camera.rotation = 0.0f;
+   calculateCameraBounds();
+
+   // Init UI
+   continueButton.rectangle = {center.x, center.y, buttonWidth, buttonHeight};
+   continueButton.text = "Continue";
+   menuButton.rectangle = {continueButton.rectangle.x, continueButton.rectangle.y + buttonPaddingY, buttonWidth, buttonHeight};
+   menuButton.text = "Save & Quit";
+   pauseButton.rectangle = {GetScreenWidth() - buttonWidth / 2.f + 10.0f, GetScreenHeight() - buttonHeight / 2.f, buttonWidth, buttonHeight};
+   pauseButton.text = "Pause";
+   continueButton.texture = menuButton.texture = &getTexture("button");
+}
+
+GameState::~GameState() {
+   inventory.discardItem();
+   saveWorldData(worldName, playerSpawnPosition, player.position, player.breath, player.hearts, player.maxHearts, camera.zoom, map, &inventory, &droppedItems);
+   resetBackground();
+}
+
+// Update
+
+void GameState::update() {
+   if (phase != Phase::died) {
+      pauseButton.update(dt);
+      if (pauseButton.clicked || handleKeyPressWithSound(KEY_ESCAPE)) {
+         phase = (phase == Phase::paused ? Phase::playing : Phase::paused);
+      }
+   }
+
+   switch (phase) {
+   case Phase::playing: updatePlaying(); break;
+   case Phase::paused:  updatePausing(); break;
+   case Phase::died:    updateDying();   break;
+   }
+}
+
+void GameState::fixedUpdate() {
+   camera.target = lerp(camera.target, player.getCenter(), cameraFollowSpeed);
+   if (phase == Phase::paused) {
       return;
    }
+
+   if (player.hearts == 0) {
+      phase = Phase::died;
+      calculateCameraBounds(); // Make sure the camera does not go out of bounds
+   } else {
+      player.updatePlayer(map);
+   }
    
+   // Update physics
+   physicsCounter = (physicsCounter + 1) % physicsTicks;
+   if (physicsCounter != 0) {
+      return;
+   }
+
+   lavaCounter = (lavaCounter + 1) % lavaUpdateSpeed;
+   honeyCounter = (honeyCounter + 1) % honeyUpdateSpeed;
+
+   Rectangle physicsBounds = cameraBounds;
+   Vector2 halfSize = {(cameraBounds.width - cameraBounds.x) / 2.0f, (cameraBounds.height - cameraBounds.y) / 2.0f};
+   physicsBounds.x = max<int>(0, cameraBounds.x - halfSize.x);
+   physicsBounds.y = max<int>(0, cameraBounds.y - halfSize.y);
+   physicsBounds.width = min<int>(map.sizeX - 1, cameraBounds.width + halfSize.x);
+   physicsBounds.height = min<int>(map.sizeY - 1, cameraBounds.height + halfSize.y);
+
+   // Loop backwards to avoid updating most of the moving blocks twice
+   for (int y = physicsBounds.height; y >= physicsBounds.y; --y) {
+      for (int x = physicsBounds.width; x >= physicsBounds.x; --x) {
+         if (map.isLiquidAtAll(x, y)) {
+            if (map.isLiquidOfType(x, y, LiquidType::water)) {
+               updateWaterPhysics(x, y);
+            } else if (lavaCounter == 0 && map.isLiquidOfType(x, y, LiquidType::lava)) {
+               updateLavaPhysics(x, y);
+            } else if (honeyCounter == 0 && map.isLiquidOfType(x, y, LiquidType::honey)) {
+               updateHoneyPhysics(x, y);
+            }
+         }
+
+         BlockType type = map.blocks[y][x].type;
+         if (type & BlockType::sand) {
+            updateSandPhysics(x, y);
+         } else if (type & BlockType::grass) {
+            updateGrassPhysics(x, y);
+         } else if (type & BlockType::dirt) {
+            updateDirtPhysics(x, y);
+         } else if (type & BlockType::torch) {
+            updateTorchPhysics(x, y);
+         }
+      }
+   }
+}
+
+// Update playing
+
+void GameState::updatePlaying() {
+   const float zoomFactor = isKeyPressed(KEY_EQUAL) - isKeyPressed(KEY_MINUS);
+   if (zoomFactor != 0.f) {
+      camera.zoom = std::clamp<float>(std::exp(std::log(camera.zoom) + zoomFactor * 0.2f), minCameraZoom, maxCameraZoom);
+   }
+   inventory.update();
+   calculateCameraBounds();
+
+   if (phase != Phase::playing) {
+      return;
+   }
+
    // Update furniture
    const Vector2 translatedMousePos = GetScreenToWorld2D(GetMousePosition(), camera);
    for (Furniture &obj: map.furniture) {
@@ -262,6 +245,38 @@ void GameState::updatePhysics() {
       droppedItems.erase(std::remove_if(droppedItems.begin(), droppedItems.end(), [](DroppedItem &i) -> bool {
          return i.flagForDeletion || i.count <= 0;
       }), droppedItems.end());
+   }
+}
+
+// Update pause screen
+
+void GameState::updatePausing() {
+   continueButton.update(dt);
+   menuButton.update(dt);
+
+   if (continueButton.clicked) {
+      phase = Phase::playing;
+   }
+
+   if (menuButton.clicked) {
+      fadingOut = true;
+   }
+}
+
+// Update death screen
+
+void GameState::updateDying() {
+   deathTimer += realDt;
+   if (deathTimer >= timeToRespawn) {
+      player.previousPosition = player.position = playerSpawnPosition;
+      player.hearts = player.maxHearts;
+      player.breath = maxBreath;
+      player.velocity = {0, 0};
+      player.immunityFrame = 1.2f; // Give the player a second of immunity
+
+      camera.target = player.getCenter();
+      phase = Phase::playing;
+      deathTimer = 0.0f;
    }
 }
 
@@ -342,9 +357,9 @@ void GameState::updateFluid(int x, int y) {
    }
 }
 
-// Since lava updates 3x slower and in batch, make water turn
-// nearby tiles into obsidian
 void GameState::updateWaterPhysics(int x, int y) {
+   // Since lava updates 2x slower and in batch, make water turn
+   // nearby tiles into obsidian
    if (handleLiquidToBlock(x, y, LiquidType::lava, getBlockIdFromName("obsidian"))) {
       if (handleLiquidToBlock(x, y, LiquidType::honey, getBlockIdFromName("honey_block"))) {
          updateFluid(x, y);
@@ -353,6 +368,8 @@ void GameState::updateWaterPhysics(int x, int y) {
 }
 
 void GameState::updateLavaPhysics(int x, int y) {
+   // Same with honey. It on purpose updates 2x slower than lava,
+   // to make preventing liquid clashes easier
    if (handleLiquidToBlock(x, y, LiquidType::honey, getBlockIdFromName("crispy_honey_block"))) {
       updateFluid(x, y);
    }
@@ -455,18 +472,18 @@ void GameState::updateTorchPhysics(int x, int y) {
 // Render
 
 void GameState::render() const {
-   const float delta = (paused ? 0 : player.delta.x * dt);
-   drawBackground(foregroundTexture, backgroundTexture, delta, delta, (paused ? 0.0f : 1.0f) * dt);
+   const float delta = (phase != Phase::playing ? 0 : player.delta.x * dt);
+   drawBackground(foregroundTexture, backgroundTexture, delta, delta, (phase == Phase::paused ? 0.0f : 1.0f) * dt);
 
-   renderGame();
-   renderUI();
-}
-
-// Render game
-
-void GameState::renderGame() const {
    BeginMode2D(camera);
    map.render(droppedItems, player, accumulator, cameraBounds, camera);
+
+   if (phase == Phase::died) {
+      EndMode2D();
+      drawText(getScreenCenter({0, -30.0f}), "YOU'VE DIED!", 120, RED);
+      drawText(getScreenCenter({0, 30.0f}), TextFormat("RESPAWN IN %d...", int(timeToRespawn - deathTimer)), 50, RED);
+      return;
+   }
 
    /************************************/
    // Scary method of rendering furniture and block preview correctly
@@ -492,11 +509,7 @@ void GameState::renderGame() const {
       }
    }
    /************************************/
-}
 
-// Render UI
-
-void GameState::renderUI() const {
    // Render breath dynamically
    if (player.breath != maxBreath) {
       Texture2D &bubbleIcon = getTexture("bubble_icon");
@@ -538,7 +551,7 @@ void GameState::renderUI() const {
    // Render other game UI
    inventory.render();
 
-   if (paused) {
+   if (phase == Phase::paused) {
       continueButton.render();
       menuButton.render();
    }
