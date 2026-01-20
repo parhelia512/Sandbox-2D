@@ -135,7 +135,9 @@ void Player::updateCollisions(Map &map) {
 
    bool collisionY = false;
    bool canGoUpSlopes = true;
-   bool liquidsAboveHead = false;
+   int liquidsAboveHead = 0;
+   int blocksInHeadX1 = 0;
+   int blocksInHeadX2 = 0;
    int waterTileCount = 0;
    int lavaTileCount = 0;
    int honeyTileCount = 0;
@@ -171,6 +173,10 @@ void Player::updateCollisions(Map &map) {
          if (!CheckCollisionRecs({position.x, position.y, playerSize.x, playerSize.y}, {(float)x, (float)y, 1.f, 1.f})) {
             continue;
          }
+
+         // Not necessary in both loops
+         blocksInHeadX1 += (y <= position.y + 1.0f && x >= position.x + playerSize.x / 2.0f);
+         blocksInHeadX2 += (y <= position.y + 1.0f && x <  position.x + playerSize.x / 2.0f);
 
          if (previousPosition.y >= y + 1.f && !map.isu(x, y, BlockType::platform)) {
             velocity.y = max(0.f, velocity.y);
@@ -252,7 +258,7 @@ void Player::updateCollisions(Map &map) {
 
    breathFrameCounter = (breathFrameCounter + 1) % framesToUpdateBreath;
    if (breathFrameCounter == 0) {
-      if (liquidsAboveHead) {
+      if (liquidsAboveHead || (blocksInHeadX1 && blocksInHeadX2)) {
          breath = max(0, breath - 2);
       } else {
          breath = min(maxBreath, breath + 1);
