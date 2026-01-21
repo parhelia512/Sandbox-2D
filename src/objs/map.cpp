@@ -1,9 +1,11 @@
+#include "game/state.hpp"
 #include "mngr/resource.hpp"
 #include "objs/map.hpp"
 #include "objs/item.hpp"
 #include "objs/player.hpp"
 #include "util/format.hpp"
 #include "util/parallax.hpp"
+#include "util/random.hpp"
 #include "util/render.hpp"
 #include <array>
 #include <cmath>
@@ -129,6 +131,12 @@ void Map::init() {
 
 Map::~Map() {
    UnloadRenderTexture(lightmap);
+}
+
+// Add damage indicator
+
+void Map::addDamageIndicator(const Vector2 &position, int damage, bool critical) {
+   damageIndicators.push_back({position, {random(-10.0f, 10.0f) * fixedUpdateDT, -5.0f * fixedUpdateDT}, 0.0f, damage, critical});
 }
 
 // Set block functions

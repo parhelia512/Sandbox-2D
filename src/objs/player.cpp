@@ -31,8 +31,8 @@ constexpr float immunityTime             = 0.4f;
 constexpr float timeToStartRegenerating  = 15.0f;
 constexpr float timeToRampUpRegeneration = 10.0f;
 constexpr float regenSpeedInHoney        = 1.8f;
-constexpr int framesToRegenerateOnce     = 20;
-constexpr int framesToUpdateBreath       = 10;
+constexpr int   framesToRegenerateOnce   = 20;
+constexpr int   framesToUpdateBreath     = 10;
 
 constexpr float minimumFallHeight = 35.0f;
 constexpr float maximumFallHeight = 110.0f;
@@ -41,6 +41,8 @@ constexpr float maximumFallDamage = 500.0f;
 // Constructors
 
 void Player::init() {
+   lastHearts = hearts;
+   timeSinceLastDamage = immunityTime; // Prevent player from spawning in red
    delta = velocity = {0, 0};
    previousPosition = position;
 }
@@ -48,6 +50,8 @@ void Player::init() {
 // Update
 
 void Player::updatePlayer(Map &map) {
+   lastHearts = hearts;
+   
    updateMovement();
    updateCollisions(map);
    updateAnimation();
@@ -269,7 +273,7 @@ void Player::updateCollisions(Map &map) {
    // Ignore fall damage if player is touching liquids or didn't fall
    // from that great of a height
    if (!wasOnGround && onGround && !shouldBounce && honeyTileCount + lavaTileCount + waterTileCount == 0 && position.y - maximumY >= minimumFallHeight) {
-      takeDamage(min(1.0f, ((position.y - maximumY) - minimumFallHeight) / (maximumFallHeight - minimumFallHeight)) * maximumFallDamage);
+      takeDamage(map, min(1.0f, ((position.y - maximumY) - minimumFallHeight) / (maximumFallHeight - minimumFallHeight)) * maximumFallDamage, 0, 0.0f);
    }
 
    breathFrameCounter = (breathFrameCounter + 1) % framesToUpdateBreath;
@@ -281,7 +285,7 @@ void Player::updateCollisions(Map &map) {
       }
 
       if (breath == 0) {
-         takeDamage(random(1, 3));
+         takeDamage(map, random(1, 2), 0, 0.0f);
       }
    }
 
@@ -296,7 +300,7 @@ void Player::updateCollisions(Map &map) {
    }
 
    if (lavaTileCount > 0) {
-      takeDamage(random(25, 45));
+      takeDamage(map, random(20, 30), 25, 1.2f);
    }
 
    // Get other things right
@@ -354,18 +358,21 @@ void Player::updateAnimation() {
 
 // Health functions
 
-void Player::takeDamage(int damage) {
+void Player::takeDamage(Map &map, int damage, int critChance, float critDamage) {
    if (immunityFrame > 0.0f) {
       return;
    }
+   bool critical = chance(critChance);
+   int damageApplied = damage * (critical ? critDamage : 1.0f);
+
    hearts = max(0, hearts - damage);
    immunityFrame = immunityTime;
    timeSinceLastDamage = timeSpentRegenerating = 0.0f;
+   map.addDamageIndicator(getCenter(), damageApplied, critical);
 }
 
 void Player::handleRegeneration() {
    if (hearts == maxHearts) {
-      timeSinceLastDamage = timeSpentRegenerating = 0.0f;
       return;
    }
 
@@ -387,7 +394,7 @@ void Player::handleRegeneration() {
 void Player::render(float accumulator) const {
    Texture2D &texture = getTexture("player");
    const Vector2 drawPos = lerp(previousPosition, position, accumulator / fixedUpdateDT);
-   DrawTexturePro(texture, {frameX * playerFrameSize, 0.f, (flipX ? -playerFrameSize : playerFrameSize), (float)texture.height}, {drawPos.x, drawPos.y, playerSize.x, playerSize.y}, {0, 0}, 0, WHITE);
+   DrawTexturePro(texture, {frameX * playerFrameSize, 0.f, (flipX ? -playerFrameSize : playerFrameSize), (float)texture.height}, {drawPos.x, drawPos.y, playerSize.x, playerSize.y}, {0, 0}, 0, (timeSinceLastDamage <= 0.3f ? RED : WHITE));
 }
 
 // Getter functions

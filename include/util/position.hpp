@@ -12,5 +12,6 @@ Rectangle getBox(const Texture &texture);
 Rectangle getCameraBounds(const Camera2D &camera);
 
 Vector2 lerp(const Vector2 &a, const Vector2 &b, float t);
+Color lerp(const Color &a, const Color &b, float t);
 
 #endif

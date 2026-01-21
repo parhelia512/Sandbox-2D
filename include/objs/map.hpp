@@ -8,10 +8,11 @@
 
 constexpr inline Color wallTint = {120, 120, 120, 255};
 
-constexpr inline unsigned char maxLiquidLayers        = 32;
-constexpr inline unsigned char minLiquidLayers        = maxLiquidLayers / 8;
-constexpr inline unsigned char liquidToBlockThreshold = maxLiquidLayers / 4;
-constexpr inline unsigned char playerLiquidThreshold  = maxLiquidLayers / 2;
+constexpr inline unsigned char maxLiquidLayers         = 32;
+constexpr inline unsigned char minLiquidLayers         = maxLiquidLayers / 8;
+constexpr inline unsigned char liquidToBlockThreshold  = maxLiquidLayers / 4;
+constexpr inline unsigned char playerLiquidThreshold   = maxLiquidLayers / 2;
+constexpr inline float         damageIndicatorLifetime = 1.0f;
 
 // Block
 
@@ -78,6 +79,15 @@ struct Block {
 unsigned short getBlockIdFromName(const std::string &name);
 std::string getBlockNameFromId(unsigned short id);
 
+// Damage indicator
+
+struct DamageIndicator {
+   Vector2 position, velocity;
+   float lifetime = 0.0f;
+   int damage = 0;
+   bool critical = false;
+};
+
 // Map
 
 struct Map {   
@@ -85,6 +95,10 @@ struct Map {
 
    void init();
    ~Map();
+
+   // Add damage indicator
+
+   void addDamageIndicator(const Vector2 &position, int damage, bool critical);
 
    // Set block functions
 
@@ -137,6 +151,8 @@ struct Map {
 
    std::vector<std::vector<unsigned char>> liquidsHeights;
    std::vector<std::vector<LiquidType>>    liquidTypes;
+
+   std::vector<DamageIndicator> damageIndicators;
 
    int sizeX = 0;
    int sizeY = 0;

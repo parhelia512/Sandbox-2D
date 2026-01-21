@@ -31,3 +31,13 @@ Rectangle getCameraBounds(const Camera2D &camera) {
 Vector2 lerp(const Vector2 &a, const Vector2 &b, float t) {
    return Vector2Add(a, Vector2Scale(Vector2Subtract(b, a), Clamp(t, 0, 1)));
 }
+
+Color lerp(const Color &a, const Color &b, float t) {
+   float i = 1.0f - t;
+   return Color{
+      static_cast<unsigned char>(a.r * t + b.r * i),
+      static_cast<unsigned char>(a.g * t + b.g * i),
+      static_cast<unsigned char>(a.b * t + b.b * i),
+      a.a,
+   };
+}

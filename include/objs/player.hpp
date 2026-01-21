@@ -20,7 +20,7 @@ struct Player {
 
    // Health functions
 
-   void takeDamage(int damage);
+   void takeDamage(Map &map, int damage, int critChance = 0, float critDamage = 0.0f);
    void handleRegeneration();
 
    // Render
@@ -60,6 +60,7 @@ struct Player {
    int breathFrameCounter = 0;
    int breath = maxBreath;
 
+   int lastHearts = 100;
    int hearts = 100;
    int maxHearts = 100;
    int regenerationFrameCounter = 0;

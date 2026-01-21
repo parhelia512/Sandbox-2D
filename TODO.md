@@ -5,11 +5,9 @@
 
 ### Survival
 - Add damage indicators and some cool effects.
-- - Damage indicators (numbers falling off)
-- - Flash white or red
 - - Heart and bubble sine wave effects
-- - change bubble sprite (less saturated)
 - - Add a cool animation whenever you spawn in
+- - Death particles
 
 ### Furniture
 - Add furniture with chest logic.

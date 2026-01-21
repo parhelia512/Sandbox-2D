@@ -4,6 +4,7 @@
 #include "mngr/input.hpp"
 #include "mngr/sound.hpp"
 #include "util/fileio.hpp"
+#include "util/format.hpp"
 #include "util/math.hpp"
 #include "util/parallax.hpp"
 #include "util/position.hpp"
@@ -112,7 +113,20 @@ void GameState::fixedUpdate() {
    } else {
       player.updatePlayer(map);
    }
-   
+
+   for (DamageIndicator &indicator: map.damageIndicators) {
+      indicator.velocity.y += 0.25f * fixedUpdateDT;
+      indicator.velocity.x *= 0.9f; // Drag
+
+      indicator.position.x += indicator.velocity.x;
+      indicator.position.y += indicator.velocity.y;
+      indicator.lifetime += fixedUpdateDT;
+   }
+
+   map.damageIndicators.erase(std::remove_if(map.damageIndicators.begin(), map.damageIndicators.end(), [](DamageIndicator &i) -> bool {
+      return i.lifetime >= damageIndicatorLifetime || i.damage <= 0.0f;
+   }), map.damageIndicators.end());   
+
    // Update physics
    physicsCounter = (physicsCounter + 1) % physicsTicks;
    if (physicsCounter != 0) {
@@ -273,7 +287,9 @@ void GameState::updateDying() {
       player.hearts = player.maxHearts;
       player.breath = maxBreath;
       player.velocity = {0, 0};
-      player.immunityFrame = 1.2f; // Give the player a second of immunity
+      player.timeSinceLastDamage = player.immunityFrame = 1.2f; // Give the player a second of immunity
+      player.onGround = player.shouldBounce = player.feetCollision = player.torsoCollision = false;
+      player.fallTimer = player.walkTimer = player.jumpTimer = player.coyoteTimer = player.foxTimer = 0.0f;
 
       camera.target = player.getCenter();
       phase = Phase::playing;
@@ -479,10 +495,14 @@ void GameState::render() const {
    BeginMode2D(camera);
    map.render(droppedItems, player, accumulator, cameraBounds, camera);
 
+   for (const DamageIndicator &indicator: map.damageIndicators) {
+      drawText(indicator.position, std::to_string(indicator.damage).c_str(), 1.0f, (indicator.critical ? YELLOW : RED), 0.1f);
+   }
+
    if (phase == Phase::died) {
       EndMode2D();
       drawText(getScreenCenter({0, -30.0f}), "YOU'VE DIED!", 120, RED);
-      drawText(getScreenCenter({0, 30.0f}), TextFormat("RESPAWN IN %d...", int(timeToRespawn - deathTimer)), 50, RED);
+      drawText(getScreenCenter({0, 30.0f}), format("RESPAWN IN {}...", int(timeToRespawn - deathTimer)).c_str(), 50, RED);
       return;
    }
 
@@ -547,7 +567,7 @@ void GameState::render() const {
       drawTextureNoOrigin(heartIcon, {startingX + padding * (i % heartsPerRow), startingY + padding * int(i / heartsPerRow)}, {size, size}, Fade(WHITE, a));
    }
    EndShaderMode();
-   drawText({startingX + (GetScreenWidth() - startingX) / 2.0f, startingY / 2.0f}, TextFormat("HP: %d/%d, RG: %.1f/%.1f/%.1f", player.hearts, player.maxHearts, player.timeSinceLastDamage, player.timeSpentRegenerating, player.regeneration), 20);
+   drawText({startingX + (GetScreenWidth() - startingX) / 2.0f, startingY / 2.0f}, format("HP: {}/{}", player.hearts, player.maxHearts).c_str(), 20);
 
    // Render other game UI
    inventory.render();
