@@ -42,15 +42,13 @@ MapGenerator::MapGenerator(const std::string &name, int sizeX, int sizeY, bool i
    : infoTextMutex(infoTextMutex), infoText(infoText), progress(progress), name(name), isFlat(isFlat) {
    map.sizeX = sizeX;
    map.sizeY = sizeY;
+   map.init();
    setInfo("Initializing...", 0.0f);
 }
 
 // Generation functions
 
 void MapGenerator::generate() {
-   // Takes too long, better to put it in a thread!
-   map.init();
-
    setInfo("Seeding Noise...", 0.0f);
    if (!isFlat) {
       biomeTemperatureNoise.reseed(rand());
