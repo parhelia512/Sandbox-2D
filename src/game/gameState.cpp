@@ -33,7 +33,7 @@ constexpr float timeToRespawn = 10.0f;
 /************************************/
 // Temporary way to switch, delete and place blocks. blockMap blocks must be in the same order as
 // the blockIds map in objs/block.cpp. Everything between these multi-comments is temporary.
-static int index = 0;
+static int blockIndex = 0;
 static int size = 29;
 static const char *blockMap[] {
    "grass", "dirt", "clay", "stone", "sand", "sandstone", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian",
@@ -50,7 +50,7 @@ inline FurnitureType getFurnitureType() {
       {si, FurnitureType::sapling}, {si + 1, FurnitureType::cactusSeed}, {si + 2, FurnitureType::table}, {si + 3, FurnitureType::chair},
       {si + 4, FurnitureType::door},
    }};
-   return ftypes.count(index) ? ftypes[index] : FurnitureType::none;
+   return ftypes.count(blockIndex) ? ftypes[blockIndex] : FurnitureType::none;
 }
 /************************************/
 
@@ -205,11 +205,11 @@ void GameState::updatePlaying() {
    Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
 
    if (isKeyPressed(KEY_Y)) {
-      index = (index + 1) % size;
+      blockIndex = (blockIndex + 1) % size;
    }
 
    if (isKeyPressed(KEY_T)) {
-      index = (index == 0 ? size - 1 : index - 1);
+      blockIndex = (blockIndex == 0 ? size - 1 : blockIndex - 1);
    }
 
    if (isKeyPressed(KEY_R)) {
@@ -226,10 +226,10 @@ void GameState::updatePlaying() {
          if (ftype != FurnitureType::none) {
             generateFurniture(mousePos.x, mousePos.y, map, ftype, player.flipX);
          } else {
-            map.setBlock(mousePos.x, mousePos.y, blockMap[index], drawWall);
+            map.setBlock(mousePos.x, mousePos.y, blockMap[blockIndex], drawWall);
          }
       } else if (isMousePressedOutsideUI(MOUSE_BUTTON_MIDDLE) && !((drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].type & BlockType::empty)) {
-         index = (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].id - 1;
+         blockIndex = (drawWall ? map.walls : map.blocks)[mousePos.y][mousePos.x].id - 1;
       }
 
       if (IsKeyDown(KEY_Z)) {
@@ -537,7 +537,7 @@ void GameState::render() const {
          obj.posY = mousePos.y;
          obj.preview(map);
       } else {
-         DrawTexturePro(getTexture(blockMap[index]), {0, 0, 8, 8}, {(float)(int)mousePos.x, (float)(int)mousePos.y, 1, 1}, {0, 0}, 0, Fade((drawWall ? wallTint : (map.isu(mousePos.x, mousePos.y, BlockType::furniture) ? RED : WHITE)), previewAlpha));
+         DrawTexturePro(getTexture(blockMap[blockIndex]), {0, 0, 8, 8}, {(float)(int)mousePos.x, (float)(int)mousePos.y, 1, 1}, {0, 0}, 0, Fade((drawWall ? wallTint : (map.isu(mousePos.x, mousePos.y, BlockType::furniture) ? RED : WHITE)), previewAlpha));
       }
    }
    /************************************/
