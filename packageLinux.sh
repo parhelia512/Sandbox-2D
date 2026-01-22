@@ -1,5 +1,5 @@
 #!/bin/bash
-mkdir -p build Sandbox Sandbox/data
+mkdir -p build Sandbox
 rm -rf build/* Sandbox/* Sandbox_Linux_x86_64.tar.gz
 
 cmake -B build -DCMAKE_BUILD_TYPE=Release
