@@ -183,13 +183,13 @@ void Player::updateCollisions(Map &map) {
             continue;
          }
 
-         if (!CheckCollisionRecs({position.x, position.y, playerSize.x, playerSize.y}, {(float)x, (float)y, 1.f, 1.f})) {
-            continue;
-         }
-
          // Not necessary in both loops
          blocksInHeadX1 += (y <= position.y + 1.0f && x >= position.x + playerSize.x / 2.0f && !map.isu(x, y, BlockType::platform) && !map.isu(x, y, BlockType::furnitureTop));
          blocksInHeadX2 += (y <= position.y + 1.0f && x <  position.x + playerSize.x / 2.0f && !map.isu(x, y, BlockType::platform) && !map.isu(x, y, BlockType::furnitureTop));
+
+         if (!CheckCollisionRecs({position.x, position.y, playerSize.x, playerSize.y}, {(float)x, (float)y, 1.f, 1.f})) {
+            continue;
+         }
 
          if (previousPosition.y >= y + 1.f && !map.isu(x, y, BlockType::platform)) {
             velocity.y = max(0.f, velocity.y);

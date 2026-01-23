@@ -3,10 +3,6 @@
 - Implement tools, tools should make certain blocks break faster. Make blocks drop based on tool used.
 - Add ores that complement tools + new tool variants.
 
-### Survival
-- Add damage indicators and some cool effects.
-- - Heart and bubble sine wave effects
-
 ### Furniture
 - Add furniture with chest logic.
 - Add all of the inventory quirks to chests.
@@ -42,16 +38,9 @@
 
 ### Other
 - World generation.
-- Instead of placing blocks one by one, generate an array of block ids and batch them in world generation.
 - Make it so blocks get loaded automatically from a file
 - Add more sounds for sitting, opening doors, swimming, drowning, stepping on sticky and bouncy blocks. And fix existing sounds.
-- Compress files some more. group the same liquids, I don't think it would work good for blocks
 
 # Bugs
-### Actual Bugs
-Bugs that are bugs.
-
-### "Features"
-Bugs that may or may not be features. Might fix in the future, might not.
 - Chairs teleport you.
 - Platforms while holding W make you go up really quickly.

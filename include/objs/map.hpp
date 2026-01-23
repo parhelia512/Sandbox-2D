@@ -93,7 +93,8 @@ struct DamageIndicator {
 struct Map {   
    // Constructors
 
-   void init();
+   void init(bool thread = false);
+   void initContainers();
    ~Map();
 
    // Add damage indicator
@@ -105,9 +106,11 @@ struct Map {
    void setRow(int y, const std::string &name, bool isWall = false);
    void setRow(int y, unsigned short *ids);
    void setWallRow(int y, unsigned short *ids);
+   void setColumnAndWalls(int x, int y, const std::string &name);
    
    void setBlock(int x, int y, const std::string &name, bool isWall = false);
    void setBlock(int x, int y, unsigned short id, bool isWall = false);
+   void lightSetBlock(int x, int y, unsigned short id);
 
    void deleteBlock(int x, int y, bool isWall = false);
    void deleteBlockWithoutDeletingLiquids(int x, int y, bool isWall = false);

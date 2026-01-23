@@ -42,13 +42,15 @@ MapGenerator::MapGenerator(const std::string &name, int sizeX, int sizeY, bool i
    : infoTextMutex(infoTextMutex), infoText(infoText), progress(progress), name(name), isFlat(isFlat) {
    map.sizeX = sizeX;
    map.sizeY = sizeY;
-   map.init();
+   map.init(true); // Init with no containers
    setInfo("Initializing...", 0.0f);
 }
 
 // Generation functions
 
 void MapGenerator::generate() {
+   map.initContainers(); // Do expensive initialization in a thread
+
    setInfo("Seeding Noise...", 0.0f);
    if (!isFlat) {
       biomeTemperatureNoise.reseed(rand());
@@ -133,8 +135,8 @@ void MapGenerator::generateTerrain() {
                map.setBlock(x, yy, block, true);
             }
          } else {
-            map.setBlock(x, yy, "stone");
-            map.setBlock(x, yy, "stone", true);
+            map.setColumnAndWalls(x, yy, "stone");
+            break;
          }
       }
    }
@@ -142,12 +144,14 @@ void MapGenerator::generateTerrain() {
 
 void MapGenerator::generateWater() {
    setInfo("Filling Water...", 0.75f);
+
    int seaY = map.sizeY * seaLevel;
+   unsigned short iceid = getBlockIdFromName("ice");
 
    for (int x = 0; x < map.sizeX; ++x) {
       for (int y = seaY; y < map.sizeY && map.isu(x, y, BlockType::empty); ++y) {
          if (y == seaY && biomeData[(int)getBiome(x)].wamth == BiomeWarmth::cold) {
-            map.setBlock(x, y, "ice");
+            map.lightSetBlock(x, y, iceid);
          } else {
             map.liquidsHeights[y][x] = maxLiquidLayers;
             map.liquidTypes[y][x] = LiquidType::water;
@@ -159,19 +163,25 @@ void MapGenerator::generateWater() {
 void MapGenerator::generateDebri() {
    setInfo("Generating Debris...", 0.5f);
 
-   for (int x = 0; x < map.sizeX; ++x) {
-      for (int y = 0; y < map.sizeY; ++y) {
-         if (map.isu(x, y, BlockType::empty) || map.isu(x, y, BlockType::grass) || map.isu(x, y, BlockType::sand)) {
+   BlockType skipmask = BlockType::empty | BlockType::grass | BlockType::sand;
+   unsigned short clayid = getBlockIdFromName("clay");
+   unsigned short dirtid = getBlockIdFromName("dirt");
+   unsigned short sandid = getBlockIdFromName("sand");
+
+   for (int y = 0; y < map.sizeY; ++y) {
+      for (int x = 0; x < map.sizeX; ++x) {
+         Block &block = map.blocks[y][x];
+         if (block.type & skipmask) {
             continue;
          }
 
          float value = normalizedNoise2D(dirtDebriNoise, x, y, 0.04f);
          if (value >= .825f) {
-            map.setBlock(x, y, "clay");
+            map.lightSetBlock(x, y, clayid);
          } else if (value <= .2f) {
-            map.setBlock(x, y, "dirt");
+            map.lightSetBlock(x, y, dirtid);
          } else if (!map.isu(x, y, BlockType::dirt) && normalizedNoise2D(sandDebriNoise, x, y, 0.04f) <= .15f) {
-            map.setBlock(x, y, "sand");
+            map.lightSetBlock(x, y, sandid);
          }
       }
    }

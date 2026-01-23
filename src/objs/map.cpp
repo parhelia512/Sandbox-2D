@@ -118,10 +118,16 @@ std::string getBlockNameFromId(unsigned short id) {
 
 // Map constructors
 
-void Map::init() {
+void Map::init(bool thread) {
    timeShaderLocation = GetShaderLocation(getShader("water"), "time");
    lightmap = LoadRenderTexture(GetScreenWidth() / 2, GetScreenHeight() / 2);
 
+   if (!thread) {
+      initContainers();
+   }
+}
+
+void Map::initContainers() {
    blocks = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
    walls  = std::vector<std::vector<Block>>(sizeY, std::vector<Block>(sizeX, Block{}));
 
@@ -172,6 +178,23 @@ void Map::setWallRow(int y, unsigned short *ids) {
    }
 }
 
+void Map::setColumnAndWalls(int x, int y, const std::string &name) {
+   unsigned short id = getBlockIdFromName(name);
+   BlockType type = blockAttributes[id];
+   Texture *texture = &getTexture(name);
+   
+   for (int yy = y; yy < sizeY; ++yy) {
+      Block &block = blocks[yy][x];
+      block.id = id;
+      block.type = type;
+      block.texture = texture;
+
+      Block &wall = walls[yy][x];
+      wall.id = id;
+      wall.texture = texture;
+   }
+}
+
 void Map::setBlock(int x, int y, const std::string &name, bool isWall) {
    Block &block = (isWall ? walls : blocks)[y][x];
    if (!isWall) {
@@ -190,6 +213,13 @@ void Map::setBlock(int x, int y, const std::string &name, bool isWall) {
 
 void Map::setBlock(int x, int y, unsigned short id, bool isWall) {
    setBlock(x, y, getBlockNameFromId(id), isWall);
+}
+
+void Map::lightSetBlock(int x, int y, unsigned short id) {
+   Block &block = blocks[y][x];
+   block.id = id;
+   block.type = blockAttributes[id];
+   block.texture = &getTexture(blockNames[id]);
 }
 
 // Fuck furniture logic, rewrite it one day
