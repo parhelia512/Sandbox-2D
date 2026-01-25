@@ -16,7 +16,6 @@ int main() {
    ToggleFullscreen();
    #endif
 
-   SetTargetFPS(60);
    InitAudioDevice();
    SetExitKey(KEY_NULL);
 

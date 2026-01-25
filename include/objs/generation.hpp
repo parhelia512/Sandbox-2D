@@ -14,6 +14,8 @@ struct MapGenerator {
    std::mutex &infoTextMutex;
    std::string &infoText;
    float &progress;
+
+   std::vector<int> rockStartHeights;
    std::string name;
    Map map;
 

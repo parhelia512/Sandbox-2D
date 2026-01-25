@@ -334,7 +334,7 @@ const Item &Inventory::getSelected() const {
 
 void Inventory::toggleInventoryOpen() {
    if (isKeyPressed(KEY_E)) {
-      playSound("click");
+      playSound(open ? "ui_open_inventory" : "ui_close_inventory");
       open = !open;
    }
 }

@@ -50,6 +50,7 @@ MapGenerator::MapGenerator(const std::string &name, int sizeX, int sizeY, bool i
 
 void MapGenerator::generate() {
    map.initContainers(); // Do expensive initialization in a thread
+   rockStartHeights.resize(map.sizeX);
 
    setInfo("Seeding Noise...", 0.0f);
    if (!isFlat) {
@@ -135,6 +136,7 @@ void MapGenerator::generateTerrain() {
                map.setBlock(x, yy, block, true);
             }
          } else {
+            rockStartHeights[x] = yy;
             map.setColumnAndWalls(x, yy, "stone");
             break;
          }
@@ -163,28 +165,23 @@ void MapGenerator::generateWater() {
 void MapGenerator::generateDebri() {
    setInfo("Generating Debris...", 0.5f);
 
-   BlockType skipmask = BlockType::empty | BlockType::grass | BlockType::sand;
    unsigned short clayid = getBlockIdFromName("clay");
    unsigned short dirtid = getBlockIdFromName("dirt");
    unsigned short sandid = getBlockIdFromName("sand");
 
-   for (int y = 0; y < map.sizeY; ++y) {
-      for (int x = 0; x < map.sizeX; ++x) {
-         Block &block = map.blocks[y][x];
-         if (block.type & skipmask) {
-            continue;
-         }
-
-         float value = normalizedNoise2D(dirtDebriNoise, x, y, 0.04f);
-         if (value >= .825f) {
+   for (int x = 0; x < map.sizeX; ++x) {
+      for (int y = rockStartHeights[x]; y < map.sizeY; ++y) {
+         float value = dirtDebriNoise.octave2D(x * 0.05f, y * 0.05f, 3);
+         if (value >= 0.6125f) {
             map.lightSetBlock(x, y, clayid);
-         } else if (value <= .2f) {
+         } else if (value <= -0.6f) {
             map.lightSetBlock(x, y, dirtid);
-         } else if (!map.isu(x, y, BlockType::dirt) && normalizedNoise2D(sandDebriNoise, x, y, 0.04f) <= .15f) {
+         } else if (sandDebriNoise.octave2D(x * 0.05f, y * 0.05f, 3) <= -0.7f) {
             map.lightSetBlock(x, y, sandid);
          }
       }
    }
+   rockStartHeights.clear();
 }
 
 void MapGenerator::generateTrees() {

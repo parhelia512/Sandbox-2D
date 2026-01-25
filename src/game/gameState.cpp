@@ -67,6 +67,7 @@ void GameState::update() {
       pauseButton.update(dt);
       if (pauseButton.clicked || handleKeyPressWithSound(KEY_ESCAPE)) {
          phase = (phase == Phase::paused ? Phase::playing : Phase::paused);
+         calculateCameraBounds();
       }
    }
 
@@ -80,6 +81,7 @@ void GameState::update() {
 void GameState::fixedUpdate() {
    camera.target = lerp(camera.target, player.getCenter(), cameraFollowSpeed);
    if (phase == Phase::paused) {
+      calculateCameraBounds(); // Make sure the camera does not go out of bounds
       return;
    }
 
