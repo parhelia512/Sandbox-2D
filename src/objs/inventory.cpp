@@ -241,10 +241,6 @@ void Inventory::update() {
          return;
       }
    }
-
-   if (!open && anySelected) {
-      discardItem();
-   }
 }
 
 // Placement functions
@@ -254,35 +250,35 @@ bool Inventory::canPlaceBlock() {
 }
 
 void Inventory::placeBlock(int x, int y, bool playerFacingLeft) {
-   Item &item = items[selectedY][selectedX];
+   Item &item = (anySelected ? selectedItem.item : items[selectedY][selectedX]);
 
-   // Place furniture
    if (item.isFurniture) {
       Furniture furniture = getFurniture(x, y, map, getFurnitureType(item.id), playerFacingLeft);
       if (furniture.type == FurnitureType::none) {
          return;
       }
       map.addFurniture(furniture);
-   }
-
-   // Place blocks
-   else {
-      if (!((item.isWall && (map.walls[y][x].type & BlockType::empty)) || (!item.isWall && (map.blocks[y][x].type & BlockType::empty)))) {
+   } else {
+      if (!((item.isWall && (map.walls[y][x].type & BlockType::empty)) || (!item.isWall && (map.blocks[y][x].type & BlockType::empty) && !(map.blocks[y][x].type & BlockType::furniture)))) {
          return;
       }
       map.setBlock(x, y, item.id, item.isWall);
    }
 
    item.count -= 1;
-   if (item.count <= 0) {
-      item = Item{};
+   if (anySelected && selectedItem.fullSelect) {
+      selectedItem.address->count -= 1;
    }
 
-   if (anySelected &&& item == selectedItem.address) {
-      selectedItem.item.count -= 1;
-      if (selectedItem.item.count <= 0) {
+   if (item.count <= 0) {
+      if (anySelected) {
+         if (selectedItem.fullSelect) {
+            *selectedItem.address = Item{};
+         }
          selectedItem.reset();
          anySelected = false;
+      } else {
+         item = Item{};
       }
    }
 }
@@ -331,7 +327,7 @@ void Inventory::selectItem(int x, int y) {
 }
 
 const Item &Inventory::getSelected() const {
-   return items[selectedY][selectedX];
+   return anySelected ? selectedItem.item : items[selectedY][selectedX];
 }
 
 // Helper functions
@@ -345,6 +341,9 @@ void Inventory::toggleInventoryOpen() {
 
 void Inventory::switchOnKeyPress(int key, int hotbarX) {
    if (isKeyPressed(key)) {
+      if (!open && anySelected && selectedItem.address != &items[selectedY][selectedX]) {
+         discardItem();
+      }
       selectedX = hotbarX;
       selectedY = 0;
    }
@@ -352,11 +351,22 @@ void Inventory::switchOnKeyPress(int key, int hotbarX) {
 
 void Inventory::switchOnMouseWheel() {
    float wheel = GetMouseWheelMove();
+   if (!open && anySelected && selectedItem.address != &items[selectedY][selectedX]) {
+      if (wheel >= 1.0f) {
+         selectedX = 0;
+         discardItem();
+      } else if (wheel <= -1.0f) {
+         selectedX = inventoryWidth - 1;
+         discardItem();
+      }
+      return;
+   }
+
    if (wheel >= 1.0f) {
-      selectedX = (selectedX + 1) % 10;
+      selectedX = (selectedX + 1) % inventoryWidth;
    } else if (wheel <= -1.0f) {
       selectedX -= 1;
-      if (selectedX < 0) selectedX = 9;
+      if (selectedX < 0) selectedX = inventoryWidth - 1;
    }
 }
 
@@ -498,10 +508,12 @@ int Inventory::addItemCount(Item &item1, Item &item2) {
 // Render functions
 
 void Inventory::render() const {
+   bool externalSlot = !open && anySelected && selectedItem.address != &items[selectedY][selectedX];
+
    for (int y = 0; y < (open ? inventoryHeight : 1); ++y) {
       for (int x = 0; x < inventoryWidth; ++x) {
          const Item &item = items[y][x];
-         bool isSelected = (x == selectedX && y == selectedY);
+         bool isSelected = (x == selectedX && y == selectedY && !externalSlot);
          bool isFavorite = item.favorite;
 
          Vector2 position = getFramePosition(x, y, isSelected);
@@ -519,6 +531,23 @@ void Inventory::render() const {
       }
    }
 
+   // Render external slot
+   if (externalSlot) {
+      Vector2 position = getFramePosition(10, 0, true);
+      Vector2 size = getFrameSize(true);
+      drawTextureNoOrigin(getFrameTexture(true, selectedItem.address->favorite),position, size);
+      renderItem(selectedItem.item, Vector2Add(position, getOrigin(size)), true);
+
+      Vector2 textPosition = Vector2Add(position, itemframeIndexOffset);
+      if (selectedItem.fromTrash) {
+         drawText(textPosition, "BIN", 25);
+      } else {
+         // Pointer arithmetic
+         int index = (reinterpret_cast<unsigned long>(selectedItem.address) - reinterpret_cast<unsigned long>(items)) / sizeof(Item);
+         drawText(textPosition, std::to_string(index + 1).c_str(), 25);
+      }
+   }
+
    // Render trash frame if inventory is open
    if (open) {
       bool trashOccupied = (trashedItem.id != 0 && (!anySelected || !selectedItem.fullSelect || selectedItem.address != &trashedItem));
@@ -532,7 +561,7 @@ void Inventory::render() const {
    }
 
    // Render selected item
-   if (anySelected) {
+   if (anySelected && !externalSlot) {
       renderItem(selectedItem.item, GetMousePosition(), true);
    }
 }
@@ -541,7 +570,8 @@ void Inventory::renderItem(const Item &item, const Vector2 &position, bool isSel
    Color drawColor = Fade((item.isWall ? wallTint : WHITE), (isSelected ? 0.75f : 1.0f));
 
    if (!item.isFurniture) {
-      drawTexture(getTexture(getBlockNameFromId(item.id)), position, itemframeItemSize, 0.0f, drawColor);
+      Texture2D &texture = getTexture(getBlockNameFromId(item.id));
+      DrawTexturePro(texture, {0, 0, 8, 8}, {position.x, position.y, itemframeItemSize.x, itemframeItemSize.y}, getOrigin(itemframeItemSize), 0, drawColor);
    } else if (item.isFurniture) {
       FurnitureTexture texture = getFurnitureIcon(item.id);
       Vector2 newPos = position;//Vector2Add(position, Vector2Scale(itemframeSize, 0.5f));
