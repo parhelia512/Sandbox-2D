@@ -277,6 +277,14 @@ void Inventory::placeBlock(int x, int y, bool playerFacingLeft) {
    if (item.count <= 0) {
       item = Item{};
    }
+
+   if (anySelected &&& item == selectedItem.address) {
+      selectedItem.item.count -= 1;
+      if (selectedItem.item.count <= 0) {
+         selectedItem.reset();
+         anySelected = false;
+      }
+   }
 }
 
 void Inventory::selectItem(int x, int y) {
@@ -446,7 +454,7 @@ bool Inventory::placeItem(Item &item) {
       for (int x = 0; x < inventoryWidth; ++x) {
          Item &it = items[y][x];
 
-         if (it.id == item.id && it.isFurniture == item.isFurniture && addItemCount(it, item) <= 0) {
+         if (it.id == item.id && it.isWall == item.isWall && it.isFurniture == item.isFurniture && addItemCount(it, item) <= 0) {
             return true;
          } else if (!firstAvailableSpot && it.id == 0) {
             firstAvailableSpot = &it;
