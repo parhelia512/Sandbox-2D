@@ -246,7 +246,8 @@ void Inventory::update() {
 // Placement functions
 
 bool Inventory::canPlaceBlock() {
-   return getSelected().type == ItemType::block && getSelected().count > 0;
+   const Item &selected = getSelected();
+   return selected.type == ItemType::block && selected.count > 0 && selected.id != 0;
 }
 
 void Inventory::placeBlock(int x, int y, bool playerFacingLeft) {

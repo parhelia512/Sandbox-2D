@@ -187,25 +187,30 @@ void GameState::updatePlaying() {
 
       if (isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT) && inventory.canPlaceBlock()) {
          inventory.placeBlock(mouseX, mouseY, player.flipX);
+         canDrawPreview = canDrawPreview && inventory.canPlaceBlock(); // To avoid attempting to draw air on placing last block
       } else if (isMousePressedOutsideUI(MOUSE_BUTTON_MIDDLE)) {
          inventory.selectItem(mouseX, mouseY);
-      } else if (isMouseDownOutsideUI(MOUSE_BUTTON_LEFT) && !(map.blocks[mouseY][mouseX].type & BlockType::empty)) {
-         if (mouseX != player.lastBreakingX || mouseY != player.lastBreakingY) {
+      } else if (isMouseDownOutsideUI(MOUSE_BUTTON_LEFT) && (!(map.blocks[mouseY][mouseX].type & BlockType::empty) || !(map.walls[mouseY][mouseX].type & BlockType::empty))) {
+         bool isWall = (map.blocks[mouseY][mouseX].type & BlockType::empty);
+         Block &block = (isWall ? map.walls : map.blocks)[mouseY][mouseX];
+
+         if (mouseX != player.lastBreakingX || mouseY != player.lastBreakingY || isWall != player.breakingWall) {
             player.breakTime = 0;
          }
 
          player.breakTime += realDt;
+         player.breakingWall = isWall;
          player.lastBreakingX = mouseX;
          player.lastBreakingY = mouseY;
 
-         if (player.breakTime >= getBlockBreakingTime(map.blocks[mouseY][mouseX].id)) {
-            Item item {ItemType::block, map.blocks[mouseY][mouseX].id, 1, false, false, false};
+         if (player.breakTime >= getBlockBreakingTime(block.id)) {
+            Item item {ItemType::block, block.id, 1, false, player.breakingWall, false};
             if (!inventory.placeItem(item)) {
                DroppedItem droppedItem {item, mouseX, mouseY};
                droppedItems.push_back(droppedItem);
             }
 
-            map.deleteBlockWithoutDeletingLiquids(mouseX, mouseY);
+            map.deleteBlockWithoutDeletingLiquids(mouseX, mouseY, player.breakingWall);
             player.breakTime = 0;
          }
       }
@@ -512,9 +517,9 @@ void GameState::render() {
 
    // Render block breaking preview
    if (player.breakTime != 0.0f) {
-      int textureX = (player.breakTime / getBlockBreakingTime(map.blocks[player.lastBreakingY][player.lastBreakingX].id)) * 5;
+      int textureX = (player.breakTime / getBlockBreakingTime((player.breakingWall ? map.walls : map.blocks)[player.lastBreakingY][player.lastBreakingX].id)) * 5;
       Texture2D &texture = getTexture("breaking");
-      DrawTexturePro(texture, {textureX * 8.0f, 0, 8, 8}, {(float)player.lastBreakingX, (float)player.lastBreakingY, 1, 1}, {0, 0}, 0, WHITE);
+      DrawTexturePro(texture, {textureX * 8.0f, 0, 8, 8}, {(float)player.lastBreakingX, (float)player.lastBreakingY, 1, 1}, {0, 0}, 0, (player.breakingWall ? wallTint : WHITE));
    }
 
    // Render breath dynamically
