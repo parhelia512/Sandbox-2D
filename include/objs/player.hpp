@@ -73,11 +73,15 @@ struct Player {
    float displayHearts = 100;
    float displayBreath = 100;
 
+   int breakAnimation = 0;
    int lastBreakingX = 0;
    int lastBreakingY = 0;
    bool breakingWall = false;
    bool breakingFurniture = false;
+   bool placedBlock = false;
+   bool breakingBlock = false;
    float breakTime = 0.0f;
+   float breakAnimationTimer = 0.0f;
 };
 
 #endif

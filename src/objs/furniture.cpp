@@ -165,6 +165,7 @@ void Furniture::update(Map &map, Player &player, const Vector2 &mousePos) {
 
    case FurnitureType::chair: {
       if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && CheckCollisionPointRec(mousePos, {(float)posX, (float)posY, (float)sizeX, (float)sizeY})) {
+         player.placedBlock = true;
          player.sitting = true;
          player.flipX = (pieces[0][0].tx == 0); // Flip player if chair is flipped
          player.position.x = posX - (player.flipX ? 0 : 1); // Adjust flipped player's position
@@ -183,6 +184,7 @@ void Furniture::update(Map &map, Player &player, const Vector2 &mousePos) {
       }
 
       if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && CheckCollisionPointRec(mousePos, doorRect)) {
+         player.placedBlock = true;
          value = !value;
       }
 

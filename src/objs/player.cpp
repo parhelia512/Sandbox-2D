@@ -13,7 +13,8 @@
 // Constants
 
 constexpr Vector2 playerSize    = {1.8f, 2.7f};
-constexpr float playerFrameSize = 16;
+constexpr float playerFrameSizeX = 16;
+constexpr float playerFrameSizeY = 24;
 
 constexpr float playerSpeed   = 0.364f;
 constexpr float airMultiplier = 0.600f;
@@ -325,6 +326,17 @@ void Player::updateCollisions(Map &map) {
 }
 
 void Player::updateAnimation() {
+   if (breakingBlock || placedBlock) {
+      breakAnimationTimer += fixedUpdateDT;
+      if (breakAnimationTimer >= 0.1f) {
+         breakAnimationTimer -= 0.1f;
+         breakAnimation = (breakAnimation + 1) % 3;
+         placedBlock = placedBlock && breakAnimation != 0;
+      }
+   } else {
+      breakAnimation = 0;
+   }
+
    if (sitting) {
       frameX = 15;
       return;
@@ -399,7 +411,8 @@ void Player::handleRegeneration() {
 void Player::render(float accumulator) const {
    Texture2D &texture = getTexture("player");
    const Vector2 drawPos = lerp(previousPosition, position, accumulator / fixedUpdateDT);
-   DrawTexturePro(texture, {frameX * playerFrameSize, 0.f, (flipX ? -playerFrameSize : playerFrameSize), (float)texture.height}, {drawPos.x, drawPos.y, playerSize.x, playerSize.y}, {0, 0}, 0, (timeSinceLastDamage <= 0.3f ? RED : WHITE));
+   DrawTexturePro(texture, {frameX * playerFrameSizeX, 0.f, (flipX ? -playerFrameSizeX : playerFrameSizeX), playerFrameSizeY}, {drawPos.x, drawPos.y, playerSize.x, playerSize.y}, {0, 0}, 0, (timeSinceLastDamage <= 0.3f ? RED : WHITE));
+   DrawTexturePro(texture, {playerFrameSizeX * (breakingBlock || placedBlock ? 16 + breakAnimation : frameX), playerFrameSizeY, (flipX ? -playerFrameSizeX : playerFrameSizeX), playerFrameSizeY}, {drawPos.x, drawPos.y, playerSize.x, playerSize.y}, {0, 0}, 0, (timeSinceLastDamage <= 0.3f ? RED : WHITE));
 }
 
 // Getter functions

@@ -27,6 +27,8 @@ constexpr int honeyUpdateSpeed  = 4; // Honey updates 2x slower than lava
 constexpr int grassGrowSpeedMin = 100;
 constexpr int grassGrowSpeedMax = 255;
 
+constexpr float maxPickupRange = 4.0f; // Squared
+constexpr float maxToolRange = 100.0f; // Squared
 constexpr float timeToRespawn = 10.0f;
 
 // Constructors
@@ -179,18 +181,20 @@ void GameState::updatePlaying() {
 
    // Place and destroy blocks
    Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
+   Vector2 playerCenter = player.getCenter();
    int mouseX = mousePos.x;
    int mouseY = mousePos.y;
 
-   if (map.isPositionValid(mouseX, mouseY)) {
+   if (map.isPositionValid(mouseX, mouseY) && Vector2DistanceSqr(mousePos, playerCenter) <= maxToolRange) {
       canDrawPreview = (inventory.canPlaceBlock() && (inventory.getSelected().isFurniture || !CheckCollisionRecs(player.getBounds(), {(float)mouseX, (float)mouseY, 1, 1})));
+      player.breakingBlock = (isMouseDownOutsideUI(MOUSE_BUTTON_LEFT) && (!(map.blocks[mouseY][mouseX].type & BlockType::empty) || !(map.walls[mouseY][mouseX].type & BlockType::empty) || (map.blocks[mouseY][mouseX].type & BlockType::furniture)));
 
       if (isMouseDownOutsideUI(MOUSE_BUTTON_RIGHT) && inventory.canPlaceBlock()) {
          inventory.placeBlock(mouseX, mouseY, player.flipX);
          canDrawPreview = canDrawPreview && inventory.canPlaceBlock(); // To avoid attempting to draw air on placing last block
       } else if (isMousePressedOutsideUI(MOUSE_BUTTON_MIDDLE)) {
          inventory.selectItem(mouseX, mouseY);
-      } else if (isMouseDownOutsideUI(MOUSE_BUTTON_LEFT) && (!(map.blocks[mouseY][mouseX].type & BlockType::empty) || !(map.walls[mouseY][mouseX].type & BlockType::empty) || (map.blocks[mouseY][mouseX].type & BlockType::furniture))) {
+      } else if (player.breakingBlock) {
          bool isWall = (map.blocks[mouseY][mouseX].type & BlockType::empty);
          bool isFurniture = (map.blocks[mouseY][mouseX].type & BlockType::furniture);
          Block &block = (isWall ? map.walls : map.blocks)[mouseY][mouseX];
@@ -221,12 +225,10 @@ void GameState::updatePlaying() {
    }
 
    // Update dropped items
-   const Rectangle playerBounds = player.getBounds();
-   
    for (auto &droppedItem: droppedItems) {
       droppedItem.update(cameraBounds, dt);
 
-      if (!droppedItem.inBounds || !CheckCollisionRecs(playerBounds, droppedItem.getBounds())) {
+      if (!droppedItem.inBounds || Vector2DistanceSqr(playerCenter, {(float)droppedItem.tileX, (float)droppedItem.tileY}) > maxPickupRange) {
          continue;
       }
       Item item {droppedItem.type, droppedItem.id, droppedItem.count, droppedItem.isFurniture, droppedItem.isWall, false};

@@ -235,14 +235,14 @@ void Map::setColumnAndWalls(int x, int y, const std::string &name) {
 
 void Map::setBlock(int x, int y, const std::string &name, bool isWall) {
    Block &block = (isWall ? walls : blocks)[y][x];
-   if (!isWall) {
-      liquidsHeights[y][x] = 0;
-      liquidTypes[y][x] = LiquidType::none;
-   }
-
    block.id = getBlockIdFromName(name);
    block.value = block.value2 = 0;
    block.type = blockAttributes[block.id] | (block.type % (BlockType::furniture | BlockType::furnitureTop));
+
+   if (!isWall && !(block.type & BlockType::flowable)) {
+      liquidsHeights[y][x] = 0;
+      liquidTypes[y][x] = LiquidType::none;
+   }
 
    if (block.id != 0) {
       block.texture = &getTexture(name);

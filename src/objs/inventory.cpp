@@ -272,11 +272,13 @@ void Inventory::placeBlock(int x, int y, bool playerFacingLeft) {
          return;
       }
       map.addFurniture(furniture);
+      player.placedBlock = true;
    } else {
       if (!((item.isWall && (map.walls[y][x].type & BlockType::empty)) || (!item.isWall && (map.blocks[y][x].type & BlockType::empty) && !(map.blocks[y][x].type & BlockType::furniture)))) {
          return;
       }
       map.setBlock(x, y, item.id, item.isWall);
+      player.placedBlock = true;
    }
 
    item.count -= 1;
