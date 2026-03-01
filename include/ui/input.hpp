@@ -18,6 +18,7 @@ struct Input {
    bool hovering = false;
    bool typing = false;
    bool changed = false;
+   bool wrapinput = true;
 
    int maxChars = 255;
    int counter = 0;

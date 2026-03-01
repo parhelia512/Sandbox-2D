@@ -54,6 +54,7 @@ GameState::GameState(const std::string &worldName)
    pauseButton.rectangle = {GetScreenWidth() - buttonWidth / 2.f + 10.0f, GetScreenHeight() - buttonHeight / 2.f, buttonWidth, buttonHeight};
    pauseButton.text = "Pause";
    continueButton.texture = menuButton.texture = &getTexture("button");
+   console.init();
 }
 
 GameState::~GameState() {
@@ -162,6 +163,17 @@ void GameState::updatePlaying() {
    if (zoomFactor != 0.f) {
       camera.zoom = /* std:: */clamp<float>(std::exp(std::log(camera.zoom) + zoomFactor * 0.2f), minCameraZoom, maxCameraZoom);
    }
+
+   setInputBlocking(false);
+   if (IsKeyDown(KEY_LEFT_CONTROL) && isKeyPressed(KEY_TAB)) {
+      console.input.typing = !console.input.typing;
+   }
+
+   console.update(map, player, inventory);
+   setInputBlocking(console.input.typing);
+   player.blockInput = console.input.typing;
+
+
    inventory.update();
    calculateCameraBounds();
 
@@ -580,6 +592,9 @@ void GameState::render() {
    drawText({startingX + (GetScreenWidth() - startingX) / 2.0f, startingY / 2.0f}, format("HP: {}/{}", player.hearts, player.maxHearts).c_str(), 20);
 
    // Render other game UI
+   if (phase != Phase::died && (console.input.typing || console.shouldRender)) {
+      console.render();
+   }
    inventory.render();
 
    if (phase == Phase::paused) {

@@ -2,6 +2,7 @@
 #define GAME_GAMESTATE_HPP
 
 #include "game/state.hpp"
+#include "objs/console.hpp"
 #include "objs/inventory.hpp"
 #include "objs/player.hpp"
 #include "ui/button.hpp"
@@ -55,6 +56,7 @@ struct GameState: public State {
    Rectangle cameraBounds;
    Vector2 playerSpawnPosition;
 
+   Console console;
    Inventory inventory;
    Button continueButton, menuButton, pauseButton;
 

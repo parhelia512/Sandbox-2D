@@ -4,6 +4,7 @@
 // Update input
 
 void updateInput();
+void setInputBlocking(bool block);
 
 // Get key functions
 

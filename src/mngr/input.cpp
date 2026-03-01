@@ -43,6 +43,7 @@ constexpr bool operator&(MouseState a, MouseState b) {
 static inline std::array<KeyState, KEY_KB_MENU + 1> keys;
 static inline std::array<MouseState, MOUSE_BUTTON_BACK + 1> mouse;
 static inline bool mouseOnUI = false;
+static inline bool shouldBlock = false;
 
 // Update input
 
@@ -52,9 +53,15 @@ void updateInput() {
    mouse.fill(MouseState::none);
 }
 
+void setInputBlocking(bool block) {
+   shouldBlock = block;
+}
+
 // Get key functions
 
 bool isKeyAState(int key, KeyState state) {
+   if (shouldBlock) return false;
+   
    bool isState = !(keys[key] & state);
    keys[key] = keys[key] | state;
    return isState;

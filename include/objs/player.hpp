@@ -35,6 +35,7 @@ struct Player {
    // Members
 
    Vector2 position, velocity, previousPosition, delta;
+   bool blockInput = false;
    bool feetCollision = false;
    bool torsoCollision = false;
    int feetCollisionY = 0;

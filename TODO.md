@@ -1,6 +1,3 @@
-### Tools
-- Add ores.
-
 ### Furniture
 - Add furniture with chest logic.
 - Add all of the inventory quirks to chests.

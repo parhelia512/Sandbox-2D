@@ -71,10 +71,10 @@ void Player::updatePlayer(Map &map) {
 }
 
 void Player::updateMovement() {
-   int directionX = IsKeyDown(KEY_D) - IsKeyDown(KEY_A);
+   int directionX = (!blockInput && IsKeyDown(KEY_D)) - (!blockInput && IsKeyDown(KEY_A));
 
    if (sitting) {
-      if (directionX != 0 || IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_S)/*  || IsKeyDown(KEY_W) */) {
+      if (directionX != 0 || (!blockInput && IsKeyDown(KEY_SPACE)) || (!blockInput && IsKeyDown(KEY_S))) {
          sitting = false;
          goto notSittingAnymore;
       }
@@ -101,7 +101,7 @@ notSittingAnymore:
    }
 
    // Handle jumping
-   if (!onGround && IsKeyDown(KEY_SPACE)) {
+   if (!onGround && (!blockInput && IsKeyDown(KEY_SPACE))) {
       foxTimer = foxTime;
    } else {
       foxTimer -= fixedUpdateDT;
@@ -114,7 +114,7 @@ notSittingAnymore:
    }
 
    jumpTimer -= fixedUpdateDT;
-   if (((IsKeyDown(KEY_SPACE) && coyoteTimer > 0) || (onGround && foxTimer > 0)) && jumpTimer <= 0) {
+   if ((((!blockInput && IsKeyDown(KEY_SPACE)) && coyoteTimer > 0) || (onGround && foxTimer > 0)) && jumpTimer <= 0) {
       playSound("jump");
       coyoteTimer = 0.f;
       jumpTimer = jumpTime;
@@ -180,7 +180,7 @@ void Player::updateCollisions(Map &map) {
          }
          honeyTileCount += map.isu(x, y, BlockType::sticky);
 
-         if ((!map.isu(x, y, BlockType::solid) && !map.isPlatformedFurniture(x, y)) || ((map.isu(x, y, BlockType::platform) || map.isu(x, y, BlockType::furnitureTop)) && IsKeyDown(KEY_S))) {
+         if ((!map.isu(x, y, BlockType::solid) && !map.isPlatformedFurniture(x, y)) || ((map.isu(x, y, BlockType::platform) || map.isu(x, y, BlockType::furnitureTop)) && (!blockInput && IsKeyDown(KEY_S)))) {
             continue;
          }
 
@@ -210,7 +210,7 @@ void Player::updateCollisions(Map &map) {
       }
    }
 
-   if (!torsoCollision && feetCollision && !IsKeyDown(KEY_S)) {
+   if (!torsoCollision && feetCollision && !(!blockInput && IsKeyDown(KEY_S))) {
       position.y = feetCollisionY - playerSize.y;
    }
 

@@ -6,6 +6,11 @@ void drawText(const Vector2 &position, const char *text, float fontSize, const C
    DrawTextPro(getFont("andy"), text, position, getOrigin(text, fontSize, spacing), 0, fontSize, spacing, color);
 }
 
+void drawTextByRight(const Vector2 &position, float width, const char *text, float fontSize, const Color &color, float spacing) {
+   Vector2 origin = getOrigin(text, fontSize, spacing);
+   DrawTextPro(getFont("andy"), text, {position.x - (origin.x - width), position.y}, origin, 0, fontSize, spacing, color);
+}
+
 void drawTexture(const Texture &texture, const Vector2 &position, const Vector2 &size, float rotation, const Color &color) {
    DrawTexturePro(texture, getBox(texture), {position.x, position.y, size.x, size.y}, getOrigin(size), rotation, color);
 }
@@ -28,4 +33,8 @@ void drawFluidBlock(const Texture &texture, const Rectangle &rect, const Color &
 
 void drawRect(const Color &color) {
    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), color);
+}
+
+void drawRect(const Rectangle &rect, const Color &color) {
+   DrawRectanglePro(rect, getOrigin({rect.width, rect.height}), 0, color);
 }
