@@ -89,6 +89,10 @@ void Console::handleCommand(Map &map, Player &player, Inventory &inventory) {
       help(args, map, player, inventory);
    } else if (args[0] == "tp") {
       tp(args, map, player, inventory);
+   } else if (args[0] == "crds") {
+      crds(args, map, player, inventory);
+   } else if (args[0] == "clear") {
+      clear(args, map, player, inventory);
    } else {
       divideOutput("Invalid command. See 'help' for a list of commands.");
    }
@@ -100,6 +104,9 @@ void Console::handleCommand(Map &map, Player &player, Inventory &inventory) {
 
 void Console::help(const Args&, Map&, Player&, Inventory&) {
    divideOutput("tp X Y - teleport player to the given coordinates.");
+   divideOutput("crds - show current coordinates.");
+   divideOutput("clear - clear the console.");
+   divideOutput("Scroll back with the scroll wheel to see more commands.");
 }
 
 void Console::tp(const Args &args, Map &map, Player &player, Inventory&) {
@@ -109,7 +116,7 @@ void Console::tp(const Args &args, Map &map, Player &player, Inventory&) {
    }
    int x, y;
 
-   // fuck this function
+   // fuck this function and try blocks
    try {
       x = stoi(args[1]);
       y = stoi(args[2]);
@@ -126,4 +133,17 @@ void Console::tp(const Args &args, Map &map, Player &player, Inventory&) {
    player.position.x = x;
    player.position.y = y;
    divideOutput(TextFormat("tp: teleported to (X %d; Y %d).", x, y));
+}
+
+void Console::crds(const Args &args, Map&, Player &player, Inventory&) {
+   if (args.size() == 1) {
+      divideOutput("crds: expected no arguments. Executing anyway.");
+   }
+   divideOutput(TextFormat("crds: your position is (X %d; Y %d).", (int)player.position.x, (int)player.position.y));
+}
+
+void Console::clear(const Args&, Map&, Player&, Inventory&) {
+   output.clear();
+   output.shrink_to_fit(); // Clear memory too
+   scrollback = 0;
 }

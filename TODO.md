@@ -34,6 +34,9 @@
 
 ### Cheats
 - Add history
+- Add bash like operators &&, ||, ;
+- Add colors!
+- Fix scrollback on non full consoles showing nothing (possibly UB?)
 - give command
 
 ### Other

@@ -14,10 +14,13 @@ struct Console {
    // Commands
 
    using Args = std::vector<std::string>;
+   #define ArgsList const Args &args, struct Map &map, struct Player &player, struct Inventory &inventory
 
    void handleCommand(struct Map &map, struct Player &player, struct Inventory &inventory);
-   void help(const Args &args, Map &map, Player &player, Inventory &inventory);
-   void tp(const Args &args, Map &map, Player &player, Inventory &inventory);
+   void help(ArgsList);
+   void tp(ArgsList);
+   void crds(ArgsList);
+   void clear(ArgsList);
 
    // Members
 
