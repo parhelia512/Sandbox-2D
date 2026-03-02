@@ -4,34 +4,37 @@
 #include "ui/input.hpp"
 #include <vector>
 
+// Commands
+
+#define VArgs std::vector<std::string>
+#define ArgsList struct Console &console, const std::string &original, const VArgs &args, struct Map &map, struct Player &player, struct Inventory &inventory
+
+void c_help(ArgsList);
+void c_tp(ArgsList);
+void c_crds(ArgsList);
+void c_clear(ArgsList);
+void c_exit(ArgsList);
+void c_quine(ArgsList);
+
+// Console
+
+enum class ConsoleColor: char {white, gray, yellow, red, green, blue, orange, purple, pink, count};
+
 struct Console {
-   void init();
-   void divideOutput(const std::string &string);
-   
+   void init();   
    void update(struct Map &map, struct Player &player, struct Inventory &inventory);
    void render();
 
-   // Commands
-
-   using Args = std::vector<std::string>;
-   #define ArgsList const Args &args, struct Map &map, struct Player &player, struct Inventory &inventory
-
+   void output(const std::string &string, ConsoleColor color = ConsoleColor::white);
    void handleCommand(struct Map &map, struct Player &player, struct Inventory &inventory);
-   void help(ArgsList);
-   void tp(ArgsList);
-   void crds(ArgsList);
-   void clear(ArgsList);
 
    // Members
 
-   std::vector<std::string> output;
+   std::vector<std::string> text;
+   std::vector<ConsoleColor> textColors;
+
    Input input;
-   bool shouldRender = false;
-   bool fadingout = false;
-   bool renderInGameState = false; // wtf
    int scrollback = 0;
-   float outputDelay = 0.0f;
-   float fadeoutTimer = 0.0f;
 };
 
 #endif
