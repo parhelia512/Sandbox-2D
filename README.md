@@ -84,9 +84,9 @@ git push origin [feature-name]
 This project owes its success to the following people and organizations:
 
 ### Contributors
-- The code was written by and sprites and sound effects were made by Acerx-AMJ.
+- The code was written by and sprites were made by Acerx-AMJ.
 - Windows builds were made by Jhyde927.
-- Music was made by ZC Bernardino.
+- SFX by DTChords.
 
 ### Assets
 - Thanks to Steve Matteson for creating the "Andy" font!

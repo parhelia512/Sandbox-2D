@@ -57,6 +57,7 @@ struct Player {
    int frameX = 0;
    bool flipX = false;
    bool sitting = false;
+   bool ignoreCollision = false;
 
    int breathFrameCounter = 0;
    int breath = maxBreath;

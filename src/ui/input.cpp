@@ -61,7 +61,7 @@ void Input::update() {
       }
 
       if (text.size() != previousTextSize) {
-         playSound("hover");
+         playSound("typing");
       }
    }
 

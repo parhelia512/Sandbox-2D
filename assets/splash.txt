@@ -1,8 +1,9 @@
 Made by Acerxamj!
+Thanks to Jhyde927 for making Windows builds!
+Thanks to DTChords for making SFX!
 Made with C++ and Raylib!
 Using the power of text files to show you this message!
 Edit assets/splash.txt for your own messages!
-Thanks to Jhyde927 for making Windows builds!
 Splash.
 In development.
 Undefined behavior included!
@@ -22,3 +23,5 @@ Over 150 commits on Github!
 Make sure to star the repository on Github!
 Hold shift while deleting worlds to batch delete!
 Now includes a stone pickaxe!
+Ctrl + Tab in game to cheat.
+Can't wait for the 3D version!

@@ -9,12 +9,12 @@
 #define VArgs std::vector<std::string>
 #define ArgsList struct Console &console, const std::string &original, const VArgs &args, struct Map &map, struct Player &player, struct Inventory &inventory
 
-void c_help(ArgsList);
-void c_tp(ArgsList);
-void c_crds(ArgsList);
-void c_clear(ArgsList);
-void c_exit(ArgsList);
-void c_quine(ArgsList);
+bool c_help(ArgsList);
+bool c_tp(ArgsList);
+bool c_crds(ArgsList);
+bool c_clear(ArgsList);
+bool c_exit(ArgsList);
+bool c_quine(ArgsList);
 
 // Console
 
@@ -26,7 +26,8 @@ struct Console {
    void render();
 
    void output(const std::string &string, ConsoleColor color = ConsoleColor::white);
-   void handleCommand(struct Map &map, struct Player &player, struct Inventory &inventory);
+   void lex(struct Map &map, struct Player &player, struct Inventory &inventory);
+   bool handleCommand(const VArgs &args, struct Map &map, struct Player &player, struct Inventory &inventory);
 
    // Members
 

@@ -12,7 +12,7 @@
 
 constexpr int maxVisibleLinesOnScreenAtOnce = 6;
 
-using Command = std::function<void(ArgsList)>;
+using Command = std::function<bool(ArgsList)>;
 static inline const std::unordered_map<std::string, Command> commands {
    {"help", c_help},
    {"tp", c_tp},
@@ -50,7 +50,7 @@ void Console::update(Map &map, Player &player, Inventory &inventory) {
 
    if (wastyping && !input.typing && IsKeyPressed(KEY_ENTER)) {
       input.typing = true;
-      handleCommand(map, player, inventory);
+      lex(map, player, inventory);
    }
 
    if (input.typing) {
@@ -58,7 +58,7 @@ void Console::update(Map &map, Player &player, Inventory &inventory) {
       if (thing >= 1.0f) {
          scrollback = std::max(0, scrollback - 1);
       } else if (thing <= -1.0f) {
-         scrollback = std::min((int)text.size() - maxVisibleLinesOnScreenAtOnce, scrollback + 1);
+         scrollback = std::min(std::max(0, (int)text.size() - maxVisibleLinesOnScreenAtOnce), scrollback + 1);
       }
    }
 }
@@ -76,7 +76,7 @@ void Console::render() {
 
 // Commands
 
-void Console::handleCommand(Map &map, Player &player, Inventory &inventory) {
+void Console::lex(Map &map, Player &player, Inventory &inventory) {
    std::stringstream s (input.text);
    std::string temp;
    VArgs args;
@@ -89,29 +89,36 @@ void Console::handleCommand(Map &map, Player &player, Inventory &inventory) {
       return;
    }
 
-   if (auto it = commands.find(args[0]); it != commands.end()) {
-      it->second(*this, input.text, args, map, player, inventory);
-   } else {
-      output("Invalid command. See 'help' for a list of commands.", ConsoleColor::red);
-   }
-
+   handleCommand(args, map, player, inventory);
    input.text.clear();
    scrollback = std::max(0, (int)text.size() - maxVisibleLinesOnScreenAtOnce);
 }
 
-void c_help(Console &console, const std::string&, const VArgs&, Map&, Player&, Inventory&) {
+bool Console::handleCommand(const VArgs &args, Map &map, Player &player, Inventory &inventory) {
+   if (auto it = commands.find(args[0]); it != commands.end()) {
+      return it->second(*this, input.text, args, map, player, inventory);
+   } else {
+      output("Invalid command. See 'help' for a list of commands.", ConsoleColor::red);
+      return false;
+   }
+}
+
+bool c_help(Console &console, const std::string&, const VArgs&, Map&, Player&, Inventory&) {
+   console.output("Operators:", ConsoleColor::gray);
+   console.output("Commands:", ConsoleColor::gray);
    console.output("tp X Y - teleport player to the given coordinates.");
    console.output("crds - show current coordinates.");
    console.output("quine - turing complete when?");
    console.output("clear - clear the console.");
    console.output("exit - exit the console. Or simply press ESC!");
-   console.output("Scroll back with the scroll wheel to see more commands.", ConsoleColor::blue);
+   console.output("Scroll back with the scroll wheel to see more commands.", ConsoleColor::gray);
+   return true;
 }
 
-void c_tp(Console &console, const std::string&, const VArgs &args, Map &map, Player &player, Inventory&) {
+bool c_tp(Console &console, const std::string&, const VArgs &args, Map &map, Player &player, Inventory&) {
    if (args.size() != 3) {
       console.output("tp: expected exactly 2 arguments.", ConsoleColor::red);
-      return;
+      return false;
    }
    int x, y;
 
@@ -121,40 +128,46 @@ void c_tp(Console &console, const std::string&, const VArgs &args, Map &map, Pla
       y = stoi(args[2]);
    } catch (...) {
       console.output("tp: expected both arguments to be numbers.", ConsoleColor::red);
-      return;
+      return false;
    }
 
    if (x < 0 || y < 0 || x >= map.sizeX || y >= map.sizeY) {
       console.output("tp: coordinates are out of bounds.", ConsoleColor::red);
-      return;
+      return false;
    }
 
    player.maximumY = y; // Reset fall height for safety purposes
+   player.ignoreCollision = true;
    player.position.x = x;
    player.position.y = y;
    console.output(TextFormat("tp: teleported to (X %d; Y %d).", x, y));
+   return true;
 }
 
-void c_crds(Console &console, const std::string&, const VArgs &args, Map&, Player &player, Inventory&) {
+bool c_crds(Console &console, const std::string&, const VArgs &args, Map&, Player &player, Inventory&) {
    if (args.size() != 1) {
       console.output("crds: expected no arguments. Executing anyway.", ConsoleColor::red);
    }
    console.output(TextFormat("crds: your position is (X %d; Y %d).", (int)player.position.x, (int)player.position.y));
+   return true;
 }
 
-void c_clear(Console &console, const std::string&, const VArgs&, Map&, Player&, Inventory&) {
+bool c_clear(Console &console, const std::string&, const VArgs&, Map&, Player&, Inventory&) {
    console.text.clear();
    console.text.shrink_to_fit(); // Clear memory too
 
    console.textColors.clear();
    console.textColors.shrink_to_fit();
    console.scrollback = 0;
+   return true;
 }
 
-void c_exit(Console &console, const std::string&, const VArgs&, Map&, Player&, Inventory&) {
+bool c_exit(Console &console, const std::string&, const VArgs&, Map&, Player&, Inventory&) {
    console.input.typing = false;
+   return true;
 }
 
-void c_quine(Console &console, const std::string &quine, const VArgs&, Map&, Player&, Inventory&) {
+bool c_quine(Console &console, const std::string &quine, const VArgs&, Map&, Player&, Inventory&) {
    console.output(quine);
+   return true;
 }

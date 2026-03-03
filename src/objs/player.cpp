@@ -144,6 +144,11 @@ notSittingAnymore:
 
 void Player::updateCollisions(Map &map) {
    if (sitting) return;
+   if (ignoreCollision) {
+      ignoreCollision = false;
+      return;
+   }
+
    position.y += velocity.y;
 
    bool wasOnGround = onGround;
