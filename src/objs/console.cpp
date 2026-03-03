@@ -2,6 +2,7 @@
 #include "mngr/resource.hpp"
 #include "objs/inventory.hpp"
 #include "util/format.hpp"
+#include "util/parallax.hpp"
 #include "util/position.hpp"
 #include "util/render.hpp"
 #include <functional>
@@ -24,6 +25,7 @@ static inline const std::unordered_map<std::string, Command> commands {
    {"maxhp", c_maxhp},
    {"br", c_br},
    {"kill", c_kill},
+   {"time", c_time},
 };
 
 static inline constexpr Color lineColors[(size_t)ConsoleColor::count] {
@@ -185,6 +187,7 @@ bool c_help(Console &console, const VArgs&, Map&, Player&, Inventory&) {
    console.output("> - execute next command and push an argument as the output from the previous command.");
    console.output("Commands:", ConsoleColor::gray);
    console.output("echo [MSG] - echo a message to the console.");
+   console.output("time [TIME] - set time of day.");
    console.output("tp [X] [Y] - teleport player to the given coordinates.");
    console.output("sp [X] [Y] - set player spawn point to the given coordinates.");
    console.output("crds - show current coordinates.");
@@ -360,5 +363,24 @@ bool c_kill(Console &console, const VArgs &args, Map&, Player &player, Inventory
    }
    player.hearts = 0;
    console.output("kill: killed player.");
+   return true;
+}
+
+bool c_time(Console &console, const VArgs &args, Map&, Player&, Inventory&) {
+   if (args.size() != 2) {
+      console.output("time: expected 1 argument.", ConsoleColor::red);
+      return false;
+   }
+
+   float t;
+   try {
+      t = stof(args[1]) * (360.0f / 24.0f);
+   } catch (...) {
+      console.output("time: expected first argument to be a number.", ConsoleColor::red);
+      return false;
+   }
+
+   setTimeOfDay(t);
+   console.output(TextFormat("time: set time of day to %.2f.", t));
    return true;
 }

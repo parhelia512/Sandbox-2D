@@ -20,6 +20,7 @@ bool c_hp(ArgsList);
 bool c_maxhp(ArgsList);
 bool c_br(ArgsList);
 bool c_kill(ArgsList);
+bool c_time(ArgsList);
 
 // Console
 
