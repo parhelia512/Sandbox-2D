@@ -34,7 +34,6 @@
 
 ### Cheats
 - Add history
-- Add bash like operators &&, ||, ;
 - give command
 
 ### Other

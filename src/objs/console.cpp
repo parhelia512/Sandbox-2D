@@ -5,7 +5,6 @@
 #include "util/position.hpp"
 #include "util/render.hpp"
 #include <functional>
-#include <sstream>
 #include <unordered_map>
 
 // Constants
@@ -15,6 +14,7 @@ constexpr int maxVisibleLinesOnScreenAtOnce = 6;
 using Command = std::function<bool(ArgsList)>;
 static inline const std::unordered_map<std::string, Command> commands {
    {"help", c_help},
+   {"echo", c_echo},
    {"tp", c_tp},
    {"sp", c_sp},
    {"crds", c_crds},
@@ -81,35 +81,110 @@ void Console::render() {
 // Commands
 
 void Console::lex(Map &map, Player &player, Inventory &inventory) {
-   std::stringstream s (input.text);
-   std::string temp;
+   std::string pipe;
+   size_t index = 0;
    VArgs args;
 
-   while (s >> temp) {
-      args.push_back(temp);
-   }
+   for (; index < input.text.size(); ++index) {
+      char ch = input.text[index];
 
-   if (args.empty()) {
-      return;
-   }
+      if (ch == ';') {
+         if (args.empty()) {
+            output("operator ';': no command to execute.", ConsoleColor::red);
+            goto QUIT_LEXING;
+         }
 
-   handleCommand(args, map, player, inventory);
+         handleCommand(args, map, player, inventory, pipe);
+         args.clear();
+      } else if (ch == '&') {
+         if (args.empty()) {
+            output("operator '&': no command to execute.", ConsoleColor::red);
+            goto QUIT_LEXING;
+         }
+         
+         if (!handleCommand(args, map, player, inventory, pipe)) goto QUIT_LEXING;
+         args.clear();
+      } else if (ch == '|') {
+         if (args.empty()) {
+            output("operator '|': no command to execute.", ConsoleColor::red);
+            goto QUIT_LEXING;
+         }
+
+         if (handleCommand(args, map, player, inventory, pipe)) goto QUIT_LEXING;
+         args.clear();
+      } else if (ch == '>') {
+         if (args.empty()) {
+            output("operator '>': no command to execute.", ConsoleColor::red);
+            goto QUIT_LEXING;
+         }
+
+         size_t outputsize = text.size();
+         handleCommand(args, map, player, inventory, pipe);
+         args.clear();
+
+         for (size_t i = outputsize; i < text.size(); ++i) {
+            pipe += text[i];
+         }
+      } else if (ch == '"') {
+         std::string str;
+         index += 1;
+         if (index >= input.text.size()) {
+            output("operator '\"': unterminated string.", ConsoleColor::red);
+            goto QUIT_LEXING;
+         }
+
+         for (ch = input.text[index]; index < input.text.size() && ch != '"'; ch = input.text[++index])
+            str.push_back(ch);
+
+         if (index >= input.text.size() || ch != '"') {
+            output("operator '\"': unterminated string.", ConsoleColor::red);
+            goto QUIT_LEXING;
+         }
+         args.push_back(str);
+      } else if (std::isspace(ch)) {
+         continue;
+      } else {
+         std::string arg;
+
+         for (ch = input.text[index]; index < input.text.size() && !std::isspace(ch); ch = input.text[++index]) {
+            if (ch == '&' || ch == '|' || ch == ';') {
+               index -= 1;
+               break;
+            }
+            arg.push_back(ch);
+         }
+         args.push_back(arg);
+      }
+   }
+   handleCommand(args, map, player, inventory, pipe);
+
+QUIT_LEXING:
    input.text.clear();
    scrollback = std::max(0, (int)text.size() - maxVisibleLinesOnScreenAtOnce);
 }
 
-bool Console::handleCommand(const VArgs &args, Map &map, Player &player, Inventory &inventory) {
+bool Console::handleCommand(VArgs &args, Map &map, Player &player, Inventory &inventory, std::string &pipe) {
    if (auto it = commands.find(args[0]); it != commands.end()) {
-      return it->second(*this, input.text, args, map, player, inventory);
+      if (!pipe.empty()) {
+         args.push_back(pipe);
+         pipe.clear();
+      }
+      return it->second(*this, args, map, player, inventory);
    } else {
+      pipe.clear();
       output("Invalid command. See 'help' for a list of commands.", ConsoleColor::red);
       return false;
    }
 }
 
-bool c_help(Console &console, const std::string&, const VArgs&, Map&, Player&, Inventory&) {
+bool c_help(Console &console, const VArgs&, Map&, Player&, Inventory&) {
    console.output("Operators:", ConsoleColor::gray);
+   console.output("& - execute next command only if the last was successful.");
+   console.output("| - execute next command only if the last failed.");
+   console.output("; - execute next command.");
+   console.output("> - execute next command and push an argument as the output from the previous command.");
    console.output("Commands:", ConsoleColor::gray);
+   console.output("echo [MSG] - echo a message to the console.");
    console.output("tp [X] [Y] - teleport player to the given coordinates.");
    console.output("sp [X] [Y] - set player spawn point to the given coordinates.");
    console.output("crds - show current coordinates.");
@@ -122,7 +197,16 @@ bool c_help(Console &console, const std::string&, const VArgs&, Map&, Player&, I
    return true;
 }
 
-bool c_tp(Console &console, const std::string&, const VArgs &args, Map &map, Player &player, Inventory&) {
+bool c_echo(Console &console, const VArgs &args, Map&, Player&, Inventory&) {
+   if (args.size() != 2) {
+      console.output("echo: expected exactly 1 argument.", ConsoleColor::red);
+      return false;
+   }
+   console.output(args[1]);
+   return true;
+}
+
+bool c_tp(Console &console, const VArgs &args, Map &map, Player &player, Inventory&) {
    if (args.size() != 3) {
       console.output("tp: expected exactly 2 arguments.", ConsoleColor::red);
       return false;
@@ -151,7 +235,7 @@ bool c_tp(Console &console, const std::string&, const VArgs &args, Map &map, Pla
    return true;
 }
 
-bool c_sp(Console &console, const std::string&, const VArgs &args, Map &map, Player &player, Inventory&) {
+bool c_sp(Console &console, const VArgs &args, Map &map, Player &player, Inventory&) {
    if (args.size() != 1 && args.size() != 3) {
       console.output("sp: expected 2 or no arguments.", ConsoleColor::red);
       return false;
@@ -182,7 +266,7 @@ bool c_sp(Console &console, const std::string&, const VArgs &args, Map &map, Pla
    return true;
 }
 
-bool c_crds(Console &console, const std::string&, const VArgs &args, Map&, Player &player, Inventory&) {
+bool c_crds(Console &console, const VArgs &args, Map&, Player &player, Inventory&) {
    if (args.size() != 1) {
       console.output("crds: expected no arguments. Executing anyway.", ConsoleColor::red);
    }
@@ -190,7 +274,7 @@ bool c_crds(Console &console, const std::string&, const VArgs &args, Map&, Playe
    return true;
 }
 
-bool c_clear(Console &console, const std::string&, const VArgs&, Map&, Player&, Inventory&) {
+bool c_clear(Console &console, const VArgs&, Map&, Player&, Inventory&) {
    console.text.clear();
    console.text.shrink_to_fit(); // Clear memory too
 
@@ -200,7 +284,7 @@ bool c_clear(Console &console, const std::string&, const VArgs&, Map&, Player&, 
    return true;
 }
 
-bool c_exit(Console &console, const std::string&, const VArgs&, Map&, Player&, Inventory&) {
+bool c_exit(Console &console, const VArgs&, Map&, Player&, Inventory&) {
    console.input.typing = false;
    return true;
 }
@@ -210,7 +294,7 @@ bool c_quine(Console &console, const std::string &quine, const VArgs&, Map&, Pla
    return true;
 }
 
-bool c_hp(Console &console, const std::string&, const VArgs &args, Map&, Player &player, Inventory&) {
+bool c_hp(Console &console, const VArgs &args, Map&, Player &player, Inventory&) {
    if (args.size() != 2) {
       console.output("hp: expected 1 argument.", ConsoleColor::red);
       return false;
@@ -230,7 +314,7 @@ bool c_hp(Console &console, const std::string&, const VArgs &args, Map&, Player 
    return true;
 }
 
-bool c_maxhp(Console &console, const std::string&, const VArgs &args, Map&, Player &player, Inventory&) {
+bool c_maxhp(Console &console, const VArgs &args, Map&, Player &player, Inventory&) {
    if (args.size() != 2) {
       console.output("maxhp: expected 1 argument.", ConsoleColor::red);
       return false;
@@ -251,7 +335,7 @@ bool c_maxhp(Console &console, const std::string&, const VArgs &args, Map&, Play
    return true;
 }
 
-bool c_br(Console &console, const std::string&, const VArgs &args, Map&, Player &player, Inventory&) {
+bool c_br(Console &console, const VArgs &args, Map&, Player &player, Inventory&) {
    if (args.size() != 2) {
       console.output("br: expected 1 argument.", ConsoleColor::red);
       return false;
@@ -270,7 +354,7 @@ bool c_br(Console &console, const std::string&, const VArgs &args, Map&, Player 
    return true;
 }
 
-bool c_kill(Console &console, const std::string&, const VArgs &args, Map&, Player &player, Inventory&) {
+bool c_kill(Console &console, const VArgs &args, Map&, Player &player, Inventory&) {
    if (args.size() != 1) {
       console.output("kill: expected no arguments. Executing anyway.", ConsoleColor::red);
    }

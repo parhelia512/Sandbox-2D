@@ -7,9 +7,10 @@
 // Commands
 
 #define VArgs std::vector<std::string>
-#define ArgsList struct Console &console, const std::string &original, const VArgs &args, struct Map &map, struct Player &player, struct Inventory &inventory
+#define ArgsList struct Console &console, const VArgs &args, struct Map &map, struct Player &player, struct Inventory &inventory
 
 bool c_help(ArgsList);
+bool c_echo(ArgsList);
 bool c_tp(ArgsList);
 bool c_sp(ArgsList);
 bool c_crds(ArgsList);
@@ -31,7 +32,7 @@ struct Console {
 
    void output(const std::string &string, ConsoleColor color = ConsoleColor::white);
    void lex(struct Map &map, struct Player &player, struct Inventory &inventory);
-   bool handleCommand(const VArgs &args, struct Map &map, struct Player &player, struct Inventory &inventory);
+   bool handleCommand(VArgs &args, struct Map &map, struct Player &player, struct Inventory &inventory, std::string &pipe);
 
    // Members
 
