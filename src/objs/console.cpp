@@ -3,190 +3,35 @@
 #include "objs/inventory.hpp"
 #include "util/format.hpp"
 #include "util/parallax.hpp"
-#include "util/position.hpp"
 #include "util/render.hpp"
 #include <functional>
 #include <unordered_map>
 
 // Constants
 
-constexpr int maxVisibleLinesOnScreenAtOnce = 6;
-
-using Command = std::function<bool(ArgsList)>;
-static inline const std::unordered_map<std::string, Command> commands {
-   {"help", c_help},
-   {"echo", c_echo},
-   {"tp", c_tp},
-   {"sp", c_sp},
-   {"crds", c_crds},
-   {"clear", c_clear},
-   {"exit", c_exit},
-   {"hp", c_hp},
-   {"maxhp", c_maxhp},
-   {"br", c_br},
-   {"kill", c_kill},
-   {"time", c_time},
-};
+constexpr int maxLines = 7;
+constexpr int consoleFontSize = 35;
 
 static inline constexpr Color lineColors[(size_t)ConsoleColor::count] {
    WHITE, GRAY, YELLOW, RED, GREEN, BLUE, Color{255, 125, 0, 255}, Color{125, 0, 255, 255}, Color{255, 125, 255, 255}
 };
 
-// init
-
-void Console::init() {
-   input.rectangle = {500.0f, GetScreenHeight() - 25.0f, 1000.0f, 50.0f};
-   input.fallback = "'help' for a list of commands.";
-   input.wrapinput = false;
-   input.maxChars = 512;
-}
-
-void Console::output(const std::string &string, ConsoleColor color) {
-   size_t last = text.size();
-   divideText(text, string, input.rectangle.width - 10.0f, 35, 1.0f);
-
-   for (size_t i = last; i < text.size(); ++i) {
-      textColors.push_back(color);
-   }
-}
-
-void Console::update(Map &map, Player &player, Inventory &inventory) {
-   bool wastyping = input.typing;
-   input.update();
-
-   if (wastyping && !input.typing && IsKeyPressed(KEY_ENTER)) {
-      input.typing = true;
-      lex(map, player, inventory);
-   }
-
-   if (input.typing) {
-      float thing = GetMouseWheelMove();
-      if (thing >= 1.0f) {
-         scrollback = std::max(0, scrollback - 1);
-      } else if (thing <= -1.0f) {
-         scrollback = std::min(std::max(0, (int)text.size() - maxVisibleLinesOnScreenAtOnce), scrollback + 1);
-      }
-   }
-}
-
-void Console::render() {
-   if (!input.typing) return;
-   drawRect(input.rectangle, Fade(BLACK, 0.9f));
-   input.render();
-   drawRect({input.rectangle.x, input.rectangle.y - 125.0f - input.rectangle.height, input.rectangle.width, input.rectangle.height + 250.0f}, Fade(BLACK, 0.75f));
-
-   for (int i = scrollback; i < scrollback + maxVisibleLinesOnScreenAtOnce && (size_t)i < text.size(); ++i) {
-      DrawTextPro(getFont("andy"), text[i].c_str(), {input.rectangle.x - input.rectangle.width / 2.0f + 5.0f, (input.rectangle.y - 125.0f) - (input.rectangle.height + 250.0f) / 2.0f + (i - scrollback) * 40}, {0, getOrigin(text[i].c_str(), 35, 1).y}, 0, 35, 1, lineColors[(size_t)textColors[i]]);
-   }
-}
-
 // Commands
 
-void Console::lex(Map &map, Player &player, Inventory &inventory) {
-   std::string pipe;
-   size_t index = 0;
-   VArgs args;
-
-   for (; index < input.text.size(); ++index) {
-      char ch = input.text[index];
-
-      if (ch == ';') {
-         if (args.empty()) {
-            output("operator ';': no command to execute.", ConsoleColor::red);
-            goto QUIT_LEXING;
-         }
-
-         handleCommand(args, map, player, inventory, pipe);
-         args.clear();
-      } else if (ch == '&') {
-         if (args.empty()) {
-            output("operator '&': no command to execute.", ConsoleColor::red);
-            goto QUIT_LEXING;
-         }
-         
-         if (!handleCommand(args, map, player, inventory, pipe)) goto QUIT_LEXING;
-         args.clear();
-      } else if (ch == '|') {
-         if (args.empty()) {
-            output("operator '|': no command to execute.", ConsoleColor::red);
-            goto QUIT_LEXING;
-         }
-
-         if (handleCommand(args, map, player, inventory, pipe)) goto QUIT_LEXING;
-         args.clear();
-      } else if (ch == '>') {
-         if (args.empty()) {
-            output("operator '>': no command to execute.", ConsoleColor::red);
-            goto QUIT_LEXING;
-         }
-
-         size_t outputsize = text.size();
-         handleCommand(args, map, player, inventory, pipe);
-         args.clear();
-
-         for (size_t i = outputsize; i < text.size(); ++i) {
-            pipe += text[i];
-         }
-      } else if (ch == '"') {
-         std::string str;
-         index += 1;
-         if (index >= input.text.size()) {
-            output("operator '\"': unterminated string.", ConsoleColor::red);
-            goto QUIT_LEXING;
-         }
-
-         for (ch = input.text[index]; index < input.text.size() && ch != '"'; ch = input.text[++index])
-            str.push_back(ch);
-
-         if (index >= input.text.size() || ch != '"') {
-            output("operator '\"': unterminated string.", ConsoleColor::red);
-            goto QUIT_LEXING;
-         }
-         args.push_back(str);
-      } else if (std::isspace(ch)) {
-         continue;
-      } else {
-         std::string arg;
-
-         for (ch = input.text[index]; index < input.text.size() && !std::isspace(ch); ch = input.text[++index]) {
-            if (ch == '&' || ch == '|' || ch == ';') {
-               index -= 1;
-               break;
-            }
-            arg.push_back(ch);
-         }
-         args.push_back(arg);
-      }
-   }
-   handleCommand(args, map, player, inventory, pipe);
-
-QUIT_LEXING:
-   input.text.clear();
-   scrollback = std::max(0, (int)text.size() - maxVisibleLinesOnScreenAtOnce);
-}
-
-bool Console::handleCommand(VArgs &args, Map &map, Player &player, Inventory &inventory, std::string &pipe) {
-   if (auto it = commands.find(args[0]); it != commands.end()) {
-      if (!pipe.empty()) {
-         args.push_back(pipe);
-         pipe.clear();
-      }
-      return it->second(*this, args, map, player, inventory);
-   } else {
-      pipe.clear();
-      output("Invalid command. See 'help' for a list of commands.", ConsoleColor::red);
-      return false;
-   }
-}
-
 bool c_help(Console &console, const VArgs&, Map&, Player&, Inventory&) {
+   console.output("Controls:", ConsoleColor::gray);
+   console.output("UP - previous command from history.");
+   console.output("DOWN - next command from history.");
+   console.output("ENTER - run command.");
+   console.output("ESC/CTRL+TAB - close.");
    console.output("Operators:", ConsoleColor::gray);
    console.output("& - execute next command only if the last was successful.");
    console.output("| - execute next command only if the last failed.");
    console.output("; - execute next command.");
-   console.output("> - execute next command and push an argument as the output from the previous command.");
    console.output("Commands:", ConsoleColor::gray);
    console.output("echo [MSG] - echo a message to the console.");
+   console.output("hist - output command history.");
+   console.output("chist - clear command history.");
    console.output("time [TIME] - set time of day.");
    console.output("tp [X] [Y] - teleport player to the given coordinates.");
    console.output("sp [X] [Y] - set player spawn point to the given coordinates.");
@@ -383,4 +228,195 @@ bool c_time(Console &console, const VArgs &args, Map&, Player&, Inventory&) {
    setTimeOfDay(t);
    console.output(TextFormat("time: set time of day to %.2f.", t));
    return true;
+}
+
+bool c_hist(Console &console, const VArgs &args, Map&, Player&, Inventory&) {
+   if (args.size() != 1) {
+      console.output("hist: expect no arguments. Executing anyway.", ConsoleColor::red);
+   }
+
+   // Don't show the current 'hist' command in history
+   for (size_t i = 0; i < console.history.size() - 1; ++i)
+      console.output(TextFormat("%5lu: %s", i + 1, console.history[i].c_str()));
+   return true;
+}
+
+bool c_chist(Console &console, const VArgs &args, Map&, Player&, Inventory&) {
+   if (args.size() != 1) {
+      console.output("chist: expect no arguments. Executing anyway.", ConsoleColor::red);
+   }
+   console.history.clear();
+   console.history.shrink_to_fit();
+   console.output("chist: history cleared.");
+   return true;
+}
+
+using Command = std::function<bool(Console&, const VArgs&, Map&, Player&, Inventory&)>;
+static inline const std::unordered_map<std::string, Command> commands {
+   {"help", c_help},
+   {"echo", c_echo},
+   {"tp", c_tp},
+   {"sp", c_sp},
+   {"crds", c_crds},
+   {"clear", c_clear},
+   {"exit", c_exit},
+   {"hp", c_hp},
+   {"maxhp", c_maxhp},
+   {"br", c_br},
+   {"kill", c_kill},
+   {"time", c_time},
+   {"hist", c_hist},
+   {"chist", c_chist},
+};
+
+// init
+
+void Console::init() {
+   input.rectangle = {500.0f, GetScreenHeight() - 25.0f, 1000.0f, 50.0f};
+   input.fallback = "'help' for a list of commands.";
+   input.wrapinput = false;
+   input.maxChars = 512;
+}
+
+void Console::output(const std::string &string, ConsoleColor color) {
+   size_t last = text.size();
+   divideText(text, string, input.rectangle.width - 10.0f, 35, 1.0f);
+
+   for (size_t i = last; i < text.size(); ++i) {
+      textColors.push_back(color);
+   }
+}
+
+// Update
+
+void Console::update(Map &map, Player &player, Inventory &inventory) {
+   bool wastyping = input.typing;
+   input.update();
+
+   if (wastyping && !input.typing && IsKeyPressed(KEY_ENTER)) {
+      input.typing = true;
+      lex(map, player, inventory);
+   }
+
+   if (!history.empty() && (IsKeyPressed(KEY_UP) || IsKeyPressedRepeat(KEY_UP))) {
+      historyIndex = (historyIndex == 0 ? history.size() - 1 : historyIndex - 1);
+      input.text = history[historyIndex];
+   } else if (!history.empty() && (IsKeyPressed(KEY_DOWN) || IsKeyPressedRepeat(KEY_DOWN))) {
+      historyIndex = (historyIndex + 1) % history.size();
+      input.text = history[historyIndex];
+   }
+
+   if (input.changed) {
+      historyIndex = 0;
+   }
+
+   if (input.typing) {
+      float thing = GetMouseWheelMove();
+      if (thing >= 1.0f) {
+         scrollback = std::max(0, scrollback - 1);
+      } else if (thing <= -1.0f) {
+         scrollback = std::min(std::max(0, (int)text.size() - maxLines), scrollback + 1);
+      }
+   }
+}
+
+// Render
+
+void Console::render() {
+   if (!input.typing) return;
+   drawRect(input.rectangle, Fade(BLACK, 0.9f));
+   input.render();
+
+   Font &font = getFont("andy");
+   float ym125 = input.rectangle.y - 125.0f;
+   float hp250 = input.rectangle.height + 250.0f;
+   float xconst = input.rectangle.x - input.rectangle.width / 2.0f + 5.0f;
+   float yconst = ym125 - hp250 / 2.0f;
+
+   drawRect({input.rectangle.x, ym125 - input.rectangle.height, input.rectangle.width, hp250}, Fade(BLACK, 0.75f));
+   for (int i = scrollback; i < scrollback + maxLines && (size_t)i < text.size(); ++i) {
+      DrawTextPro(font, text[i].c_str(), {xconst, yconst + (i - scrollback - 1) * 40.0f}, {0, 0}, 0, consoleFontSize, 1, lineColors[(size_t)textColors[i]]);
+   }
+}
+
+// Lexing/command logic
+
+void Console::lex(Map &map, Player &player, Inventory &inventory) {
+   history.push_back(input.text);
+   size_t index = 0;
+   VArgs args;
+
+   for (; index < input.text.size(); ++index) {
+      char ch = input.text[index];
+
+      if (ch == ';') {
+         if (args.empty()) {
+            output("operator ';': no command to execute.", ConsoleColor::red);
+            goto QUIT_LEXING;
+         }
+
+         handleCommand(args, map, player, inventory);
+         args.clear();
+      } else if (ch == '&') {
+         if (args.empty()) {
+            output("operator '&': no command to execute.", ConsoleColor::red);
+            goto QUIT_LEXING;
+         }
+         
+         if (!handleCommand(args, map, player, inventory)) goto QUIT_LEXING;
+         args.clear();
+      } else if (ch == '|') {
+         if (args.empty()) {
+            output("operator '|': no command to execute.", ConsoleColor::red);
+            goto QUIT_LEXING;
+         }
+
+         if (handleCommand(args, map, player, inventory)) goto QUIT_LEXING;
+         args.clear();
+      } else if (ch == '"') {
+         std::string str;
+         index += 1;
+         if (index >= input.text.size()) {
+            output("operator '\"': unterminated string.", ConsoleColor::red);
+            goto QUIT_LEXING;
+         }
+
+         for (ch = input.text[index]; index < input.text.size() && ch != '"'; ch = input.text[++index])
+            str.push_back(ch);
+
+         if (index >= input.text.size() || ch != '"') {
+            output("operator '\"': unterminated string.", ConsoleColor::red);
+            goto QUIT_LEXING;
+         }
+         args.push_back(str);
+      } else if (std::isspace(ch)) {
+         continue;
+      } else {
+         std::string arg;
+
+         for (ch = input.text[index]; index < input.text.size() && !std::isspace(ch); ch = input.text[++index]) {
+            if (ch == '&' || ch == '|' || ch == ';') {
+               index -= 1;
+               break;
+            }
+            arg.push_back(ch);
+         }
+         args.push_back(arg);
+      }
+   }
+   handleCommand(args, map, player, inventory);
+
+QUIT_LEXING:
+   input.text.clear();
+   scrollback = std::max(0, (int)text.size() - maxLines);
+   historyIndex = 0;
+}
+
+bool Console::handleCommand(VArgs &args, Map &map, Player &player, Inventory &inventory) {
+   if (auto it = commands.find(args[0]); it != commands.end()) {
+      return it->second(*this, args, map, player, inventory);
+   } else {
+      output("Invalid command. See 'help' for a list of commands.", ConsoleColor::red);
+      return false;
+   }
 }

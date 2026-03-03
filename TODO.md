@@ -33,7 +33,6 @@
 - Maybe add localization settings? Probably not
 
 ### Cheats
-- Fix weird inconsistencies for text
 - Add history
 - give command
 
