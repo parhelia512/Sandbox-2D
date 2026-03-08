@@ -33,6 +33,9 @@ bool c_help(Console &console, const VArgs&, Map&, Player&, Inventory&) {
    console.output("hist - output command history.");
    console.output("chist - clear command history.");
    console.output("time [TIME] - set time of day.");
+   console.output("stblk [ID/NAME] [X] [Y] - set block with the id/name at the given coordinates.");
+   console.output("stwl [ID/NAME] [X] [Y] - set wall with the id/name at the given coordinates.");
+   console.output("rblk [X] [Y] - remove block at the given coordinates.");
    console.output("tp [X] [Y] - teleport player to the given coordinates.");
    console.output("sp [X] [Y] - set player spawn point to the given coordinates.");
    console.output("crds - show current coordinates.");
@@ -232,7 +235,7 @@ bool c_time(Console &console, const VArgs &args, Map&, Player&, Inventory&) {
 
 bool c_hist(Console &console, const VArgs &args, Map&, Player&, Inventory&) {
    if (args.size() != 1) {
-      console.output("hist: expect no arguments. Executing anyway.", ConsoleColor::red);
+      console.output("hist: expected no arguments. Executing anyway.", ConsoleColor::red);
    }
 
    // Don't show the current 'hist' command in history
@@ -243,13 +246,121 @@ bool c_hist(Console &console, const VArgs &args, Map&, Player&, Inventory&) {
 
 bool c_chist(Console &console, const VArgs &args, Map&, Player&, Inventory&) {
    if (args.size() != 1) {
-      console.output("chist: expect no arguments. Executing anyway.", ConsoleColor::red);
+      console.output("chist: expected no arguments. Executing anyway.", ConsoleColor::red);
    }
    console.history.clear();
    console.history.shrink_to_fit();
    console.output("chist: history cleared.");
    return true;
 }
+
+bool c_stblk(Console &console, const VArgs &args, Map &map, Player&, Inventory&) {
+   if (args.size() != 4) {
+      console.output("stblk: expected 3 argument.", ConsoleColor::red);
+      return false;
+   }
+
+   int x, y, id;
+   try {
+      id = stoi(args[1]);
+
+      if (!isBlockIdValid(id)) {
+         console.output("stblk: invalid block id.", ConsoleColor::red);
+         return false;
+      }
+   } catch (...) {
+      if (!isBlockNameValid(args[1].c_str())) {
+         console.output("stblk: expected first argument to either be a valid block id or name.", ConsoleColor::red);
+         return false;
+      }
+      id = getBlockIdFromName(args[1].c_str());
+   }
+
+   try {
+      x = stoi(args[2]);
+      y = stoi(args[3]);
+   } catch (...) {
+      console.output("stblk: expected second and third arguments to be numbers.", ConsoleColor::red);
+      return false;
+   }
+
+   if (x < 0 || y < 0 || x >= map.sizeX || y >= map.sizeY) {
+      console.output("stblk: coordinates are out of bounds.", ConsoleColor::red);
+      return false;
+   }
+
+   map.setBlock(x, y, id);
+   console.output(TextFormat("stblk: set block at coordinates (X %d; Y %d) to '%s'.", x, y, getBlockNameFromId(id).c_str()));
+   return true;
+}
+
+bool c_rblk(Console &console, const VArgs &args, Map &map, Player&, Inventory&) {
+   if (args.size() != 3) {
+      console.output("rblk: expected 2 argument.", ConsoleColor::red);
+      return false;
+   }
+
+   int x, y;
+   try {
+      x = stoi(args[2]);
+      y = stoi(args[3]);
+   } catch (...) {
+      console.output("rblk: expected all arguments to be numbers.", ConsoleColor::red);
+      return false;
+   }
+
+   if (x < 0 || y < 0 || x >= map.sizeX || y >= map.sizeY) {
+      console.output("rblk: coordinates are out of bounds.", ConsoleColor::red);
+      return false;
+   }
+
+   map.deleteBlockWithoutDeletingLiquids(x, y);
+   map.deleteBlockWithoutDeletingLiquids(x, y, true);
+   console.output(TextFormat("rblk: removed block at coordinates (X %d; Y %d).", x, y));
+   return true;
+}
+
+bool c_stwl(Console &console, const VArgs &args, Map &map, Player&, Inventory&) {
+   if (args.size() != 4) {
+      console.output("stwl: expected 3 argument.", ConsoleColor::red);
+      return false;
+   }
+
+   int x, y, id;
+   try {
+      id = stoi(args[1]);
+
+      if (!isBlockIdValid(id)) {
+         console.output("stwl: invalid block id.", ConsoleColor::red);
+         return false;
+      }
+   } catch (...) {
+      if (!isBlockNameValid(args[1].c_str())) {
+         console.output("stwl: expected first argument to either be a valid block id or name.", ConsoleColor::red);
+         return false;
+      }
+      id = getBlockIdFromName(args[1].c_str());
+   }
+
+   try {
+      x = stoi(args[2]);
+      y = stoi(args[3]);
+   } catch (...) {
+      console.output("stwl: expected second and third arguments to be numbers.", ConsoleColor::red);
+      return false;
+   }
+
+   if (x < 0 || y < 0 || x >= map.sizeX || y >= map.sizeY) {
+      console.output("stwl: coordinates are out of bounds.", ConsoleColor::red);
+      return false;
+   }
+
+   map.setBlock(x, y, id, true);
+   console.output(TextFormat("stwl: set block at coordinates (X %d; Y %d) to '%s'.", x, y, getBlockNameFromId(id).c_str()));
+   return true;
+}
+
+// COMMAND MAP
 
 using Command = std::function<bool(Console&, const VArgs&, Map&, Player&, Inventory&)>;
 static inline const std::unordered_map<std::string, Command> commands {
@@ -267,6 +378,8 @@ static inline const std::unordered_map<std::string, Command> commands {
    {"time", c_time},
    {"hist", c_hist},
    {"chist", c_chist},
+   {"stblk", c_stblk},
+   {"stwl", c_stwl},
 };
 
 // init

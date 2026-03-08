@@ -63,7 +63,7 @@ constexpr static inline std::array<BlockInfo, blockCount> blockInfo {
    BlockInfo{"mythril_ore",        BlockType::solid,                                                                                          3.25f,        3,            Item{ItemType::item, 4, 1}},
 };
 
-const static inline StrArray<const char *> blockIds {
+const static inline StrArray<std::string> blockIds {
    "air", "grass", "dirt", "clay", "stone", "sand", "sandstone", "bricks", "glass", "planks", "stone_bricks", "tiles", "obsidian", "platform", "snow", "ice", "jungle_grass", "mud", "lamp", "torch",
    "honey_block", "crispy_honey_block", "slime_block", "bubble_block", "slime_platform", "cactus_block", "coal_ore", "iron_ore", "gold_ore", "mythril_ore"
 };
@@ -80,9 +80,13 @@ int getBlockBreakingLevel(unsigned short id) {
    return blockInfo[id].breakLevel;
 }
 
+Item getBlockDropId(unsigned short id, bool iswall) {
+   return blockInfo[id].drop.id == 0 ? Item{ItemType::block, id, 1, false, iswall, false} : blockInfo.at(id).drop;
+}
+
 // Asserts in these two functions would be too slow, as they're called often (especially in
 // world generation code), that's why debug asserts are used instead
-unsigned short getBlockIdFromName(const char *name) {
+unsigned short getBlockIdFromName(const std::string &name) {
    assertDebug(blockIds.count(name), "DEBUG: Block with the name '{}' does not exist!", name);
    return blockIds.at(name);
 }
@@ -92,8 +96,12 @@ std::string getBlockNameFromId(unsigned short id) {
    return blockInfo[id].name;
 }
 
-Item getBlockDropId(unsigned short id, bool iswall) {
-   return blockInfo[id].drop.id == 0 ? Item{ItemType::block, id, 1, false, iswall, false} : blockInfo.at(id).drop;
+bool isBlockNameValid(const std::string &name) {
+   return blockIds.map.find(name) != blockIds.map.end();
+}
+
+bool isBlockIdValid(unsigned short id) {
+   return id < blockCount;
 }
 
 // Map constructors
@@ -175,7 +183,7 @@ void Map::addDamageIndicator(const Vector2 &position, int damage, bool critical)
 
 // Set block functions
 
-void Map::setRow(int y, const char *name, bool isWall) {
+void Map::setRow(int y, const std::string &name, bool isWall) {
    unsigned short id = getBlockIdFromName(name);
    BlockType type = blockInfo[id].attributes;
 
@@ -206,7 +214,7 @@ void Map::setWallRow(int y, unsigned short *ids) {
    }
 }
 
-void Map::setColumnAndWalls(int x, int y, const char *name) {
+void Map::setColumnAndWalls(int x, int y, const std::string &name) {
    unsigned short id = getBlockIdFromName(name);
    BlockType type = blockInfo[id].attributes;
    Texture *texture = &getTexture(name);
@@ -223,7 +231,7 @@ void Map::setColumnAndWalls(int x, int y, const char *name) {
    }
 }
 
-void Map::setBlock(int x, int y, const char *name, bool isWall) {
+void Map::setBlock(int x, int y, const std::string &name, bool isWall) {
    Block &block = (isWall ? walls : blocks)[y][x];
    block.id = getBlockIdFromName(name);
    block.value = block.value2 = 0;
