@@ -39,6 +39,8 @@ bool c_help(Console &console, const VArgs&, Map&, Player&, Inventory&) {
    console.output("flwl [ID/NAME] [SX] [SY] [DX] [DY] - fill walls with the id/name from coordinates (SX; SY) to (DX; DY).");
    console.output("stlq [ID/NAME] [X] [Y] - set liquid with the id/name at the given coordinates.");
    console.output("fllq [ID/NAME] [SX] [SY] [DX] [DY] - fill liquids with the id/name from coordinates (SX; SY) to (DX; DY).");
+   console.output("gv [i/b/e/p] [ID] [COUNT] - give item of specified id and quantity to the player.");
+   console.output("clinv - clear the inventory.");
    console.output("tp [X] [Y] - teleport player to the given coordinates.");
    console.output("sp [X] [Y] - set player spawn point to the given coordinates.");
    console.output("crds - show current coordinates.");
@@ -259,7 +261,7 @@ bool c_chist(Console &console, const VArgs &args, Map&, Player&, Inventory&) {
 
 bool c_stblk(Console &console, const VArgs &args, Map &map, Player&, Inventory&) {
    if (args.size() != 4) {
-      console.output("stblk: expected 3 argument.", ConsoleColor::red);
+      console.output("stblk: expected 3 arguments.", ConsoleColor::red);
       return false;
    }
 
@@ -299,7 +301,7 @@ bool c_stblk(Console &console, const VArgs &args, Map &map, Player&, Inventory&)
 
 bool c_flblk(Console &console, const VArgs &args, Map &map, Player&, Inventory&) {
    if (args.size() != 6) {
-      console.output("flblk: expected 5 argument.", ConsoleColor::red);
+      console.output("flblk: expected 5 arguments.", ConsoleColor::red);
       return false;
    }
 
@@ -348,7 +350,7 @@ bool c_flblk(Console &console, const VArgs &args, Map &map, Player&, Inventory&)
 
 bool c_stwl(Console &console, const VArgs &args, Map &map, Player&, Inventory&) {
    if (args.size() != 4) {
-      console.output("stwl: expected 3 argument.", ConsoleColor::red);
+      console.output("stwl: expected 3 arguments.", ConsoleColor::red);
       return false;
    }
 
@@ -388,7 +390,7 @@ bool c_stwl(Console &console, const VArgs &args, Map &map, Player&, Inventory&) 
 
 bool c_flwl(Console &console, const VArgs &args, Map &map, Player&, Inventory&) {
    if (args.size() != 6) {
-      console.output("flwl: expected 5 argument.", ConsoleColor::red);
+      console.output("flwl: expected 5 arguments.", ConsoleColor::red);
       return false;
    }
 
@@ -437,7 +439,7 @@ bool c_flwl(Console &console, const VArgs &args, Map &map, Player&, Inventory&) 
 
 bool c_stlq(Console &console, const VArgs &args, Map &map, Player&, Inventory&) {
    if (args.size() != 4) {
-      console.output("stlq: expected 3 argument.", ConsoleColor::red);
+      console.output("stlq: expected 3 arguments.", ConsoleColor::red);
       return false;
    }
 
@@ -489,7 +491,7 @@ bool c_stlq(Console &console, const VArgs &args, Map &map, Player&, Inventory&) 
 
 bool c_fllq(Console &console, const VArgs &args, Map &map, Player&, Inventory&) {
    if (args.size() != 6) {
-      console.output("fllq: expected 5 argument.", ConsoleColor::red);
+      console.output("fllq: expected 5 arguments.", ConsoleColor::red);
       return false;
    }
 
@@ -542,6 +544,92 @@ bool c_fllq(Console &console, const VArgs &args, Map &map, Player&, Inventory&) 
    return true;
 }
 
+bool c_gv(Console &console, const VArgs &args, Map&, Player &player, Inventory &inventory) {
+   if (args.size() != 4 && args.size() != 3) {
+      console.output("gv: expected 2 or 3 arguments.", ConsoleColor::red);
+      return false;
+   }
+
+   Item item;
+   int id, count = 1;
+
+   try {
+      if (args[1].size() != 1) {
+         console.output("gv: invalid first argument, expected item type - b/i/e/p.", ConsoleColor::red);
+         return false;
+      }
+
+      id = stoi(args[2]);
+      if (args.size() == 4) {
+         count = stoi(args[3]);
+      }
+
+      if (count < 0 || count > 9999) {
+         console.output("gv: invalid item count.", ConsoleColor::red);
+         return false;
+      }
+
+      switch (args[1][0]) {
+      case 'b':
+         if (id < 0 || id >= getBlockCount()) {
+            console.output("gv: invalid block id.", ConsoleColor::red);
+            return false;
+         }
+         item.type = ItemType::block;
+         break;
+      case 'i':
+         if (id < 0 || id >= (int)getItemCount()) {
+            console.output("gv: invalid item id.", ConsoleColor::red);
+            return false;
+         }
+         item.type = ItemType::item;
+         break;
+      case 'e':
+         if (id < 0 || id >= (int)getToolCount()) {
+            console.output("gv: invalid equipment id.", ConsoleColor::red);
+            return false;
+         }
+         item.type = ItemType::equipment;
+         break;
+      case 'p':
+         if (id < 0 || id >= (int)getPotionCount()) {
+            console.output("gv: invalid potion id.", ConsoleColor::red);
+            return false;
+         }
+         item.type = ItemType::potion;
+         break;
+      default:
+         console.output("gv: invalid first argument, expected item type - b/i/e/p.", ConsoleColor::red);
+         return false;
+      }
+
+      item.count = count;
+      item.id = id;
+   } catch (...) {
+      console.output("gv: expected second and third arguments to be numbers.", ConsoleColor::red);
+      return false;
+   }
+
+   inventory.tryToPlaceItemOrDropAtCoordinates(item, player.position.x, player.position.y);
+   console.output(TextFormat("gv: gave %d of item id %d.", count, id));
+   return true;
+}
+
+bool c_clinv(Console &console, const VArgs &args, Map&, Player&, Inventory &inventory) {
+   if (args.size() != 1) {
+      console.output("clinv: expected no arguments. Executing anyway.", ConsoleColor::red);
+   }
+   for (int y = 0; y < inventoryHeight; ++y) {
+      for (int x = 0; x < inventoryWidth; ++x) {
+         inventory.items[y][x] = Item{};
+      }
+   }
+   inventory.trashedItem = Item{};
+   inventory.anySelected = false;
+   inventory.selectedItem.reset();
+   return true;
+}
+
 // COMMAND MAP
 
 using Command = std::function<bool(Console&, const VArgs&, Map&, Player&, Inventory&)>;
@@ -552,6 +640,7 @@ static inline const std::unordered_map<std::string, Command> commands {
    {"sp", c_sp},
    {"crds", c_crds},
    {"clear", c_clear},
+   {"clinv", c_clinv},
    {"exit", c_exit},
    {"hp", c_hp},
    {"maxhp", c_maxhp},
@@ -566,6 +655,7 @@ static inline const std::unordered_map<std::string, Command> commands {
    {"flwl", c_flwl},
    {"stlq", c_stlq},
    {"fllq", c_fllq},
+   {"gv", c_gv},
 };
 
 // init

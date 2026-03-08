@@ -75,6 +75,10 @@ struct Inventory {
    void render() const;
 };
 
+size_t getItemCount();
+size_t getToolCount();
+size_t getPotionCount();
+
 void drawItem(ItemType type, unsigned short id, unsigned short count, bool isFurniture, bool isWall, const Vector2 &position, const Vector2 &size, bool isSelected, bool isworldspace = false);
 
 #endif

@@ -96,6 +96,10 @@ std::string getBlockNameFromId(unsigned short id) {
    return blockInfo[id].name;
 }
 
+unsigned short getBlockCount() {
+   return blockCount;
+}
+
 bool isBlockNameValid(const std::string &name) {
    return blockIds.map.find(name) != blockIds.map.end();
 }

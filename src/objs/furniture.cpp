@@ -546,6 +546,10 @@ unsigned short getFurnitureIdFromName(const std::string &name) {
    return furnitureTextureIds.at(name);
 }
 
+unsigned short getFurnitureCount() {
+   return furnitureCount;
+}
+
 std::string getFurnitureNameFromId(unsigned short id) {
    return furnitureTextureNames.at(id);
 }

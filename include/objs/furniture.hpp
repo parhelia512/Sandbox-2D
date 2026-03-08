@@ -79,6 +79,8 @@ struct Furniture {
 
 float getFurnitureBreakingTime(unsigned short id);
 unsigned short getFurnitureIdFromName(const std::string &name);
+unsigned short getFurnitureCount();
+
 std::string getFurnitureNameFromId(unsigned short id);
 FurnitureType getFurnitureType(unsigned short id);
 FurnitureTexture getFurnitureIcon(unsigned short id);

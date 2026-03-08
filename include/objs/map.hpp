@@ -83,6 +83,7 @@ struct Item getBlockDropId(unsigned short id, bool iswall);
 unsigned short getBlockIdFromName(const std::string &name);
 std::string getBlockNameFromId(unsigned short id);
 
+unsigned short getBlockCount();
 bool isBlockNameValid(const std::string &name);
 bool isBlockIdValid(unsigned short id);
 

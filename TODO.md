@@ -33,7 +33,6 @@
 - Maybe add localization settings? Probably not
 
 ### Cheats
-- give command
 - variables $x $y $msx $msy and so on
 
 ### Other

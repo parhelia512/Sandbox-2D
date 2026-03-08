@@ -39,6 +39,8 @@ struct ToolInfo {
    int breakLevel;
 };
 
+constexpr size_t potionCount = 0;
+
 constexpr static inline std::array<ToolInfo, toolCount> toolInfo {{
    ToolInfo{"wooden_pickaxe",  1.3f, 1},
    ToolInfo{"stone_pickaxe",   1.6f, 2},
@@ -625,6 +627,20 @@ void Inventory::render() const {
    if (anySelected && !externalSlot) {
       drawItem(selectedItem.item.type, selectedItem.item.id, selectedItem.item.count, selectedItem.item.isFurniture, selectedItem.item.isWall, GetMousePosition(), itemframeItemSize, true);
    }
+}
+
+// Get counts
+
+size_t getItemCount() {
+   return itemCount;
+}
+
+size_t getToolCount() {
+   return toolCount;
+}
+
+size_t getPotionCount() {
+   return potionCount;
 }
 
 // Draw item
