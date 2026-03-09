@@ -75,6 +75,7 @@ void Player::updatePlayer(Map &map) {
 void Player::updateMovement() {
    // We do not sit while flying
    if (creative) {
+      maximumY = position.y;
       sitting = false;
 
       float dirx = (!blockInput && IsKeyDown(KEY_D)) - (!blockInput && IsKeyDown(KEY_A));

@@ -1,3 +1,4 @@
+#include "objs/console.hpp"
 #include "objs/inventory.hpp"
 #include "objs/map.hpp"
 #include "objs/player.hpp"
@@ -10,7 +11,7 @@
 
 // Please increment after any breaking changes to warn players
 // about corrupted worlds
-constexpr int fileVersion = 8;
+constexpr int fileVersion = 9;
 
 // File functions
 
@@ -45,7 +46,7 @@ void saveLinesToFile(const std::string &path, const std::vector<std::string> &li
 // World saving functions
 // Save and load functions must follow the same data arrangement
 
-void saveWorldData(const std::string &name, const Vector2 &playerSpawnPosition, const Vector2 &position, int breath, int hearts, int maxHearts, float zoom, const Map &map, const Inventory *inventory, const std::vector<DroppedItem> *droppedItems) {
+void saveWorldData(const std::string &name, const Vector2 &playerSpawnPosition, const Vector2 &position, bool creative, int breath, int hearts, int maxHearts, float zoom, const Map &map, const Console *console, const Inventory *inventory, const std::vector<DroppedItem> *droppedItems) {
    std::ofstream file ("data/worlds/" + name + ".bin", std::ios::binary);
    assert(file.is_open(), "Failed to save world 'data/worlds/{}.bin'.", name);
 
@@ -55,6 +56,7 @@ void saveWorldData(const std::string &name, const Vector2 &playerSpawnPosition, 
    file.write(reinterpret_cast<const char*>(&playerSpawnPosition.y), sizeof(playerSpawnPosition.y));
    file.write(reinterpret_cast<const char*>(&position.x), sizeof(position.x));
    file.write(reinterpret_cast<const char*>(&position.y), sizeof(position.y));
+   file.write(reinterpret_cast<const char*>(&creative), sizeof(creative));
    file.write(reinterpret_cast<const char*>(&breath), sizeof(breath));
    file.write(reinterpret_cast<const char*>(&hearts), sizeof(hearts));
    file.write(reinterpret_cast<const char*>(&maxHearts), sizeof(maxHearts));
@@ -80,6 +82,20 @@ void saveWorldData(const std::string &name, const Vector2 &playerSpawnPosition, 
       for (int i = 0; i < inventoryHeight * inventoryWidth; ++i) {
          file.write(reinterpret_cast<const char*>(&item), sizeof(Item));
       }
+   }
+
+   // Write console history
+   if (console) {
+      size_t size = console->history.size();
+      file.write(reinterpret_cast<const char*>(&size), sizeof(size));
+      for (const std::string &string : console->history) {
+         size = string.size();
+         file.write(reinterpret_cast<const char*>(&size), sizeof(size));
+         file.write(reinterpret_cast<const char*>(string.data()), string.size());
+      }
+   } else {
+      size_t none = 0;
+      file.write(reinterpret_cast<const char*>(&none), sizeof(none));
    }
 
    // Write the map
@@ -138,7 +154,7 @@ void saveWorldData(const std::string &name, const Vector2 &playerSpawnPosition, 
 
 // World loading functions
 
-void loadWorldData(const std::string &name, Player &player, float &zoom, Map &map, Inventory &inventory, std::vector<DroppedItem> &droppedItems) {
+void loadWorldData(const std::string &name, Player &player, float &zoom, Map &map, Console &console, Inventory &inventory, std::vector<DroppedItem> &droppedItems) {
    std::ifstream file ("data/worlds/" + name + ".bin", std::ios::binary);
    assert(file.is_open(), "Failed to load world 'data/worlds/{}.bin'.", name);
 
@@ -149,6 +165,7 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
    file.read(reinterpret_cast<char*>(&player.spawnPos.y), sizeof(player.spawnPos.y));
    file.read(reinterpret_cast<char*>(&player.position.x), sizeof(player.position.x));
    file.read(reinterpret_cast<char*>(&player.position.y), sizeof(player.position.y));
+   file.read(reinterpret_cast<char*>(&player.creative), sizeof(player.creative));
    file.read(reinterpret_cast<char*>(&player.breath), sizeof(player.breath));
    file.read(reinterpret_cast<char*>(&player.hearts), sizeof(player.hearts));
    file.read(reinterpret_cast<char*>(&player.maxHearts), sizeof(player.maxHearts));
@@ -169,6 +186,21 @@ void loadWorldData(const std::string &name, Player &player, float &zoom, Map &ma
 
    // Read inventory
    file.read(reinterpret_cast<char*>(&inventory.items[0]), inventoryHeight * inventoryWidth * sizeof(Item));
+
+   // Read console
+   size_t size = 0;
+   file.read(reinterpret_cast<char*>(&size), sizeof(size));
+   console.history.resize(size);
+
+   for (size_t i = 0; i < size; ++i) {
+      size_t ssize = 0;
+      file.read(reinterpret_cast<char*>(&ssize), sizeof(ssize));
+      
+      std::string history;
+      history.resize(ssize);
+      file.read(reinterpret_cast<char*>(history.data()), ssize);
+      console.history[i] = history;
+   }
 
    // Read map
    int blockCount = map.sizeX * map.sizeY;
