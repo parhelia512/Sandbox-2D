@@ -569,7 +569,6 @@ bool c_give(Console &console, const VArgs &args, Map&, Player &player, Inventory
             console.output("give: invalid equipment id.", ConsoleColor::red);
             return false;
          }
-         id += 1;
          item.type = ItemType::equipment;
          break;
       case 'p':
@@ -577,7 +576,6 @@ bool c_give(Console &console, const VArgs &args, Map&, Player &player, Inventory
             console.output("give: invalid potion id.", ConsoleColor::red);
             return false;
          }
-         id += 1; // I'm going to guess that the potions will also be fucked up
          item.type = ItemType::potion;
          break;
       default:
