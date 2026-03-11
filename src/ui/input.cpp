@@ -27,7 +27,7 @@ static bool consumeBackspace(std::string &text, size_t &cursor) {
    text.erase(text.begin() + cursor);
 
    if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
-      while (cursor != 0 && !std::isspace(cursor == text.size() ? text.back() : text[cursor])) {
+      while (cursor != 0 && !std::isspace(cursor == 0 ? text.front() : text[cursor - 1])) {
          cursor -= 1;
          text.erase(text.begin() + cursor);
       }
@@ -58,10 +58,22 @@ void Input::update(float dt) {
 
    if (typing && (isKeyRepeated(KEY_LEFT))) {
       cursor = (cursor == 0 ? cursor : cursor - 1);
+
+      if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+         while (cursor != 0 && !std::isspace(cursor == 0 ? text.front() : text[cursor - 1])) {
+            cursor -= 1;
+         }
+      }
       rendercursor = true;
       cursorcounter = 0.0f;
    } else if (typing && (isKeyRepeated(KEY_RIGHT))) {
       cursor = (cursor == text.size() ? cursor : cursor + 1);
+
+      if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+         while (cursor != text.size() && !std::isspace(text[cursor - 1])) {
+            cursor += 1;
+         }
+      }
       rendercursor = true;
       cursorcounter = 0.0f;
    }

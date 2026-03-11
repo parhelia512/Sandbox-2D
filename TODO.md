@@ -35,4 +35,3 @@
 ### Other
 - World generation.
 - Add more sounds for sitting, opening doors, swimming, drowning, stepping on sticky and bouncy blocks. And fix existing sounds.
-- Make inputs have cursor capability
