@@ -1,7 +1,7 @@
 # Sandbox-2D
 Build whatever your heart desires, survive the environment or simply play around - it's up to you. Sandbox-2D is a sandbox survival game where you can build, destroy and explore. Ready for the laid-back experience? Download it now for free on [Itch.io](https://acerxamj.itch.io/sandbox-2d).
 
-![Main Menu Screenshot](assets/screenshots/2026-01-01_19-00.png)
+![Main Menu Screenshot](assets/screenshots/2026-03-11_13-53.png)
 
 ## Table of Contents
 - [Features](#features)
@@ -21,7 +21,7 @@ The game is a WIP, so stay tuned for new features! Currently it includes;
 - Lighting system.
 - Survival mode.
 
-![Game Screenshot](assets/screenshots/2026-01-01_18-48_1.png)
+![Game Screenshot](assets/screenshots/2026-03-11_13-54.png)
 
 ## Controls
 
@@ -36,6 +36,7 @@ The game is a WIP, so stay tuned for new features! Currently it includes;
 - ESC - Toggle pause screen
 - MINUS - zoom in
 - EQUAL - zoom out
+- CTRL+TAB - open console
 
 ## Installation
 This project only depends on Raylib 5.5 and it uses C++ standard 17.

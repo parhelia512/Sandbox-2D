@@ -312,11 +312,10 @@ Furniture &Map::getFurnitureAtPosition(int x, int y) {
          && furniture.posY <= y && furniture.posY + furniture.sizeY > y
          && !furniture.pieces[y - furniture.posY][x - furniture.posX].nil) {
          return furniture;
-         break;
       }
    }
-   assert(false, "Error: No furniture at position ({}, {}).", x, y);
-   std::exit(-1); // Silence warning
+   assert(false, "No furniture at position ({}; {}).", x, y);
+   exit(EXIT_FAILURE);
 }
 
 void Map::addFurniture(Furniture &object) {
