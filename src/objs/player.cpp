@@ -119,9 +119,11 @@ notSittingAnymore:
 
    // Handle gravity
    if (!onGround) {
+      float maxWaterMultiplier = (waterMultiplier != 1.0f ? waterMultiplier * 0.2f : waterMultiplier);
       velocity.y += gravity;
-      if (velocity.y >= maxGravity) {
-         velocity.y = maxGravity;
+
+      if (velocity.y >= maxGravity * maxWaterMultiplier) {
+         velocity.y = maxGravity * maxWaterMultiplier;
       }
    } else if (!shouldBounce) {
       velocity.y = 0.001f; // Needed
@@ -168,7 +170,7 @@ notSittingAnymore:
 
    // Do everything else
    velocity.x *= waterMultiplier;
-   velocity.y *= std::min(1.0f, waterMultiplier * 1.6f);
+   // velocity.y *= std::min(1.0f, waterMultiplier * 1.6f);
 
    if (directionX != 0 ) {
       flipX = (directionX == 1);

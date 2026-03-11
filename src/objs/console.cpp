@@ -776,9 +776,9 @@ void Console::output(const std::string &string, ConsoleColor color) {
 
 // Update
 
-void Console::update(Map &map, Player &player, Inventory &inventory) {
+void Console::update(float dt, Map &map, Player &player, Inventory &inventory) {
    bool wastyping = input.typing;
-   input.update();
+   input.update(dt);
 
    if (wastyping && !input.typing && IsKeyPressed(KEY_ENTER)) {
       input.typing = true;

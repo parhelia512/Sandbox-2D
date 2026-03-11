@@ -5,8 +5,8 @@
 #include <string>
 
 struct Input {
-   void update();
-   void render() const;
+   void update(float dt);
+   void render();
    Rectangle normalizeRect() const;
 
    // Members
@@ -19,9 +19,13 @@ struct Input {
    bool typing = false;
    bool changed = false;
    bool wrapinput = true;
+   bool rendercursor = false;
 
    int maxChars = 255;
-   int counter = 0;
+   float counter = 0;
+   float cursorcounter = 0;
+   size_t cursor = 0;
+   size_t prevsize = 0;
 };
 
 #endif

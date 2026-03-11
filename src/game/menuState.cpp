@@ -145,7 +145,7 @@ void MenuState::updateLevelSelection() {
    backButton.update(dt);
    newButton.update(dt);
    worldFrame.update(dt);
-   worldSearchBar.update();
+   worldSearchBar.update(dt);
 
    if (backButton.clicked || (!worldSearchBar.typing && handleKeyPressWithSound(KEY_ESCAPE))) {
       worldSearchBar.typing = false;
@@ -344,7 +344,7 @@ void MenuState::updateLevelSelection() {
 void MenuState::updateLevelCreation() {
    backButtonCreation.update(dt);
    createButtonCreation.update(dt);
-   worldName.update();
+   worldName.update(dt);
    shouldWorldBeFlat.update();
 
    if (backButtonCreation.clicked || (!worldName.typing && handleKeyPressWithSound(KEY_ESCAPE))) {
@@ -390,7 +390,7 @@ void MenuState::updateLevelCreation() {
 void MenuState::updateLevelRenaming() {
    backButtonRenaming.update(dt);
    renameButtonRenaming.update(dt);
-   renameInput.update();
+   renameInput.update(dt);
 
    if (backButtonRenaming.clicked || (!renameInput.typing && handleKeyPressWithSound(KEY_ESCAPE))) {
       phase = Phase::levelSelection;

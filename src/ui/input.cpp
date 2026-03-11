@@ -1,8 +1,10 @@
 #include "mngr/input.hpp"
+#include "mngr/resource.hpp"
 #include "mngr/sound.hpp"
 #include "ui/input.hpp"
 #include "ui/keybindIndicator.hpp"
 #include "util/format.hpp"
+#include "util/position.hpp"
 #include "util/render.hpp"
 #include <raymath.h>
 #include <cmath>
@@ -10,21 +12,24 @@
 // Constants
 
 constexpr float textWrapPadding = 10.0f;
-constexpr float fadeSpeed       = 0.3f;
+constexpr float fadeSpeed       = 0.3f / 0.016f;
 constexpr int   fadeMin         = 200;
 constexpr int   fadeRange       = 255 - fadeMin;
 
 // Helper functions
 
-static bool consumeBackspace(std::string &text) {
-   if (text.empty()) {
+static bool consumeBackspace(std::string &text, size_t &cursor) {
+   if (cursor == 0) {
       return false;
    }
 
-   text.pop_back();
-   if (IsKeyDown(KEY_LEFT_CONTROL)) {
-      while (!text.empty() && !std::isspace(text.back())) {
-         text.pop_back();
+   cursor -= 1;
+   text.erase(text.begin() + cursor);
+
+   if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+      while (cursor != 0 && !std::isspace(cursor == text.size() ? text.back() : text[cursor])) {
+         cursor -= 1;
+         text.erase(text.begin() + cursor);
       }
    }
    return true;
@@ -32,7 +37,10 @@ static bool consumeBackspace(std::string &text) {
 
 // Update
 
-void Input::update() {
+void Input::update(float dt) {
+   if (prevsize != text.size()) {
+      cursor = text.size();
+   }
    changed = false;
 
    const bool wasTyping = typing;
@@ -48,16 +56,27 @@ void Input::update() {
       typing = false;
    }
 
+   if (typing && (isKeyRepeated(KEY_LEFT))) {
+      cursor = (cursor == 0 ? cursor : cursor - 1);
+      rendercursor = true;
+      cursorcounter = 0.0f;
+   } else if (typing && (isKeyRepeated(KEY_RIGHT))) {
+      cursor = (cursor == text.size() ? cursor : cursor + 1);
+      rendercursor = true;
+      cursorcounter = 0.0f;
+   }
+
    if (typing) {
       const std::size_t previousTextSize = text.size();
 
       if (isKeyRepeated(KEY_BACKSPACE) || isKeyRepeated(KEY_DELETE)) {
-         changed = consumeBackspace(text);
+         changed = consumeBackspace(text, cursor);
       }
 
       for (char c = GetCharPressed(); c != 0 && (int)text.size() < maxChars; c = GetCharPressed()) {
-         text += c;
+         text.insert(text.begin() + cursor, c);
          changed = true;
+         cursor += 1;
       }
 
       if (text.size() != previousTextSize) {
@@ -73,12 +92,20 @@ void Input::update() {
       text.clear();
       changed = true;
    }
-   ++counter;
+
+   counter += dt;
+   cursorcounter += dt;
+
+   if (cursorcounter >= 0.5f) {
+      cursorcounter -= 0.5f;
+      rendercursor = !rendercursor;
+   }
+   prevsize = text.size();
 }
 
 // Render function
 
-void Input::render() const {
+void Input::render() {
    unsigned char value = 255;
    if (typing) {
       value = std::sin(counter * fadeSpeed) * fadeRange + fadeMin;
@@ -88,17 +115,28 @@ void Input::render() const {
       value -= fadeRange;
    }
 
-
    if (texture) {
       drawTexture(*texture, {rectangle.x, rectangle.y}, {rectangle.width, rectangle.height});
    }
 
+   std::string selected = text.empty() ? fallback : text;
    if (wrapinput) {
-      std::string wrapped = text.empty() ? fallback : text;
-      wrapText(wrapped, rectangle.width - textWrapPadding, 35, 1);
-      drawText({rectangle.x, rectangle.y}, wrapped.c_str(), 35, Color{value, value, value, 255});
+      wrapText(selected, rectangle.width - textWrapPadding, 35, 1);
+      drawText({rectangle.x, rectangle.y}, selected.c_str(), 35, Color{value, value, value, 255});
    } else {
-      drawTextByRight({rectangle.x, rectangle.y}, rectangle.width / 2.0f, (text.empty() ? fallback : text).c_str(), 35, Color{value, value, value, 255});
+      Vector2 origin = getOrigin(selected.c_str(), 35.0f, 1.0f);
+      Vector2 position = {rectangle.x - (origin.x - rectangle.width / 2.0f), rectangle.y};
+      DrawTextPro(getFont("andy"), selected.c_str(), position, origin, 0, 35.0f, 1.0f, Color{value, value, value, 255});
+
+      if (rendercursor && !text.empty()) {
+         std::string substr = selected.substr(0, cursor);
+         Vector2 cursorPosition = MeasureTextEx(getFont("andy"), (substr.empty() ? "X" : substr.c_str()), 35, 1.0f);
+         if (substr.empty()) {
+            cursorPosition.x = 0.0f;
+         }
+
+         DrawRectangleV(Vector2Add({cursorPosition.x, 0}, Vector2Subtract(position, origin)), {15.0f, 35.0f}, Fade(WHITE, 0.75f));
+      }
    }
    drawKeybindIndicator(keybind, {rectangle.x + rectangle.width / 2.0f, rectangle.y - rectangle.height / 2.0f});
 }

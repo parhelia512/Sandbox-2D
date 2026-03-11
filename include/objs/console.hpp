@@ -14,7 +14,7 @@ using Variable = std::variant<bool*, int*, float*>;
 
 struct Console {
    void init(struct Map & map, struct Player &player, struct Inventory &inventory);
-   void update(struct Map &map, struct Player &player, struct Inventory &inventory);
+   void update(float dt, struct Map &map, struct Player &player, struct Inventory &inventory);
    void render();
 
    void output(const std::string &string, ConsoleColor color = ConsoleColor::white);

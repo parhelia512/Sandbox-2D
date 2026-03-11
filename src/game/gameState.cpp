@@ -170,7 +170,7 @@ void GameState::updatePlaying() {
       console.input.typing = !console.input.typing;
    }
 
-   console.update(map, player, inventory);
+   console.update(dt, map, player, inventory);
 
    if (console.input.typing && IsKeyPressed(KEY_ESCAPE)) {
       console.input.typing = false;

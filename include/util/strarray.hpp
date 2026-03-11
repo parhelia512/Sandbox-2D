@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 
+// Array with strings as indices
 template<typename T>
 struct StrArray {
    StrArray(std::initializer_list<T> list) {
