@@ -8,6 +8,7 @@
 #include "util/format.hpp"
 #include "util/parallax.hpp"
 #include "util/position.hpp"
+#include "util/random.hpp"
 #include "util/render.hpp"
 #include <filesystem>
 #include <thread>
@@ -25,7 +26,7 @@ constexpr int defaultMapSizeY = 750;
 
 // Constructors
 
-MenuState::MenuState(): backgroundTexture(getRandomBackground()), foregroundTexture(getRandomForeground()) {
+MenuState::MenuState() {
    const Vector2 center = getScreenCenter();
 
    // Init title screen
@@ -101,6 +102,8 @@ MenuState::MenuState(): backgroundTexture(getRandomBackground()), foregroundText
    generationProgressBar.rectangle = {center.x, center.y, 18.0f * 50.0f, 50.0f};
    generationProgressBar.backgroundTint = GRAY;
    generationProgressBar.foregroundTint = WHITE;
+
+   setCurrentBackgroundBiome(MapGenerator::Biome(random(0, (int)MapGenerator::Biome::count) - 1));
 }
 
 // Update
@@ -463,7 +466,7 @@ void MenuState::updateGeneratingLevel() {
 // Render
 
 void MenuState::render() {
-   drawBackground(foregroundTexture, backgroundTexture, 1.0f * dt, 1.0f * dt, 15.0f * dt);
+   drawBackground(dt, dt, 15.0f * dt);
 
    switch (phase) {
    case Phase::title:           renderTitle();           break;

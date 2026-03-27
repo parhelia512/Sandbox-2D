@@ -8,7 +8,7 @@
 #include <string>
 
 struct MapGenerator {
-   enum class Biome { plains, forest, mountains, desert_oasis, desert, tundra, jungle };
+   enum class Biome { plains, forest, mountains, desert_oasis, desert, tundra, jungle, count };
    enum class BiomeWarmth { cold, warm, hot };
 
    std::mutex &infoTextMutex;

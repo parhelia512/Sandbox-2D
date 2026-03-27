@@ -27,12 +27,25 @@ constexpr Color backgroundTintDay   = {190, 190, 170, 255};
 constexpr Color foregroundTintNight = {40, 40, 40, 255};
 constexpr Color foregroundTintDay   = {210, 210, 190, 255};
 
-static inline const std::vector<std::string> backgroundTextures {
-   "mountains1", "mountains2", "mountains3", "mountains4", "mountains5"
+using s = std::vector<std::string>;
+static inline const std::array<s, (size_t)MapGenerator::Biome::count> biomeBackgroundTextures {
+   s{"mountains1", "mountains2", "mountains3", "mountains4", "mountains5"}, // plains
+   s{"mountains1", "mountains2", "mountains3", "mountains4", "mountains5"}, // forest
+   s{"mountains1", "mountains2", "mountains3", "mountains4", "mountains5"}, // mountains
+   s{"mountains_sand1", "mountains_sand2", "mountains_sand3"},              // oasis
+   s{"mountains_sand1", "mountains_sand2", "mountains_sand3"},              // desert
+   s{"mountains1", "mountains2", "mountains3", "mountains4", "mountains5"}, // tundra
+   s{"mountains1", "mountains2", "mountains3", "mountains4", "mountains5"}, // jungle
 };
 
-static inline const std::vector<std::string> foregroundTextures {
-   "bg_trees1", "bg_trees2", "bg_trees3", "bg_trees4"
+static inline const std::array<s, (size_t)MapGenerator::Biome::count> biomeForegroundTextures {
+   s{"bg_trees1", "bg_trees2", "bg_trees3", "bg_trees4"}, // plains
+   s{"bg_trees1", "bg_trees2", "bg_trees3", "bg_trees4"}, // forest
+   s{"bg_trees1", "bg_trees2", "bg_trees3", "bg_trees4"}, // mountains
+   s{"bg_trees_sand1", "bg_trees_sand2"},                 // oasis
+   s{"bg_trees_sand1", "bg_trees_sand2"},                 // desert
+   s{"bg_trees1", "bg_trees2", "bg_trees3", "bg_trees4"}, // tundra
+   s{"bg_trees1", "bg_trees2", "bg_trees3", "bg_trees4"}, // jungle
 };
 
 struct Star {
@@ -51,6 +64,9 @@ static float lastTime = 0;
 static int moonPhase = -1;
 static int lastMoonPhase = -1;
 static bool isNight = false;
+static MapGenerator::Biome biome = MapGenerator::Biome::plains;
+static Texture *bgTexture = nullptr;
+static Texture *fgTexture = nullptr;
 
 // Color helper functions
 
@@ -82,7 +98,7 @@ void resetBackground() {
    isNight = false;
 }
 
-void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bgSpeed, float fgSpeed, float daySpeed) {
+void drawBackground(float bgSpeed, float fgSpeed, float daySpeed) {
    Vector2 screenSize = getScreenSize();
    Vector2 origin = getOrigin(screenSize);
 
@@ -154,13 +170,18 @@ void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bg
    }
 
    // Draw backgrounds
-   Color bgColor = fadeColor(backgroundTintNight, backgroundTintDay, t);
-   drawTextureNoOrigin(bgTexture, {bgProgress, 0}, screenSize, bgColor);
-   drawTextureNoOrigin(bgTexture, {screenSize.x + bgProgress, 0}, screenSize, bgColor);
 
-   Color fgColor = fadeColor(foregroundTintNight, foregroundTintDay, t);
-   drawTextureNoOrigin(fgTexture, {fgProgress, 0}, screenSize, fgColor);
-   drawTextureNoOrigin(fgTexture, {screenSize.x + fgProgress, 0}, screenSize, fgColor);
+   if (bgTexture) {
+      Color bgColor = fadeColor(backgroundTintNight, backgroundTintDay, t);
+      drawTextureNoOrigin(*bgTexture, {bgProgress, 0}, screenSize, bgColor);
+      drawTextureNoOrigin(*bgTexture, {screenSize.x + bgProgress, 0}, screenSize, bgColor);
+   }
+
+   if (fgTexture) {
+      Color fgColor = fadeColor(foregroundTintNight, foregroundTintDay, t);
+      drawTextureNoOrigin(*fgTexture, {fgProgress, 0}, screenSize, fgColor);
+      drawTextureNoOrigin(*fgTexture, {screenSize.x + fgProgress, 0}, screenSize, fgColor);
+   }
 }
 
 // Time functions
@@ -188,10 +209,10 @@ Color getLightBasedOnTime() {
    return fadeColor({15, 15, 15, 255}, WHITE, getFadeStrengthBasedOnTime());
 }
 
-Texture& getRandomBackground() {
-   return getTexture(random(backgroundTextures));
-}
-
-Texture& getRandomForeground() {
-   return getTexture(random(foregroundTextures));
+void setCurrentBackgroundBiome(MapGenerator::Biome biome) {
+   if (::biome != biome || !bgTexture || !fgTexture) {
+      bgTexture = &getTexture(random(biomeBackgroundTextures[(size_t)biome]));
+      fgTexture = &getTexture(random(biomeForegroundTextures[(size_t)biome]));   
+   }
+   ::biome = biome;
 }

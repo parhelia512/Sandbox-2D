@@ -5,6 +5,7 @@
 #include "objs/item.hpp"
 #include "objs/player.hpp"
 #include "util/format.hpp"
+#include "util/math.hpp"
 #include "util/parallax.hpp"
 #include "util/random.hpp"
 #include "util/render.hpp"
@@ -411,11 +412,11 @@ Texture &Map::getLiquidTexture(int x, int y) const {
 
 // Render functions
 
-void Map::renderLight(const Camera2D &camera, Texture2D &texture, float x, float y, const Vector2 &size, const Color &color) const {
+void Map::renderLight(const Camera2D &camera, Texture2D &texture, float x, float y, const Vector2 &size, const Color &color) {
    drawTexture(texture, {(((x + 0.5f - camera.target.x) * camera.zoom) + camera.offset.x) / 2.0f, (((y + 0.5f - camera.target.y) * camera.zoom) + camera.offset.y) / 2.0f}, size, 0, color);
 }
 
-void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &player, float accumulator, const Rectangle &cameraBounds, const Camera2D &camera, const Inventory &inventory) const {
+void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &player, float accumulator, const Rectangle &cameraBounds, const Camera2D &camera, const Inventory &inventory) {
    // Render background walls
    for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
       for (int x = cameraBounds.x; x <= cameraBounds.width; ++x) {
@@ -438,6 +439,17 @@ void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &pla
    for (const Furniture &obj: furniture) {
       obj.render(cameraBounds);
    }
+
+   // biome count setup
+   size_t sandCount = 0, forestCount = 0, jungleCount = 0, mountainCount = 0, tundraCount = 0;
+   unsigned short sandId   = getBlockIdFromName("sand");
+   unsigned short dirtId   = getBlockIdFromName("dirt");
+   unsigned short grassId  = getBlockIdFromName("grass");
+   unsigned short mudId    = getBlockIdFromName("mud");
+   unsigned short jungleId = getBlockIdFromName("jungle_grass");
+   unsigned short stoneId  = getBlockIdFromName("stone");
+   unsigned short snowId   = getBlockIdFromName("snow");
+   unsigned short iceId    = getBlockIdFromName("ice");
 
    // Render blocks
    for (int y = cameraBounds.y; y <= cameraBounds.height; ++y) {
@@ -463,8 +475,32 @@ void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &pla
             x += 1;
          }
 
-         drawTextureBlock(*block.texture, {(float)oldX, (float)y, float(x - oldX), 1});
+         int xx = x - oldX;
+         sandCount += (block.id == sandId) * xx;
+         forestCount += (block.id == dirtId || block.id == grassId) * xx;
+         jungleCount += (block.id == mudId || block.id == jungleId) * xx;
+         mountainCount += (block.id == stoneId) * xx;
+         tundraCount += (block.id == snowId || block.id == iceId) * xx;
+
+         drawTextureBlock(*block.texture, {(float)oldX, (float)y, (float)xx, 1});
          x -= 1;
+      }
+   }
+
+   mountainCount /= 3; // to equilize given that stone is in abundance underground
+   size_t maximum = max(sandCount, max(forestCount, max(jungleCount, max(mountainCount, tundraCount))));
+
+   if (maximum >= 20) {
+      if (sandCount == maximum) {
+         setCurrentBackgroundBiome(MapGenerator::Biome::desert);
+      } else if (forestCount == maximum) {
+         setCurrentBackgroundBiome(MapGenerator::Biome::forest);
+      } else if (jungleCount == maximum) {
+         setCurrentBackgroundBiome(MapGenerator::Biome::jungle);
+      } else if (tundraCount == maximum) {
+         setCurrentBackgroundBiome(MapGenerator::Biome::tundra);
+      } else if (mountainCount == maximum) {
+         setCurrentBackgroundBiome(MapGenerator::Biome::mountains);
       }
    }
 
@@ -581,5 +617,7 @@ void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &pla
    DrawTexturePro(lightmap.texture, {0, 0, (float)lightmap.texture.width, -(float)lightmap.texture.height}, {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()}, {0, 0}, 0, WHITE);
    EndBlendMode();
 
+   DrawText(TextFormat("f%lu s%lu t%lu j%lu m%lu == %lu", forestCount, sandCount, tundraCount,
+      jungleCount, mountainCount), 500, 500, 40, RED);
    BeginMode2D(camera); // EndTextureMode disables it for some reason
 }

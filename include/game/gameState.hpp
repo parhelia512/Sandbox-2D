@@ -47,8 +47,6 @@ struct GameState: public State {
 
    // Members
 
-   const Texture &backgroundTexture, &foregroundTexture;
-
    Map map;
    Player player;
 

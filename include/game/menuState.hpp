@@ -61,8 +61,6 @@ struct MenuState: public State {
 
    // Members
 
-   const Texture &backgroundTexture, &foregroundTexture;
-
    Button playButton, optionsButton, quitButton;
    Button backButton, renameButton, deleteButton, favoriteButton, playWorldButton, newButton;
    Button backButtonCreation, createButtonCreation;

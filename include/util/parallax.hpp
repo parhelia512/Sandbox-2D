@@ -1,10 +1,11 @@
 #ifndef UTIL_PARALLAX_HPP
 #define UTIL_PARALLAX_HPP
 
+#include "objs/generation.hpp"
 #include <raylib.h>
 
 void resetBackground();
-void drawBackground(const Texture &fgTexture, const Texture &bgTexture, float bgSpeed, float fgSpeed, float daySpeed);
+void drawBackground(float bgSpeed, float fgSpeed, float daySpeed);
 
 int getMoonPhase();
 float getTimeOfDay();
@@ -13,7 +14,6 @@ void setMoonPhase(int moonPhase);
 void setTimeOfDay(float timeOfDay);
 
 Color getLightBasedOnTime();
-Texture& getRandomBackground();
-Texture& getRandomForeground();
+void setCurrentBackgroundBiome(MapGenerator::Biome biome);
 
 #endif

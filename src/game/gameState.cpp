@@ -34,7 +34,7 @@ constexpr float timeToRespawn = 10.0f;
 // Constructors
 
 GameState::GameState(const std::string &worldName)
-: backgroundTexture(getRandomBackground()), foregroundTexture(getRandomForeground()), inventory(map, player, droppedItems), worldName(worldName) {
+: inventory(map, player, droppedItems), worldName(worldName) {
    const Vector2 center = getScreenCenter();
    
    // Init world and camera
@@ -490,7 +490,7 @@ void GameState::updateTorchPhysics(int x, int y) {
 
 void GameState::render() {
    const float delta = (phase != Phase::playing ? 0 : player.delta.x * dt);
-   drawBackground(foregroundTexture, backgroundTexture, delta, delta, (phase == Phase::paused ? 0.0f : 1.0f) * dt);
+   drawBackground(delta, delta, (phase == Phase::paused ? 0.0f : 1.0f) * dt);
 
    BeginMode2D(camera);
    map.render(droppedItems, player, accumulator, cameraBounds, camera, inventory);
