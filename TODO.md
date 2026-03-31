@@ -36,3 +36,7 @@
 - World generation.
 - Add more sounds for sitting, opening doors, swimming, drowning, stepping on sticky and bouncy blocks. And fix existing sounds.
 - finally update README.md
+
+### Bugs
+- fix only some inputs having visible cursor
+- fix inventory right click. inventory also doesn't feel as good as it should

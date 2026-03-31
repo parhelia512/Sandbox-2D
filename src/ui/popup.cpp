@@ -1,5 +1,6 @@
 #include "mngr/input.hpp"
 #include "mngr/resource.hpp"
+#include "mngr/sound.hpp"
 #include "ui/button.hpp"
 #include "ui/popup.hpp"
 #include "util/format.hpp"
@@ -71,8 +72,14 @@ void initPopups() {
 
 // Popup functions
 
-void insertPopup(const std::string &header, const std::string &body, bool confirmation) {
-   popups.push_back(Popup{header, body, confirmation});
+void insertPopup(const std::string &header, const std::string &body, PopupType type) {
+   popups.push_back(Popup{header, body, type});
+
+   if (type == PopupType::error) {
+      playSound("failure");
+   } else {
+      playSound("notice");
+   }
 }
 
 bool isPopupConfirmed() {
@@ -98,7 +105,7 @@ void updatePopups(float dt) {
    fadeIn(dt);
    Popup &popup = popups.back();
 
-   if (popup.confirmation) {
+   if (popup.type == PopupType::confirmation) {
       confirmationButton.update(dt);
       denialButton.update(dt);
    
@@ -136,7 +143,7 @@ void renderPopups() {
    wrapText(popup.body, popupSize.x - 30.0f, 25.0f, 1.0f);
    drawText(getScreenCenter({0.0f, -40.0f}), popup.body.c_str(), 25.0f);
 
-   if (popup.confirmation) {
+   if (popup.type == PopupType::confirmation) {
       confirmationButton.render();
       denialButton.render();
    } else {

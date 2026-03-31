@@ -617,7 +617,5 @@ void Map::render(const std::vector<DroppedItem> &droppedItems, const Player &pla
    DrawTexturePro(lightmap.texture, {0, 0, (float)lightmap.texture.width, -(float)lightmap.texture.height}, {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()}, {0, 0}, 0, WHITE);
    EndBlendMode();
 
-   DrawText(TextFormat("f%lu s%lu t%lu j%lu m%lu == %lu", forestCount, sandCount, tundraCount,
-      jungleCount, mountainCount), 500, 500, 40, RED);
    BeginMode2D(camera); // EndTextureMode disables it for some reason
 }

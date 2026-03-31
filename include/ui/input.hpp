@@ -13,7 +13,7 @@ struct Input {
 
    Texture *texture = nullptr;
    Rectangle rectangle;
-   std::string text, fallback, keybind;
+   std::string text, fallback;
 
    bool hovering = false;
    bool typing = false;

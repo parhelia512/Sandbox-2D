@@ -27,7 +27,7 @@ static bool consumeBackspace(std::string &text, size_t &cursor) {
    text.erase(text.begin() + cursor);
 
    if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
-      while (cursor != 0 && !std::isspace(cursor == 0 ? text.front() : text[cursor - 1])) {
+      while (cursor != 0 && !std::isspace(text[cursor - 1])) {
          cursor -= 1;
          text.erase(text.begin() + cursor);
       }
@@ -60,7 +60,7 @@ void Input::update(float dt) {
       cursor = (cursor == 0 ? cursor : cursor - 1);
 
       if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
-         while (cursor != 0 && !std::isspace(cursor == 0 ? text.front() : text[cursor - 1])) {
+         while (cursor != 0 && !std::isspace(text[cursor - 1])) {
             cursor -= 1;
          }
       }
@@ -86,6 +86,7 @@ void Input::update(float dt) {
       }
 
       for (char c = GetCharPressed(); c != 0 && (int)text.size() < maxChars; c = GetCharPressed()) {
+         cursor = std::min(cursor, text.size());
          text.insert(text.begin() + cursor, c);
          changed = true;
          cursor += 1;
@@ -150,7 +151,6 @@ void Input::render() {
          DrawRectangleV(Vector2Add({cursorPosition.x, 0}, Vector2Subtract(position, origin)), {15.0f, 35.0f}, Fade(WHITE, 0.75f));
       }
    }
-   drawKeybindIndicator(keybind, {rectangle.x + rectangle.width / 2.0f, rectangle.y - rectangle.height / 2.0f});
 }
 
 // Normalize rect

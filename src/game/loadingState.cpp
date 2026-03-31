@@ -45,7 +45,7 @@ void LoadingState::update() {
       loadPhase = Load::music;
    } else if (loadPhase == Load::music) {
       loadMusic();
-      playSound("load");
+      playSound("success");
 
       loadingText = "Loading Done!";
       loadPhase = Load::count;

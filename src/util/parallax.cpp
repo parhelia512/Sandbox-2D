@@ -64,7 +64,7 @@ static float lastTime = 0;
 static int moonPhase = -1;
 static int lastMoonPhase = -1;
 static bool isNight = false;
-static MapGenerator::Biome biome = MapGenerator::Biome::plains;
+static MapGenerator::Biome biome;
 static Texture *bgTexture = nullptr;
 static Texture *fgTexture = nullptr;
 
