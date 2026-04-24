@@ -758,6 +758,7 @@ void Console::init(Map &map, Player &player, Inventory &inventory) {
    vars["map.size.y"] = Variable(&map.sizeY);
    vars["lightingEnabled"] = Variable(&map.lightingEnabled);
    vars["waterShaderEnabled"] = Variable(&map.waterShaderEnabled);
+   vars["timeToRespawn"] = Variable(&map.timeToRespawn);
 
    // Inventory
    vars["inventory.selected.x"] = Variable(&inventory.selectedX);
@@ -840,7 +841,11 @@ void Console::lex(Map &map, Player &player, Inventory &inventory) {
       return;
    }
    
-   history.push_back(input.text);
+   // Only push back a command to history if it wasn't reran
+   if (history.size() == 0 || input.text != history.back()) {
+      history.push_back(input.text);
+   }
+
    size_t index = 0;
    VArgs args;
 

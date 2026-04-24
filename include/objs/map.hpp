@@ -174,6 +174,9 @@ struct Map {
    int sizeY = 0;
    int timeShaderLocation = 0;
 
+   // Config
+
+   float timeToRespawn = 10.0f;
    bool lightingEnabled = true;
    bool waterShaderEnabled = true;
 };

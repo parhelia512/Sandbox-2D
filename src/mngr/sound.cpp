@@ -59,6 +59,7 @@ void loadSavedSounds() {
    saveSound("typing", {"typing1", "typing2", "typing3", "typing4", "typing5"});
    saveSound("jump", {"jump1", "jump2", "jump3"});
    saveSound("hurt", {"hurt1", "hurt2", "hurt3"});
+   saveSound("die", {"die1", "die2"});
 }
 
 // Play functions

@@ -29,7 +29,6 @@ constexpr int grassGrowSpeedMax = 255;
 
 constexpr float maxPickupRange = 4.0f; // Squared
 constexpr float maxToolRange = 100.0f; // Squared
-constexpr float timeToRespawn = 10.0f;
 
 // Constructors
 
@@ -92,6 +91,7 @@ void GameState::fixedUpdate() {
       phase = Phase::died;
 
       if (lastPhase != phase) {
+         playSound("die");
          spawnDeathParticles(player.getCenter());
       }
       calculateCameraBounds(); // Make sure the camera does not go out of bounds
@@ -304,7 +304,7 @@ void GameState::updatePausing() {
 
 void GameState::updateDying() {
    deathTimer += realDt;
-   if (deathTimer >= timeToRespawn) {
+   if (deathTimer >= map.timeToRespawn) {
       player.previousPosition = player.position = player.spawnPos;
       player.hearts = player.lastHearts = player.displayHearts = player.maxHearts;
       player.displayBreath = player.breath = maxBreath;
@@ -529,7 +529,7 @@ void GameState::render() {
    if (phase == Phase::died) {
       EndMode2D();
       drawText(getScreenCenter({0, -30.0f}), "YOU'VE DIED!", 120, RED);
-      drawText(getScreenCenter({0, 30.0f}), format("RESPAWN IN {}...", int(timeToRespawn - deathTimer)).c_str(), 50, RED);
+      drawText(getScreenCenter({0, 30.0f}), format("RESPAWN IN {}...", int(map.timeToRespawn - deathTimer)).c_str(), 50, RED);
       return;
    }
 
