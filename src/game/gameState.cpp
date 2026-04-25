@@ -633,6 +633,11 @@ void GameState::render() {
       menuButton.render();
    }
    pauseButton.render();
+
+   // Optionally render FPS counter through console command
+   if (map.fpsEnabled) {
+      drawText({getScreenCenter().x, 40.0f * hr}, TextFormat("%d FPS", GetFPS()), getFontSize(40));
+   }
 }
 
 // Change states

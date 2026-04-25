@@ -179,6 +179,7 @@ struct Map {
    float timeToRespawn = 10.0f;
    bool lightingEnabled = true;
    bool waterShaderEnabled = true;
+   bool fpsEnabled = false;
 };
 
 #endif

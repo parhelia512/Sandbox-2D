@@ -6,6 +6,7 @@
 #include "util/math.hpp"
 #include "util/position.hpp"
 #include "util/render.hpp"
+#include "util/strarray.hpp"
 #include <raymath.h>
 #include <array>
 
@@ -24,12 +25,15 @@ constexpr int itemStackSize      = 9999;
 constexpr int equipmentStackSize = 1;
 constexpr int potionStackSize    = 99;
 
-constexpr size_t itemCount = 4;
+constexpr size_t itemCount = 7;
 constexpr static inline std::array<const char*, itemCount> itemTextures {{
    "coal",
    "iron_lump",
    "gold_lump",
    "mythril_lump",
+   "iron_bar",
+   "gold_bar",
+   "mythril_bar"
 }};
 
 constexpr size_t toolCount = 5;
@@ -48,6 +52,18 @@ constexpr static inline std::array<ToolInfo, toolCount> toolInfo {{
    ToolInfo{"gold_pickaxe",    2.2f, 3},
    ToolInfo{"mythril_pickaxe", 2.5f, 3},
 }};
+
+const static inline StrArray<std::string> itemNames {
+   "", "coal", "iron_lump", "gold_lump", "mythril_lump", "iron_bar", "gold_bar", "mythril_bar"
+};
+
+const static inline StrArray<std::string> equipmentNames {
+   "", "wooden_pickaxe", "stone_pickaxe", "iron_pickaxe", "gold_pickaxe", "mythril_pickaxe"
+};
+
+const static inline StrArray<std::string> potionNames {
+   "",
+};
 
 // Constructors
 
@@ -641,6 +657,30 @@ size_t getToolCount() {
 
 size_t getPotionCount() {
    return potionCount;
+}
+
+bool isItemNameValid(const std::string &name) {
+   return itemNames.map.count(name);
+}
+
+bool isEquipmentNameValid(const std::string &name) {
+   return equipmentNames.map.count(name);
+}
+
+bool isPotionNameValid(const std::string &name) {
+   return potionNames.map.count(name);
+}
+
+unsigned short getItemIdFromName(const std::string &name) {
+   return itemNames.map.at(name);
+}
+
+unsigned short getEquipmentIdFromName(const std::string &name) {
+   return equipmentNames.map.at(name);
+}
+
+unsigned short getPotionIdFromName(const std::string &name) {
+   return potionNames.map.at(name);
 }
 
 // Draw item

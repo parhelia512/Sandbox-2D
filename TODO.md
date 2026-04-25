@@ -31,6 +31,10 @@
 - Add misc. settings
 - Music, sound settings
 
+### Creative
+- add creative menu
+- make give command accept block/item names
+
 ### Other
 - World generation.
 - Add more sounds for sitting, opening doors, swimming, drowning, stepping on sticky and bouncy blocks. And fix existing sounds.

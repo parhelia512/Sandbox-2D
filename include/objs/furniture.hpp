@@ -81,6 +81,7 @@ float getFurnitureBreakingTime(unsigned short id);
 unsigned short getFurnitureIdFromName(const std::string &name);
 unsigned short getFurnitureCount();
 
+bool isValidFurnitureName(const std::string &name);
 std::string getFurnitureNameFromId(unsigned short id);
 FurnitureType getFurnitureType(unsigned short id);
 FurnitureTexture getFurnitureIcon(unsigned short id);

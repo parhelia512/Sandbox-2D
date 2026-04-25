@@ -4,6 +4,7 @@
 #include "objs/map.hpp"
 #include "objs/player.hpp"
 #include "util/random.hpp"
+#include "util/strarray.hpp"
 #include <array>
 #include <raymath.h>
 #include <unordered_map>
@@ -36,16 +37,14 @@ constexpr int textureSize = 8;
 
 constexpr int furnitureCount = 13;
 
-static inline const std::unordered_map<std::string, unsigned short> furnitureTextureIds {
-   {"tree", 0}, {"sapling", 1}, {"palm", 2}, {"palm_sapling", 3}, {"pine", 4},
-   {"pine_sapling", 5}, {"jungle_tree", 6}, {"jungle_sapling", 7}, {"cactus", 8}, {"cactus_seed", 9},
-   {"table", 10}, {"chair", 11}, {"door", 12}
+static inline const StrArray<std::string> furnitureTextureIds {
+   "tree", "sapling", "palm", "palm_sapling", "pine", "pine_sapling", "jungle_tree",
+   "jungle_sapling", "cactus", "cactus_seed", "table", "chair", "door"
 };
 
 constexpr static inline std::array<const char*, furnitureCount> furnitureTextureNames {
-   "tree", "sapling", "palm", "palm_sapling", "pine",
-   "pine_sapling", "jungle_tree", "jungle_sapling", "cactus", "cactus_seed",
-   "table", "chair", "door"
+   "tree", "sapling", "palm", "palm_sapling", "pine", "pine_sapling", "jungle_tree",
+   "jungle_sapling", "cactus", "cactus_seed", "table", "chair", "door"
 };
 
 constexpr static inline std::array<FurnitureType, furnitureCount> furnitureTypes {
@@ -550,6 +549,10 @@ unsigned short getFurnitureCount() {
    return furnitureCount;
 }
 
+bool isValidFurnitureName(const std::string &name) {
+   return furnitureTextureIds.map.count(name) && getFurnitureIcon(furnitureTextureIds.at(name)).sizeX != 0;
+}
+
 std::string getFurnitureNameFromId(unsigned short id) {
    return furnitureTextureNames.at(id);
 }
@@ -560,8 +563,8 @@ FurnitureType getFurnitureType(unsigned short id) {
 
 FurnitureTexture getFurnitureIcon(unsigned short id) {
    constexpr std::array<Vector2, furnitureCount> textureSizes {{
-      {}, {textureSize, textureSize * 2}, {}, {}, {},
-      {}, {}, {}, {}, {textureSize, textureSize},
+      {0,0}, {textureSize, textureSize * 2}, {0,0}, {0,0}, {0,0},
+      {0,0}, {0,0}, {0,0}, {0,0}, {textureSize, textureSize},
       {textureSize * 3, textureSize * 2}, {textureSize, textureSize * 2}, {textureSize, textureSize * 3}
    }};
    return {getTexture(getFurnitureNameFromId(id)), textureSizes[id].x, textureSizes[id].y};

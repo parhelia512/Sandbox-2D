@@ -40,7 +40,7 @@ bool c_help(Console &console, const VArgs&, Map&, Player&, Inventory&) {
    console.output("fillw [ID/NAME] [SX] [SY] [DX] [DY] - fill walls with the id/name from coordinates (SX; SY) to (DX; DY).");
    console.output("placeq [ID/NAME] [X] [Y] - set liquid with the id/name at the given coordinates.");
    console.output("fillq [ID/NAME] [SX] [SY] [DX] [DY] - fill liquids with the id/name from coordinates (SX; SY) to (DX; DY).");
-   console.output("give [i/b/e/p] [ID] [COUNT] - give item of specified id and quantity to the player.");
+   console.output("give [NAME] [COUNT] - give specified item to the player.");
    console.output("set [VAR] [VALUE] - set VAR to VALUE.");
    console.output("list - list all variables.");
    console.output("cinv - clear the inventory.");
@@ -526,73 +526,56 @@ bool c_fillq(Console &console, const VArgs &args, Map &map, Player&, Inventory&)
 }
 
 bool c_give(Console &console, const VArgs &args, Map&, Player &player, Inventory &inventory) {
-   if (args.size() != 4 && args.size() != 3) {
-      console.output("give: expected 2 or 3 arguments.", ConsoleColor::red);
+   if (args.size() != 3 && args.size() != 2) {
+      console.output("give: expected 1 or 2 arguments.", ConsoleColor::red);
       return false;
    }
 
    Item item;
-   int id, count = 1;
+   item.count = 1;
 
    try {
-      if (args[1].size() != 1) {
-         console.output("give: invalid first argument, expected item type - b/i/e/p.", ConsoleColor::red);
+      if (isBlockNameValid(args[1])) {
+         item.id = getBlockIdFromName(args[1]);
+         item.type = ItemType::block;
+      }
+      else if (isItemNameValid(args[1])) {
+         item.id = getItemIdFromName(args[1]);
+         item.type = ItemType::item;
+      }
+      else if (isEquipmentNameValid(args[1])) {
+         item.id = getEquipmentIdFromName(args[1]);
+         item.type = ItemType::equipment;
+      }
+      else if (isPotionNameValid(args[1])) {
+         item.id = getPotionIdFromName(args[1]);
+         item.type = ItemType::potion;
+      }
+      else if (isValidFurnitureName(args[1])) {
+         item.id = getFurnitureIdFromName(args[1]);
+         item.type = ItemType::block;
+         item.isFurniture = true;
+      }
+      else {
+         console.output("give: invalid first argument, expected valid item name.", ConsoleColor::red);
          return false;
       }
 
-      id = stoi(args[2]);
-      if (args.size() == 4) {
-         count = stoi(args[3]);
+      if (args.size() == 3) {
+         item.count = stoi(args[2]);
       }
 
-      if (count < 0 || count > 9999) {
+      if (item.count > 9999) {
          console.output("give: invalid item count.", ConsoleColor::red);
          return false;
       }
-
-      switch (args[1][0]) {
-      case 'b':
-         if (id < 0 || id >= getBlockCount()) {
-            console.output("give: invalid block id.", ConsoleColor::red);
-            return false;
-         }
-         item.type = ItemType::block;
-         break;
-      case 'i':
-         if (id < 1 || id > (int)getItemCount()) {
-            console.output("give: invalid item id.", ConsoleColor::red);
-            return false;
-         }
-         item.type = ItemType::item;
-         break;
-      case 'e':
-         if (id < 1 || id > (int)getToolCount()) {
-            console.output("give: invalid equipment id.", ConsoleColor::red);
-            return false;
-         }
-         item.type = ItemType::equipment;
-         break;
-      case 'p':
-         if (id < 1 || id > (int)getPotionCount()) {
-            console.output("give: invalid potion id.", ConsoleColor::red);
-            return false;
-         }
-         item.type = ItemType::potion;
-         break;
-      default:
-         console.output("give: invalid first argument, expected item type - b/i/e/p.", ConsoleColor::red);
-         return false;
-      }
-
-      item.count = count;
-      item.id = id;
    } catch (...) {
-      console.output("give: expected second and third arguments to be numbers.", ConsoleColor::red);
+      console.output("give: expected second argument to be number.", ConsoleColor::red);
       return false;
    }
 
+   console.output(TextFormat("give: gave %d of '%s'.", item.count, args[1].c_str()));
    inventory.tryToPlaceItemOrDropAtCoordinates(item, player.position.x, player.position.y);
-   console.output(TextFormat("give: gave %d of item id %d.", count, id));
    return true;
 }
 
@@ -758,6 +741,7 @@ void Console::init(Map &map, Player &player, Inventory &inventory) {
    vars["map.size.y"] = Variable(&map.sizeY);
    vars["lightingEnabled"] = Variable(&map.lightingEnabled);
    vars["waterShaderEnabled"] = Variable(&map.waterShaderEnabled);
+   vars["fpsEnabled"] = Variable(&map.fpsEnabled);
    vars["timeToRespawn"] = Variable(&map.timeToRespawn);
 
    // Inventory
